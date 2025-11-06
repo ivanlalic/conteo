@@ -5,11 +5,30 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import Link from 'next/link'
+import PageviewsChart from '@/components/PageviewsChart'
 
 interface Site {
   id: string
   domain: string
   api_key: string
+}
+
+interface TopPage {
+  path: string
+  pageviews: number
+  unique_visitors: number
+}
+
+interface TopReferrer {
+  referrer: string
+  visits: number
+  unique_visitors: number
+}
+
+interface ChartData {
+  date: string
+  pageviews: number
+  unique_visitors: number
 }
 
 function DashboardContent() {
@@ -23,6 +42,9 @@ function DashboardContent() {
     weekViews: 0,
     monthViews: 0,
   })
+  const [topPages, setTopPages] = useState<TopPage[]>([])
+  const [topReferrers, setTopReferrers] = useState<TopReferrer[]>([])
+  const [chartData, setChartData] = useState<ChartData[]>([])
 
   useEffect(() => {
     loadSites()
@@ -61,15 +83,73 @@ function DashboardContent() {
     if (!selectedSite) return
 
     try {
-      // For MVP: hardcoded demo data per site
-      // TODO: Replace with real Supabase queries using selectedSite.id
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+      const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+      // Live users (last 5 minutes)
+      const { data: liveUsersData, error: liveError } = await supabase
+        .rpc('get_live_users', { site_uuid: selectedSite.id })
+
+      // Today's pageviews
+      const { count: todayCount, error: todayError } = await supabase
+        .from('pageviews')
+        .select('*', { count: 'exact', head: true })
+        .eq('site_id', selectedSite.id)
+        .gte('timestamp', today.toISOString())
+
+      // Week's pageviews
+      const { count: weekCount, error: weekError } = await supabase
+        .from('pageviews')
+        .select('*', { count: 'exact', head: true })
+        .eq('site_id', selectedSite.id)
+        .gte('timestamp', weekAgo.toISOString())
+
+      // Month's pageviews
+      const { count: monthCount, error: monthError } = await supabase
+        .from('pageviews')
+        .select('*', { count: 'exact', head: true })
+        .eq('site_id', selectedSite.id)
+        .gte('timestamp', monthAgo.toISOString())
+
+      // Top pages
+      const { data: topPagesData, error: pagesError } = await supabase
+        .rpc('get_top_pages', {
+          site_uuid: selectedSite.id,
+          start_date: weekAgo.toISOString(),
+          end_date: now.toISOString(),
+          page_limit: 5
+        })
+
+      // Top referrers
+      const { data: topReferrersData, error: referrersError } = await supabase
+        .rpc('get_top_referrers', {
+          site_uuid: selectedSite.id,
+          start_date: weekAgo.toISOString(),
+          end_date: now.toISOString(),
+          referrer_limit: 5
+        })
+
+      // Chart data (last 7 days)
+      const { data: chartDataRaw, error: chartError } = await supabase
+        .rpc('get_pageviews_chart', {
+          site_uuid: selectedSite.id,
+          start_date: weekAgo.toISOString(),
+          end_date: now.toISOString()
+        })
 
       setStats({
-        liveUsers: Math.floor(Math.random() * 10) + 1,
-        todayViews: Math.floor(Math.random() * 500) + 50,
-        weekViews: Math.floor(Math.random() * 3000) + 500,
-        monthViews: Math.floor(Math.random() * 10000) + 1000,
+        liveUsers: liveUsersData || 0,
+        todayViews: todayCount || 0,
+        weekViews: weekCount || 0,
+        monthViews: monthCount || 0,
       })
+
+      setTopPages(topPagesData || [])
+      setTopReferrers(topReferrersData || [])
+      setChartData(chartDataRaw || [])
+
     } catch (error) {
       console.error('Error loading stats:', error)
     }
@@ -225,23 +305,23 @@ function DashboardContent() {
               <h3 className="text-lg font-semibold text-gray-900">Top Pages</h3>
             </div>
             <div className="p-6">
-              <div className="space-y-4">
-                {[
-                  { path: '/', views: 523, visitors: 412 },
-                  { path: '/pricing', views: 284, visitors: 201 },
-                  { path: '/features', views: 176, visitors: 143 },
-                  { path: '/blog', views: 98, visitors: 87 },
-                  { path: '/about', views: 67, visitors: 54 },
-                ].map((page, i) => (
-                  <div key={i} className="flex justify-between items-center">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{page.path}</p>
-                      <p className="text-xs text-gray-500">{page.visitors} unique visitors</p>
+              {topPages.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-8">
+                  No pageviews yet. Install the tracking script to start collecting data.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {topPages.map((page, i) => (
+                    <div key={i} className="flex justify-between items-center">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{page.path}</p>
+                        <p className="text-xs text-gray-500">{page.unique_visitors} unique visitors</p>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900">{page.pageviews}</p>
                     </div>
-                    <p className="text-sm font-semibold text-gray-900">{page.views}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -251,32 +331,33 @@ function DashboardContent() {
               <h3 className="text-lg font-semibold text-gray-900">Top Referrers</h3>
             </div>
             <div className="p-6">
-              <div className="space-y-4">
-                {[
-                  { source: 'google.com', visits: 432 },
-                  { source: 'Direct / None', visits: 287 },
-                  { source: 'twitter.com', visits: 143 },
-                  { source: 'github.com', visits: 98 },
-                  { source: 'hackernews.com', visits: 54 },
-                ].map((ref, i) => (
-                  <div key={i} className="flex justify-between items-center">
-                    <p className="text-sm font-medium text-gray-900">{ref.source}</p>
-                    <p className="text-sm font-semibold text-gray-900">{ref.visits}</p>
-                  </div>
-                ))}
-              </div>
+              {topReferrers.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-8">
+                  No referrer data yet. Install the tracking script to start collecting data.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {topReferrers.map((ref, i) => (
+                    <div key={i} className="flex justify-between items-center">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{ref.referrer}</p>
+                        <p className="text-xs text-gray-500">{ref.unique_visitors} unique visitors</p>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900">{ref.visits}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Chart Placeholder */}
+          {/* Chart */}
           <div className="bg-white rounded-lg shadow lg:col-span-2">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">Last 7 Days</h3>
             </div>
             <div className="p-6">
-              <div className="h-64 flex items-center justify-center text-gray-400">
-                Chart.js integration - Coming next
-              </div>
+              <PageviewsChart data={chartData} />
             </div>
           </div>
 

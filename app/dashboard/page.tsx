@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/components/AuthProvider'
+import ProtectedRoute from '@/components/ProtectedRoute'
+import Link from 'next/link'
 
-export default function Dashboard() {
+function DashboardContent() {
+  const { user, signOut } = useAuth()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     liveUsers: 0,
@@ -51,9 +55,18 @@ export default function Dashboard() {
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900">conteo.online</h1>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">yoursite.com</span>
-              <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700">
-                Settings
+              <Link
+                href="/sites"
+                className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
+              >
+                My Sites
+              </Link>
+              <span className="text-sm text-gray-600">{user?.email}</span>
+              <button
+                onClick={signOut}
+                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300 transition"
+              >
+                Logout
               </button>
             </div>
           </div>
@@ -186,5 +199,13 @@ export default function Dashboard() {
 
       </main>
     </div>
+  )
+}
+
+export default function Dashboard() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
   )
 }

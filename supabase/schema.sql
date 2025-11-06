@@ -213,6 +213,58 @@ RETURNS TABLE (
   ORDER BY date;
 $$ LANGUAGE SQL STABLE;
 
+-- Function to get device breakdown (Mobile vs Desktop)
+CREATE OR REPLACE FUNCTION get_device_breakdown(
+  site_uuid UUID,
+  start_date TIMESTAMPTZ,
+  end_date TIMESTAMPTZ
+)
+RETURNS TABLE (
+  device TEXT,
+  pageviews BIGINT,
+  unique_visitors BIGINT
+) AS $$
+  SELECT
+    COALESCE(device, 'Unknown') as device,
+    COUNT(*) as pageviews,
+    COUNT(DISTINCT visitor_id) as unique_visitors
+  FROM pageviews
+  WHERE site_id = site_uuid
+    AND timestamp >= start_date
+    AND timestamp <= end_date
+  GROUP BY device
+  ORDER BY pageviews DESC;
+$$ LANGUAGE SQL STABLE;
+
+-- Function to get top pages with device breakdown
+CREATE OR REPLACE FUNCTION get_top_pages_with_devices(
+  site_uuid UUID,
+  start_date TIMESTAMPTZ,
+  end_date TIMESTAMPTZ,
+  page_limit INT DEFAULT 10
+)
+RETURNS TABLE (
+  path TEXT,
+  pageviews BIGINT,
+  unique_visitors BIGINT,
+  mobile_views BIGINT,
+  desktop_views BIGINT
+) AS $$
+  SELECT
+    path,
+    COUNT(*) as pageviews,
+    COUNT(DISTINCT visitor_id) as unique_visitors,
+    COUNT(*) FILTER (WHERE device = 'Mobile') as mobile_views,
+    COUNT(*) FILTER (WHERE device = 'Desktop') as desktop_views
+  FROM pageviews
+  WHERE site_id = site_uuid
+    AND timestamp >= start_date
+    AND timestamp <= end_date
+  GROUP BY path
+  ORDER BY pageviews DESC
+  LIMIT page_limit;
+$$ LANGUAGE SQL STABLE;
+
 -- ============================================
 -- AUTO-UPDATE TIMESTAMP TRIGGER
 -- ============================================

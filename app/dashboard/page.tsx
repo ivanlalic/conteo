@@ -17,6 +17,8 @@ interface TopPage {
   path: string
   pageviews: number
   unique_visitors: number
+  mobile_views: number
+  desktop_views: number
 }
 
 interface TopReferrer {
@@ -27,6 +29,12 @@ interface TopReferrer {
 
 interface ChartData {
   date: string
+  pageviews: number
+  unique_visitors: number
+}
+
+interface DeviceBreakdown {
+  device: string
   pageviews: number
   unique_visitors: number
 }
@@ -45,6 +53,7 @@ function DashboardContent() {
   const [topPages, setTopPages] = useState<TopPage[]>([])
   const [topReferrers, setTopReferrers] = useState<TopReferrer[]>([])
   const [chartData, setChartData] = useState<ChartData[]>([])
+  const [deviceBreakdown, setDeviceBreakdown] = useState<DeviceBreakdown[]>([])
   const [trackerUrl, setTrackerUrl] = useState('')
 
   useEffect(() => {
@@ -118,13 +127,21 @@ function DashboardContent() {
         .eq('site_id', selectedSite.id)
         .gte('timestamp', monthAgo.toISOString())
 
-      // Top pages
+      // Top pages with device breakdown
       const { data: topPagesData, error: pagesError } = await supabase
-        .rpc('get_top_pages', {
+        .rpc('get_top_pages_with_devices', {
           site_uuid: selectedSite.id,
           start_date: weekAgo.toISOString(),
           end_date: now.toISOString(),
           page_limit: 5
+        })
+
+      // Device breakdown (week)
+      const { data: deviceData, error: deviceError } = await supabase
+        .rpc('get_device_breakdown', {
+          site_uuid: selectedSite.id,
+          start_date: weekAgo.toISOString(),
+          end_date: now.toISOString()
         })
 
       // Top referrers
@@ -154,6 +171,7 @@ function DashboardContent() {
       setTopPages(topPagesData || [])
       setTopReferrers(topReferrersData || [])
       setChartData(chartDataRaw || [])
+      setDeviceBreakdown(deviceData || [])
 
     } catch (error) {
       console.error('Error loading stats:', error)
@@ -301,11 +319,44 @@ function DashboardContent() {
           </div>
         </div>
 
+        {/* Device Breakdown Card */}
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Device Breakdown (This Week)</h3>
+          {deviceBreakdown.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-4">No device data available yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {deviceBreakdown.map((device) => {
+                const totalViews = deviceBreakdown.reduce((sum, d) => sum + Number(d.pageviews), 0)
+                const percentage = totalViews > 0 ? ((Number(device.pageviews) / totalViews) * 100).toFixed(1) : '0.0'
+
+                return (
+                  <div key={device.device} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-2xl">
+                          {device.device === 'Mobile' ? '📱' : device.device === 'Desktop' ? '💻' : '❓'}
+                        </span>
+                        <h4 className="text-lg font-semibold text-gray-900">{device.device}</h4>
+                      </div>
+                      <p className="text-sm text-gray-600">{Number(device.unique_visitors).toLocaleString()} unique visitors</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl font-bold text-indigo-600">{percentage}%</p>
+                      <p className="text-sm text-gray-500">{Number(device.pageviews).toLocaleString()} views</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
         {/* Charts & Tables */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
           {/* Top Pages */}
-          <div className="bg-white rounded-lg shadow">
+          <div className="bg-white rounded-lg shadow lg:col-span-2">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">Top Pages</h3>
             </div>
@@ -315,23 +366,56 @@ function DashboardContent() {
                   No pageviews yet. Install the tracking script to start collecting data.
                 </p>
               ) : (
-                <div className="space-y-4">
-                  {topPages.map((page, i) => (
-                    <div key={i} className="flex justify-between items-center">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{page.path}</p>
-                        <p className="text-xs text-gray-500">{page.unique_visitors} unique visitors</p>
-                      </div>
-                      <p className="text-sm font-semibold text-gray-900">{page.pageviews}</p>
-                    </div>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead>
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Page
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Total Views
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          💻 Desktop
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          📱 Mobile
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Unique
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {topPages.map((page, i) => (
+                        <tr key={i}>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                            {page.path}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                            {Number(page.pageviews).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right text-gray-600">
+                            {Number(page.desktop_views).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right text-gray-600">
+                            {Number(page.mobile_views).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right text-gray-500">
+                            {Number(page.unique_visitors).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
           </div>
 
           {/* Referrers */}
-          <div className="bg-white rounded-lg shadow">
+          <div className="bg-white rounded-lg shadow lg:col-span-2">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">Top Referrers</h3>
             </div>
@@ -341,9 +425,9 @@ function DashboardContent() {
                   No referrer data yet. Install the tracking script to start collecting data.
                 </p>
               ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {topReferrers.map((ref, i) => (
-                    <div key={i} className="flex justify-between items-center">
+                    <div key={i} className="flex justify-between items-center p-3 bg-gray-50 rounded">
                       <div className="flex-1">
                         <p className="text-sm font-medium text-gray-900">{ref.referrer}</p>
                         <p className="text-xs text-gray-500">{ref.unique_visitors} unique visitors</p>

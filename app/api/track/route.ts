@@ -88,14 +88,17 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// OPTIONS for CORS preflight
-export async function OPTIONS() {
+// OPTIONS for CORS preflight (handled by middleware)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin')
+
   return new NextResponse(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': origin || '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Credentials': origin ? 'true' : 'false',
     },
   })
 }

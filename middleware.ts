@@ -6,8 +6,17 @@ export function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/api/track')) {
     const response = NextResponse.next()
 
+    // Get origin from request
+    const origin = request.headers.get('origin')
+
     // Allow requests from any origin (needed for tracking script)
-    response.headers.set('Access-Control-Allow-Origin', '*')
+    if (origin) {
+      response.headers.set('Access-Control-Allow-Origin', origin)
+      response.headers.set('Access-Control-Allow-Credentials', 'true')
+    } else {
+      response.headers.set('Access-Control-Allow-Origin', '*')
+    }
+
     response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
 

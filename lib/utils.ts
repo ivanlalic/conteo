@@ -39,3 +39,61 @@ export function extractDomain(url: string | null): string {
     return 'Direct / None'
   }
 }
+
+/**
+ * Convert ISO 3166-1 alpha-2 country code to flag emoji
+ */
+export function getCountryFlag(countryCode: string | null): string {
+  if (!countryCode || countryCode === 'Unknown') return '🌐'
+
+  // Convert country code to regional indicator symbols
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0))
+
+  return String.fromCodePoint(...codePoints)
+}
+
+/**
+ * Get country name from ISO code
+ */
+export function getCountryName(countryCode: string | null): string {
+  if (!countryCode || countryCode === 'Unknown') return 'Unknown'
+
+  const countries: { [key: string]: string } = {
+    'US': 'United States',
+    'ES': 'Spain',
+    'MX': 'Mexico',
+    'AR': 'Argentina',
+    'GB': 'United Kingdom',
+    'FR': 'France',
+    'DE': 'Germany',
+    'IT': 'Italy',
+    'BR': 'Brazil',
+    'CA': 'Canada',
+    'AU': 'Australia',
+    'IN': 'India',
+    'CN': 'China',
+    'JP': 'Japan',
+    'KR': 'South Korea',
+    'RU': 'Russia',
+    'NL': 'Netherlands',
+    'SE': 'Sweden',
+    'NO': 'Norway',
+    'DK': 'Denmark',
+    'FI': 'Finland',
+    'PL': 'Poland',
+    'PT': 'Portugal',
+    'CL': 'Chile',
+    'CO': 'Colombia',
+    'PE': 'Peru',
+    'VE': 'Venezuela',
+    'UY': 'Uruguay',
+    'EC': 'Ecuador',
+    'BO': 'Bolivia',
+    'PY': 'Paraguay',
+  }
+
+  return countries[countryCode.toUpperCase()] || countryCode
+}

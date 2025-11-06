@@ -266,6 +266,31 @@ RETURNS TABLE (
   LIMIT page_limit;
 $$ LANGUAGE SQL STABLE;
 
+-- Function to get top countries
+CREATE OR REPLACE FUNCTION get_top_countries(
+  site_uuid UUID,
+  start_date TIMESTAMPTZ,
+  end_date TIMESTAMPTZ,
+  country_limit INT DEFAULT 10
+)
+RETURNS TABLE (
+  country TEXT,
+  pageviews BIGINT,
+  unique_visitors BIGINT
+) AS $$
+  SELECT
+    COALESCE(country, 'Unknown') as country,
+    COUNT(*) as pageviews,
+    COUNT(DISTINCT visitor_id) as unique_visitors
+  FROM pageviews
+  WHERE site_id = site_uuid
+    AND timestamp >= start_date
+    AND timestamp <= end_date
+  GROUP BY country
+  ORDER BY pageviews DESC
+  LIMIT country_limit;
+$$ LANGUAGE SQL STABLE;
+
 -- ============================================
 -- AUTO-UPDATE TIMESTAMP TRIGGER
 -- ============================================

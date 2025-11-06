@@ -6,6 +6,7 @@ import { useAuth } from '@/components/AuthProvider'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import Link from 'next/link'
 import PageviewsChart from '@/components/PageviewsChart'
+import { getCountryFlag, getCountryName } from '@/lib/utils'
 
 interface Site {
   id: string
@@ -39,6 +40,12 @@ interface DeviceBreakdown {
   unique_visitors: number
 }
 
+interface TopCountry {
+  country: string
+  pageviews: number
+  unique_visitors: number
+}
+
 function DashboardContent() {
   const { user, signOut } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -54,6 +61,7 @@ function DashboardContent() {
   const [topReferrers, setTopReferrers] = useState<TopReferrer[]>([])
   const [chartData, setChartData] = useState<ChartData[]>([])
   const [deviceBreakdown, setDeviceBreakdown] = useState<DeviceBreakdown[]>([])
+  const [topCountries, setTopCountries] = useState<TopCountry[]>([])
   const [trackerUrl, setTrackerUrl] = useState('')
   const [timePeriod, setTimePeriod] = useState<'today' | '7days' | '30days'>('7days')
 
@@ -170,6 +178,15 @@ function DashboardContent() {
           referrer_limit: 5
         })
 
+      // Top countries (uses selected period)
+      const { data: topCountriesData, error: countriesError } = await supabase
+        .rpc('get_top_countries', {
+          site_uuid: selectedSite.id,
+          start_date: periodStart.toISOString(),
+          end_date: now.toISOString(),
+          country_limit: 5
+        })
+
       // Chart data (last 7 days)
       const { data: chartDataRaw, error: chartError } = await supabase
         .rpc('get_pageviews_chart', {
@@ -189,6 +206,7 @@ function DashboardContent() {
       setTopReferrers(topReferrersData || [])
       setChartData(chartDataRaw || [])
       setDeviceBreakdown(deviceData || [])
+      setTopCountries(topCountriesData || [])
 
     } catch (error) {
       console.error('Error loading stats:', error)
@@ -382,6 +400,32 @@ function DashboardContent() {
                   </div>
                 )
               })}
+            </div>
+          )}
+        </div>
+
+        {/* Top Countries Card */}
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">🌍 Top Countries ({getPeriodLabel()})</h3>
+          {topCountries.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-4">No country data available yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {topCountries.map((country, i) => (
+                <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                  <div className="flex items-center space-x-3 flex-1">
+                    <span className="text-3xl">{getCountryFlag(country.country)}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{getCountryName(country.country)}</p>
+                      <p className="text-xs text-gray-500">{Number(country.unique_visitors).toLocaleString()} unique visitors</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-indigo-600">{Number(country.pageviews).toLocaleString()}</p>
+                    <p className="text-xs text-gray-500">pageviews</p>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

@@ -55,6 +55,7 @@ function DashboardContent() {
   const [chartData, setChartData] = useState<ChartData[]>([])
   const [deviceBreakdown, setDeviceBreakdown] = useState<DeviceBreakdown[]>([])
   const [trackerUrl, setTrackerUrl] = useState('')
+  const [timePeriod, setTimePeriod] = useState<'today' | '7days' | '30days'>('7days')
 
   useEffect(() => {
     loadSites()
@@ -68,7 +69,13 @@ function DashboardContent() {
     if (selectedSite) {
       loadStats()
     }
-  }, [selectedSite])
+  }, [selectedSite, timePeriod])
+
+  function getPeriodLabel() {
+    if (timePeriod === 'today') return 'Today'
+    if (timePeriod === '7days') return 'Last 7 Days'
+    return 'Last 30 Days'
+  }
 
   async function loadSites() {
     try {
@@ -102,6 +109,16 @@ function DashboardContent() {
       const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
       const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
 
+      // Calculate period start date based on selected time period
+      let periodStart: Date
+      if (timePeriod === 'today') {
+        periodStart = today
+      } else if (timePeriod === '7days') {
+        periodStart = weekAgo
+      } else {
+        periodStart = monthAgo
+      }
+
       // Live users (last 5 minutes)
       const { data: liveUsersData, error: liveError } = await supabase
         .rpc('get_live_users', { site_uuid: selectedSite.id })
@@ -127,28 +144,28 @@ function DashboardContent() {
         .eq('site_id', selectedSite.id)
         .gte('timestamp', monthAgo.toISOString())
 
-      // Top pages with device breakdown
+      // Top pages with device breakdown (uses selected period)
       const { data: topPagesData, error: pagesError } = await supabase
         .rpc('get_top_pages_with_devices', {
           site_uuid: selectedSite.id,
-          start_date: weekAgo.toISOString(),
+          start_date: periodStart.toISOString(),
           end_date: now.toISOString(),
           page_limit: 5
         })
 
-      // Device breakdown (week)
+      // Device breakdown (uses selected period)
       const { data: deviceData, error: deviceError } = await supabase
         .rpc('get_device_breakdown', {
           site_uuid: selectedSite.id,
-          start_date: weekAgo.toISOString(),
+          start_date: periodStart.toISOString(),
           end_date: now.toISOString()
         })
 
-      // Top referrers
+      // Top referrers (uses selected period)
       const { data: topReferrersData, error: referrersError } = await supabase
         .rpc('get_top_referrers', {
           site_uuid: selectedSite.id,
-          start_date: weekAgo.toISOString(),
+          start_date: periodStart.toISOString(),
           end_date: now.toISOString(),
           referrer_limit: 5
         })
@@ -319,9 +336,26 @@ function DashboardContent() {
           </div>
         </div>
 
+        {/* Time Period Selector */}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-gray-900">Analytics Breakdown</h2>
+          <div className="flex items-center space-x-3">
+            <span className="text-sm text-gray-600">Time period:</span>
+            <select
+              value={timePeriod}
+              onChange={(e) => setTimePeriod(e.target.value as 'today' | '7days' | '30days')}
+              className="bg-white border border-gray-300 text-gray-900 px-4 py-2 rounded-lg font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none"
+            >
+              <option value="today">Today</option>
+              <option value="7days">Last 7 Days</option>
+              <option value="30days">Last 30 Days</option>
+            </select>
+          </div>
+        </div>
+
         {/* Device Breakdown Card */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Device Breakdown (This Week)</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Device Breakdown ({getPeriodLabel()})</h3>
           {deviceBreakdown.length === 0 ? (
             <p className="text-sm text-gray-500 text-center py-4">No device data available yet.</p>
           ) : (
@@ -358,7 +392,7 @@ function DashboardContent() {
           {/* Top Pages */}
           <div className="bg-white rounded-lg shadow lg:col-span-2">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Top Pages</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Top Pages ({getPeriodLabel()})</h3>
             </div>
             <div className="p-6">
               {topPages.length === 0 ? (
@@ -417,7 +451,7 @@ function DashboardContent() {
           {/* Referrers */}
           <div className="bg-white rounded-lg shadow lg:col-span-2">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Top Referrers</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Top Referrers ({getPeriodLabel()})</h3>
             </div>
             <div className="p-6">
               {topReferrers.length === 0 ? (

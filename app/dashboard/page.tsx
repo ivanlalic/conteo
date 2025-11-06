@@ -46,6 +46,12 @@ interface TopCountry {
   unique_visitors: number
 }
 
+interface City {
+  city: string
+  pageviews: number
+  unique_visitors: number
+}
+
 function DashboardContent() {
   const { user, signOut } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -64,6 +70,8 @@ function DashboardContent() {
   const [topCountries, setTopCountries] = useState<TopCountry[]>([])
   const [trackerUrl, setTrackerUrl] = useState('')
   const [timePeriod, setTimePeriod] = useState<'today' | '7days' | '30days'>('7days')
+  const [expandedCountry, setExpandedCountry] = useState<string | null>(null)
+  const [countryCities, setCountryCities] = useState<{ [key: string]: City[] }>({})
 
   useEffect(() => {
     loadSites()
@@ -83,6 +91,59 @@ function DashboardContent() {
     if (timePeriod === 'today') return 'Today'
     if (timePeriod === '7days') return 'Last 7 Days'
     return 'Last 30 Days'
+  }
+
+  async function toggleCountry(countryCode: string) {
+    // If clicking the same country, collapse it
+    if (expandedCountry === countryCode) {
+      setExpandedCountry(null)
+      return
+    }
+
+    // Expand the country
+    setExpandedCountry(countryCode)
+
+    // If we already have cities for this country, don't reload
+    if (countryCities[countryCode]) {
+      return
+    }
+
+    // Load cities for this country
+    if (!selectedSite) return
+
+    try {
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+      const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+      let periodStart: Date
+      if (timePeriod === 'today') {
+        periodStart = today
+      } else if (timePeriod === '7days') {
+        periodStart = weekAgo
+      } else {
+        periodStart = monthAgo
+      }
+
+      const { data: citiesData, error } = await supabase
+        .rpc('get_cities_by_country', {
+          site_uuid: selectedSite.id,
+          country_code: countryCode,
+          start_date: periodStart.toISOString(),
+          end_date: now.toISOString(),
+          city_limit: 5
+        })
+
+      if (!error && citiesData) {
+        setCountryCities(prev => ({
+          ...prev,
+          [countryCode]: citiesData
+        }))
+      }
+    } catch (error) {
+      console.error('Error loading cities:', error)
+    }
   }
 
   async function loadSites() {
@@ -410,22 +471,57 @@ function DashboardContent() {
           {topCountries.length === 0 ? (
             <p className="text-sm text-gray-500 text-center py-4">No country data available yet.</p>
           ) : (
-            <div className="space-y-3">
-              {topCountries.map((country, i) => (
-                <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                  <div className="flex items-center space-x-3 flex-1">
-                    <span className="text-3xl">{getCountryFlag(country.country)}</span>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{getCountryName(country.country)}</p>
-                      <p className="text-xs text-gray-500">{Number(country.unique_visitors).toLocaleString()} unique visitors</p>
+            <div className="space-y-2">
+              {topCountries.map((country, i) => {
+                const isExpanded = expandedCountry === country.country
+                const cities = countryCities[country.country] || []
+
+                return (
+                  <div key={i}>
+                    {/* Country Row */}
+                    <div
+                      onClick={() => toggleCountry(country.country)}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer"
+                    >
+                      <div className="flex items-center space-x-3 flex-1">
+                        <span className="text-3xl">{getCountryFlag(country.country)}</span>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{getCountryName(country.country)}</p>
+                          <p className="text-xs text-gray-500">{Number(country.unique_visitors).toLocaleString()} unique visitors</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-indigo-600">{Number(country.pageviews).toLocaleString()}</p>
+                          <p className="text-xs text-gray-500">pageviews</p>
+                        </div>
+                        <span className="text-gray-400 transition-transform" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                          ▼
+                        </span>
+                      </div>
                     </div>
+
+                    {/* Cities Dropdown */}
+                    {isExpanded && (
+                      <div className="ml-8 mt-2 space-y-2 border-l-2 border-gray-200 pl-4">
+                        {cities.length === 0 ? (
+                          <p className="text-xs text-gray-400 py-2">Loading cities...</p>
+                        ) : (
+                          cities.map((city, j) => (
+                            <div key={j} className="flex items-center justify-between py-2 px-3 bg-white rounded border border-gray-100">
+                              <div className="flex-1">
+                                <p className="text-xs font-medium text-gray-700">{city.city}</p>
+                                <p className="text-xs text-gray-400">{Number(city.unique_visitors).toLocaleString()} visitors</p>
+                              </div>
+                              <p className="text-sm font-semibold text-gray-600">{Number(city.pageviews).toLocaleString()}</p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-indigo-600">{Number(country.pageviews).toLocaleString()}</p>
-                    <p className="text-xs text-gray-500">pageviews</p>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

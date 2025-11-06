@@ -291,6 +291,33 @@ RETURNS TABLE (
   LIMIT country_limit;
 $$ LANGUAGE SQL STABLE;
 
+-- Function to get cities by country
+CREATE OR REPLACE FUNCTION get_cities_by_country(
+  site_uuid UUID,
+  country_code TEXT,
+  start_date TIMESTAMPTZ,
+  end_date TIMESTAMPTZ,
+  city_limit INT DEFAULT 10
+)
+RETURNS TABLE (
+  city TEXT,
+  pageviews BIGINT,
+  unique_visitors BIGINT
+) AS $$
+  SELECT
+    COALESCE(city, 'Unknown') as city,
+    COUNT(*) as pageviews,
+    COUNT(DISTINCT visitor_id) as unique_visitors
+  FROM pageviews
+  WHERE site_id = site_uuid
+    AND country = country_code
+    AND timestamp >= start_date
+    AND timestamp <= end_date
+  GROUP BY city
+  ORDER BY pageviews DESC
+  LIMIT city_limit;
+$$ LANGUAGE SQL STABLE;
+
 -- ============================================
 -- AUTO-UPDATE TIMESTAMP TRIGGER
 -- ============================================

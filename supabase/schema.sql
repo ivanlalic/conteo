@@ -47,6 +47,7 @@ CREATE TABLE pageviews (
   -- Location (optional for MVP, but good to have)
   country TEXT,
   city TEXT,
+  region TEXT,
 
   -- Timestamp
   timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()

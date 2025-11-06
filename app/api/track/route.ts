@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServiceSupabase } from '@/lib/supabase'
 import { generateVisitorId, parseUserAgent, extractDomain } from '@/lib/utils'
 
+// Enable Vercel Edge Runtime for automatic geolocation
+export const runtime = 'edge'
+
 /**
  * POST /api/track
  * Receives pageview events from the tracking script
@@ -51,6 +54,13 @@ export async function POST(request: NextRequest) {
     // Extract referrer domain
     const referrerDomain = extractDomain(referrer)
 
+    // Get geolocation from Vercel Edge Runtime
+    // Note: request.geo is only available in production on Vercel
+    // In development, these will be undefined
+    const country = request.geo?.country || null
+    const city = request.geo?.city || null
+    const region = request.geo?.region || null
+
     // Insert pageview
     const { error: insertError } = await supabase
       .from('pageviews')
@@ -63,9 +73,9 @@ export async function POST(request: NextRequest) {
         browser,
         device,
         os,
-        // Country/city would come from IP geolocation service (optional for MVP)
-        country: null,
-        city: null,
+        country,
+        city,
+        region,
       })
 
     if (insertError) {

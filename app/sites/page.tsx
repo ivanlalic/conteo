@@ -23,9 +23,14 @@ function SitesContent() {
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [trackerUrl, setTrackerUrl] = useState('')
 
   useEffect(() => {
     loadSites()
+    // Get the current app URL for the tracking snippet
+    if (typeof window !== 'undefined') {
+      setTrackerUrl(`${window.location.origin}/tracker.js`)
+    }
   }, [])
 
   async function loadSites() {
@@ -219,7 +224,7 @@ function SitesContent() {
                     <p className="text-sm font-medium text-gray-700 mb-2">Installation:</p>
                     <pre className="text-xs bg-gray-900 text-gray-100 p-3 rounded overflow-x-auto">
 {`<script
-  src="https://conteo.online/tracker.js"
+  src="${trackerUrl || 'https://your-app.vercel.app/tracker.js'}"
   data-api-key="${site.api_key}"
   defer
 ></script>`}

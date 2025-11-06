@@ -1,7 +1,7 @@
 /**
  * Conteo.online Analytics Tracker
  * Lightweight tracking script for SPAs (Next.js, React, etc.)
- * Usage: <script src="https://conteo.online/tracker.js" data-api-key="YOUR_API_KEY"></script>
+ * Usage: <script src="https://your-app.vercel.app/tracker.js" data-api-key="YOUR_API_KEY"></script>
  */
 
 (function () {
@@ -10,7 +10,19 @@
   // Get API key from script tag
   const script = document.currentScript;
   const apiKey = script?.getAttribute('data-api-key');
-  const endpoint = script?.getAttribute('data-endpoint') || 'https://conteo.online/api/track';
+
+  // Auto-detect endpoint from script src
+  let endpoint = script?.getAttribute('data-endpoint');
+  if (!endpoint && script?.src) {
+    // Extract base URL from script src (e.g., https://conteo.vercel.app/tracker.js -> https://conteo.vercel.app)
+    const scriptUrl = new URL(script.src);
+    endpoint = `${scriptUrl.origin}/api/track`;
+  }
+
+  // Fallback
+  if (!endpoint) {
+    endpoint = 'https://conteo.online/api/track';
+  }
 
   if (!apiKey) {
     console.error('[Conteo] Missing data-api-key attribute');

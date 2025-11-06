@@ -45,9 +45,14 @@ function DashboardContent() {
   const [topPages, setTopPages] = useState<TopPage[]>([])
   const [topReferrers, setTopReferrers] = useState<TopReferrer[]>([])
   const [chartData, setChartData] = useState<ChartData[]>([])
+  const [trackerUrl, setTrackerUrl] = useState('')
 
   useEffect(() => {
     loadSites()
+    // Get the current app URL for the tracking snippet
+    if (typeof window !== 'undefined') {
+      setTrackerUrl(`${window.location.origin}/tracker.js`)
+    }
   }, [])
 
   useEffect(() => {
@@ -373,7 +378,7 @@ function DashboardContent() {
           </p>
           <pre className="bg-indigo-900 text-indigo-100 p-4 rounded-lg overflow-x-auto text-sm">
 {`<script
-  src="https://conteo.online/tracker.js"
+  src="${trackerUrl || 'https://your-app.vercel.app/tracker.js'}"
   data-api-key="${selectedSite?.api_key}"
   defer
 ></script>`}

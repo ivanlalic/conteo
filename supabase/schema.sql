@@ -218,6 +218,62 @@ RETURNS TABLE (
   LIMIT referrer_limit;
 $$ LANGUAGE SQL STABLE;
 
+-- Function to get referrer sources grouped by domain
+CREATE OR REPLACE FUNCTION get_referrer_sources(
+  site_uuid UUID,
+  start_date TIMESTAMPTZ,
+  end_date TIMESTAMPTZ,
+  source_limit INT DEFAULT 10
+)
+RETURNS TABLE (
+  source TEXT,
+  visits BIGINT,
+  unique_visitors BIGINT
+) AS $$
+  WITH parsed_referrers AS (
+    SELECT
+      CASE
+        -- Direct traffic
+        WHEN referrer IS NULL OR referrer = '' THEN 'Direct'
+
+        -- Google
+        WHEN referrer ILIKE '%google.%' THEN 'Google'
+
+        -- Social Media
+        WHEN referrer ILIKE '%facebook.%' OR referrer ILIKE '%fb.%' THEN 'Facebook'
+        WHEN referrer ILIKE '%twitter.%' OR referrer ILIKE '%t.co%' THEN 'Twitter'
+        WHEN referrer ILIKE '%instagram.%' THEN 'Instagram'
+        WHEN referrer ILIKE '%linkedin.%' THEN 'LinkedIn'
+        WHEN referrer ILIKE '%tiktok.%' THEN 'TikTok'
+        WHEN referrer ILIKE '%reddit.%' THEN 'Reddit'
+        WHEN referrer ILIKE '%pinterest.%' THEN 'Pinterest'
+        WHEN referrer ILIKE '%youtube.%' THEN 'YouTube'
+
+        -- Search Engines
+        WHEN referrer ILIKE '%bing.%' THEN 'Bing'
+        WHEN referrer ILIKE '%yahoo.%' THEN 'Yahoo'
+        WHEN referrer ILIKE '%duckduckgo.%' THEN 'DuckDuckGo'
+        WHEN referrer ILIKE '%baidu.%' THEN 'Baidu'
+
+        -- Other
+        ELSE 'Other'
+      END as source,
+      visitor_id
+    FROM pageviews
+    WHERE site_id = site_uuid
+      AND timestamp >= start_date
+      AND timestamp <= end_date
+  )
+  SELECT
+    source,
+    COUNT(*) as visits,
+    COUNT(DISTINCT visitor_id) as unique_visitors
+  FROM parsed_referrers
+  GROUP BY source
+  ORDER BY visits DESC
+  LIMIT source_limit;
+$$ LANGUAGE SQL STABLE;
+
 -- Function to get pageviews over time (for charts)
 -- Now supports timezone offset to display dates in user's local timezone
 CREATE OR REPLACE FUNCTION get_pageviews_chart(
@@ -415,6 +471,7 @@ GRANT EXECUTE ON FUNCTION get_live_users(UUID) TO anon;
 GRANT EXECUTE ON FUNCTION get_unique_visitors(UUID, TIMESTAMPTZ, TIMESTAMPTZ) TO anon;
 GRANT EXECUTE ON FUNCTION get_top_pages(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
 GRANT EXECUTE ON FUNCTION get_top_referrers(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
+GRANT EXECUTE ON FUNCTION get_referrer_sources(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
 GRANT EXECUTE ON FUNCTION get_pageviews_chart(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
 GRANT EXECUTE ON FUNCTION get_device_breakdown(UUID, TIMESTAMPTZ, TIMESTAMPTZ) TO anon;
 GRANT EXECUTE ON FUNCTION get_browser_breakdown(UUID, TIMESTAMPTZ, TIMESTAMPTZ) TO anon;

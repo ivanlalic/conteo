@@ -22,8 +22,8 @@ interface TopPage {
   desktop_views: number
 }
 
-interface TopReferrer {
-  referrer: string
+interface ReferrerSource {
+  source: string
   visits: number
   unique_visitors: number
 }
@@ -87,7 +87,7 @@ function DashboardContent() {
     monthViews: 0,
   })
   const [topPages, setTopPages] = useState<TopPage[]>([])
-  const [topReferrers, setTopReferrers] = useState<TopReferrer[]>([])
+  const [referrerSources, setReferrerSources] = useState<ReferrerSource[]>([])
   const [chartData, setChartData] = useState<ChartData[]>([])
   const [deviceBreakdown, setDeviceBreakdown] = useState<DeviceBreakdown[]>([])
   const [browserBreakdown, setBrowserBreakdown] = useState<BrowserBreakdown[]>([])
@@ -273,13 +273,13 @@ function DashboardContent() {
           end_date: now.toISOString()
         })
 
-      // Top referrers (uses selected period)
-      const { data: topReferrersData, error: referrersError } = await supabase
-        .rpc('get_top_referrers', {
+      // Referrer sources (uses selected period)
+      const { data: referrerSourcesData, error: referrersError } = await supabase
+        .rpc('get_referrer_sources', {
           site_uuid: selectedSite.id,
           start_date: periodStart.toISOString(),
           end_date: now.toISOString(),
-          referrer_limit: 5
+          source_limit: 5
         })
 
       // Top countries (uses selected period)
@@ -321,7 +321,7 @@ function DashboardContent() {
         })
 
       setTopPages(topPagesData || [])
-      setTopReferrers(topReferrersData || [])
+      setReferrerSources(referrerSourcesData || [])
       setChartData(chartDataRaw || [])
       setDeviceBreakdown(deviceData || [])
       setBrowserBreakdown(browserData || [])
@@ -760,6 +760,53 @@ function DashboardContent() {
                       </div>
                     </div>
                     <p className="text-lg font-bold text-indigo-600">{percentage}%</p>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Referrer Sources Card - Compact */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+            <span className="mr-2">🔗</span>
+            Traffic Sources
+          </h3>
+          {referrerSources.length === 0 ? (
+            <p className="text-xs text-gray-500 text-center py-4">No data yet</p>
+          ) : (
+            <div className="space-y-2">
+              {referrerSources.map((source) => {
+                const totalVisits = referrerSources.reduce((sum, s) => sum + Number(s.visits), 0)
+                const percentage = totalVisits > 0 ? ((Number(source.visits) / totalVisits) * 100).toFixed(1) : '0.0'
+
+                // Source icon logic
+                let icon = '🔗'
+                const sourceLower = source.source.toLowerCase()
+                if (sourceLower === 'direct') icon = '⚡'
+                else if (sourceLower === 'google') icon = '🔍'
+                else if (sourceLower === 'facebook') icon = '📘'
+                else if (sourceLower === 'twitter') icon = '🐦'
+                else if (sourceLower === 'instagram') icon = '📷'
+                else if (sourceLower === 'linkedin') icon = '💼'
+                else if (sourceLower === 'youtube') icon = '📺'
+                else if (sourceLower === 'reddit') icon = '🤖'
+                else if (sourceLower === 'tiktok') icon = '🎵'
+                else if (sourceLower === 'bing') icon = '🔍'
+                else if (sourceLower === 'yahoo') icon = '🔍'
+                else if (sourceLower === 'duckduckgo') icon = '🦆'
+
+                return (
+                  <div key={source.source} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <div className="flex items-center space-x-2 flex-1 min-w-0">
+                      <span className="text-lg flex-shrink-0">{icon}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 truncate">{source.source}</p>
+                        <p className="text-xs text-gray-500">{Number(source.visits).toLocaleString()} visits</p>
+                      </div>
+                    </div>
+                    <p className="text-lg font-bold text-indigo-600 flex-shrink-0 ml-2">{percentage}%</p>
                   </div>
                 )
               })}

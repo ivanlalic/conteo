@@ -12,7 +12,17 @@ export const runtime = 'edge'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { api_key, path, referrer, user_agent } = body
+    const {
+      api_key,
+      path,
+      referrer,
+      user_agent,
+      utm_source,
+      utm_medium,
+      utm_campaign,
+      utm_content,
+      utm_term
+    } = body
 
     // Validate required fields
     if (!api_key || !path) {
@@ -76,6 +86,11 @@ export async function POST(request: NextRequest) {
         country,
         city,
         region,
+        utm_source: utm_source || null,
+        utm_medium: utm_medium || null,
+        utm_campaign: utm_campaign || null,
+        utm_content: utm_content || null,
+        utm_term: utm_term || null,
       })
 
     if (insertError) {

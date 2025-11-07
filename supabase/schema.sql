@@ -49,6 +49,13 @@ CREATE TABLE pageviews (
   city TEXT,
   region TEXT,
 
+  -- UTM Parameters (for campaign tracking)
+  utm_source TEXT,
+  utm_medium TEXT,
+  utm_campaign TEXT,
+  utm_content TEXT,
+  utm_term TEXT,
+
   -- Timestamp
   timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -73,6 +80,10 @@ CREATE INDEX idx_pageviews_site_referrer ON pageviews(site_id, referrer)
 
 -- For unique visitor counts
 CREATE INDEX idx_pageviews_visitor ON pageviews(site_id, visitor_id, timestamp DESC);
+
+-- For UTM campaign queries
+CREATE INDEX idx_pageviews_utm_campaign ON pageviews(site_id, utm_campaign, timestamp DESC)
+  WHERE utm_campaign IS NOT NULL AND utm_campaign != '';
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
@@ -318,6 +329,43 @@ RETURNS TABLE (
   GROUP BY city
   ORDER BY pageviews DESC
   LIMIT city_limit;
+$$ LANGUAGE SQL STABLE;
+
+-- Function to get top campaigns (UTM tracking)
+CREATE OR REPLACE FUNCTION get_top_campaigns(
+  site_uuid UUID,
+  start_date TIMESTAMPTZ,
+  end_date TIMESTAMPTZ,
+  campaign_limit INT DEFAULT 10,
+  campaign_offset INT DEFAULT 0
+)
+RETURNS TABLE (
+  utm_source TEXT,
+  utm_medium TEXT,
+  utm_campaign TEXT,
+  utm_content TEXT,
+  utm_term TEXT,
+  pageviews BIGINT,
+  unique_visitors BIGINT
+) AS $$
+  SELECT
+    COALESCE(utm_source, 'Unknown') as utm_source,
+    COALESCE(utm_medium, 'Unknown') as utm_medium,
+    COALESCE(utm_campaign, 'Unknown') as utm_campaign,
+    COALESCE(utm_content, '') as utm_content,
+    COALESCE(utm_term, '') as utm_term,
+    COUNT(*) as pageviews,
+    COUNT(DISTINCT visitor_id) as unique_visitors
+  FROM pageviews
+  WHERE site_id = site_uuid
+    AND timestamp >= start_date
+    AND timestamp <= end_date
+    AND utm_campaign IS NOT NULL
+    AND utm_campaign != ''
+  GROUP BY utm_source, utm_medium, utm_campaign, utm_content, utm_term
+  ORDER BY pageviews DESC
+  LIMIT campaign_limit
+  OFFSET campaign_offset;
 $$ LANGUAGE SQL STABLE;
 
 -- ============================================

@@ -52,6 +52,16 @@ interface City {
   unique_visitors: number
 }
 
+interface Campaign {
+  utm_source: string
+  utm_medium: string
+  utm_campaign: string
+  utm_content: string
+  utm_term: string
+  pageviews: number
+  unique_visitors: number
+}
+
 function DashboardContent() {
   const { user, signOut } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -68,6 +78,10 @@ function DashboardContent() {
   const [chartData, setChartData] = useState<ChartData[]>([])
   const [deviceBreakdown, setDeviceBreakdown] = useState<DeviceBreakdown[]>([])
   const [topCountries, setTopCountries] = useState<TopCountry[]>([])
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [campaignsOffset, setCampaignsOffset] = useState(0)
+  const [hasMoreCampaigns, setHasMoreCampaigns] = useState(true)
+  const [loadingMoreCampaigns, setLoadingMoreCampaigns] = useState(false)
   const [trackerUrl, setTrackerUrl] = useState('')
   const [timePeriod, setTimePeriod] = useState<'today' | '7days' | '30days'>('7days')
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null)
@@ -83,6 +97,10 @@ function DashboardContent() {
 
   useEffect(() => {
     if (selectedSite) {
+      // Reset campaigns when period changes
+      setCampaigns([])
+      setCampaignsOffset(0)
+      setHasMoreCampaigns(true)
       loadStats()
     }
   }, [selectedSite, timePeriod])
@@ -267,14 +285,68 @@ function DashboardContent() {
         monthViews: monthCount || 0,
       })
 
+      // Top campaigns (first 5)
+      const { data: campaignsData, error: campaignsError } = await supabase
+        .rpc('get_top_campaigns', {
+          site_uuid: selectedSite.id,
+          start_date: periodStart.toISOString(),
+          end_date: now.toISOString(),
+          campaign_limit: 5,
+          campaign_offset: 0
+        })
+
       setTopPages(topPagesData || [])
       setTopReferrers(topReferrersData || [])
       setChartData(chartDataRaw || [])
       setDeviceBreakdown(deviceData || [])
       setTopCountries(topCountriesData || [])
+      setCampaigns(campaignsData || [])
+      setHasMoreCampaigns((campaignsData || []).length === 5)
+      setCampaignsOffset(5)
 
     } catch (error) {
       console.error('Error loading stats:', error)
+    }
+  }
+
+  async function loadMoreCampaigns() {
+    if (!selectedSite || loadingMoreCampaigns) return
+
+    try {
+      setLoadingMoreCampaigns(true)
+
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+      const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+      let periodStart: Date
+      if (timePeriod === 'today') {
+        periodStart = today
+      } else if (timePeriod === '7days') {
+        periodStart = weekAgo
+      } else {
+        periodStart = monthAgo
+      }
+
+      const { data: moreCampaigns, error } = await supabase
+        .rpc('get_top_campaigns', {
+          site_uuid: selectedSite.id,
+          start_date: periodStart.toISOString(),
+          end_date: now.toISOString(),
+          campaign_limit: 10,
+          campaign_offset: campaignsOffset
+        })
+
+      if (!error && moreCampaigns) {
+        setCampaigns(prev => [...prev, ...moreCampaigns])
+        setCampaignsOffset(prev => prev + moreCampaigns.length)
+        setHasMoreCampaigns(moreCampaigns.length === 10)
+      }
+    } catch (error) {
+      console.error('Error loading more campaigns:', error)
+    } finally {
+      setLoadingMoreCampaigns(false)
     }
   }
 
@@ -527,6 +599,58 @@ function DashboardContent() {
                 )
               })}
             </div>
+          )}
+        </div>
+
+        {/* Top Campaigns Card */}
+        <div className="bg-white rounded-lg shadow p-4 md:p-6 mb-6 md:mb-8">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">
+            📢 Top Campaigns ({getPeriodLabel()})
+          </h3>
+          {campaigns.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-4">
+              No campaign data yet. Use UTM parameters in your links to track campaigns.
+            </p>
+          ) : (
+            <>
+              <div className="space-y-3">
+                {campaigns.map((campaign, i) => (
+                  <div key={i} className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="text-lg">🎯</span>
+                          <h4 className="text-sm md:text-base font-semibold text-gray-900 truncate">
+                            {campaign.utm_campaign}
+                          </h4>
+                        </div>
+                        <p className="text-xs md:text-sm text-gray-600">
+                          {campaign.utm_source} / {campaign.utm_medium}
+                        </p>
+                      </div>
+                      <div className="text-right ml-3">
+                        <p className="text-base md:text-lg font-bold text-indigo-600">
+                          {Number(campaign.pageviews).toLocaleString()}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {Number(campaign.unique_visitors).toLocaleString()} visitors
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {hasMoreCampaigns && (
+                <button
+                  onClick={loadMoreCampaigns}
+                  disabled={loadingMoreCampaigns}
+                  className="mt-4 w-full py-2 px-4 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loadingMoreCampaigns ? 'Loading...' : 'Load More Campaigns'}
+                </button>
+              )}
+            </>
           )}
         </div>
 

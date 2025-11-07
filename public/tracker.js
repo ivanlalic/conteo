@@ -29,8 +29,22 @@
     return;
   }
 
+  // Extract UTM parameters from URL
+  function getUTMParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      utm_source: params.get('utm_source') || null,
+      utm_medium: params.get('utm_medium') || null,
+      utm_campaign: params.get('utm_campaign') || null,
+      utm_content: params.get('utm_content') || null,
+      utm_term: params.get('utm_term') || null,
+    };
+  }
+
   // Track pageview
   function trackPageview() {
+    const utmParams = getUTMParams();
+
     const data = {
       api_key: apiKey,
       path: window.location.pathname,
@@ -41,6 +55,8 @@
       screen_height: window.screen.height,
       // Timestamp
       timestamp: new Date().toISOString(),
+      // UTM parameters
+      ...utmParams,
     };
 
     // Send via fetch with keepalive (works even when navigating away)

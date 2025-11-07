@@ -62,6 +62,13 @@ interface Campaign {
   unique_visitors: number
 }
 
+interface SiteShare {
+  id: string
+  site_id: string
+  share_token: string
+  is_public: boolean
+}
+
 function DashboardContent() {
   const { user, signOut } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -86,6 +93,8 @@ function DashboardContent() {
   const [timePeriod, setTimePeriod] = useState<'today' | '7days' | '30days'>('7days')
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null)
   const [countryCities, setCountryCities] = useState<{ [key: string]: City[] }>({})
+  const [siteShare, setSiteShare] = useState<SiteShare | null>(null)
+  const [copiedShareLink, setCopiedShareLink] = useState(false)
 
   useEffect(() => {
     loadSites()
@@ -102,6 +111,7 @@ function DashboardContent() {
       setCampaignsOffset(0)
       setHasMoreCampaigns(true)
       loadStats()
+      loadSiteShare()
     }
   }, [selectedSite, timePeriod])
 
@@ -350,6 +360,82 @@ function DashboardContent() {
     }
   }
 
+  function generateShareToken(): string {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    let token = ''
+    for (let i = 0; i < 16; i++) {
+      token += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return token
+  }
+
+  async function loadSiteShare() {
+    if (!selectedSite) return
+
+    try {
+      const { data, error } = await supabase
+        .from('site_shares')
+        .select('*')
+        .eq('site_id', selectedSite.id)
+        .single()
+
+      if (!error && data) {
+        setSiteShare(data)
+      } else {
+        setSiteShare(null)
+      }
+    } catch (error) {
+      console.error('Error loading site share:', error)
+      setSiteShare(null)
+    }
+  }
+
+  async function togglePublicSharing() {
+    if (!selectedSite) return
+
+    try {
+      if (siteShare) {
+        // Toggle existing share
+        const newPublicState = !siteShare.is_public
+        const { error } = await supabase
+          .from('site_shares')
+          .update({ is_public: newPublicState })
+          .eq('id', siteShare.id)
+
+        if (error) throw error
+
+        setSiteShare({ ...siteShare, is_public: newPublicState })
+      } else {
+        // Create new share token
+        const shareToken = generateShareToken()
+        const { data, error } = await supabase
+          .from('site_shares')
+          .insert({
+            site_id: selectedSite.id,
+            share_token: shareToken,
+            is_public: true
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        setSiteShare(data)
+      }
+    } catch (error: any) {
+      console.error('Error toggling public sharing:', error)
+      alert(`Error: ${error.message}`)
+    }
+  }
+
+  function copyShareLink() {
+    if (!siteShare) return
+    const shareUrl = `${window.location.origin}/share/${siteShare.share_token}`
+    navigator.clipboard.writeText(shareUrl)
+    setCopiedShareLink(true)
+    setTimeout(() => setCopiedShareLink(false), 2000)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -489,6 +575,66 @@ function DashboardContent() {
             <p className="text-2xl md:text-3xl font-bold text-gray-900">{stats.monthViews.toLocaleString()}</p>
             <p className="text-xs text-gray-500 mt-1">Pageviews</p>
           </div>
+        </div>
+
+        {/* Public Sharing Section */}
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4 md:p-6 mb-6 md:mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center space-x-2 mb-2">
+                <span className="text-2xl">🔗</span>
+                <h3 className="text-base md:text-lg font-semibold text-gray-900">Public Dashboard</h3>
+              </div>
+              <p className="text-xs md:text-sm text-gray-600">
+                Share your analytics publicly like Plausible. Perfect for building in public!
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <span className="text-xs md:text-sm text-gray-700 font-medium">
+                {siteShare?.is_public ? 'Public' : 'Private'}
+              </span>
+              <button
+                onClick={togglePublicSharing}
+                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                  siteShare?.is_public ? 'bg-green-500' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-md ${
+                    siteShare?.is_public ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          {siteShare?.is_public && (
+            <div className="mt-4 pt-4 border-t border-indigo-200">
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+                <div className="flex-1 bg-white rounded-lg border border-indigo-300 px-3 py-2 overflow-x-auto">
+                  <code className="text-xs md:text-sm text-indigo-900 font-mono">
+                    {typeof window !== 'undefined' && `${window.location.origin}/share/${siteShare.share_token}`}
+                  </code>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={copyShareLink}
+                    className="flex-1 md:flex-none bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs md:text-sm font-semibold hover:bg-indigo-700 transition"
+                  >
+                    {copiedShareLink ? '✓ Copied!' : 'Copy Link'}
+                  </button>
+                  <a
+                    href={`/share/${siteShare.share_token}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 md:flex-none bg-green-600 text-white px-4 py-2 rounded-lg text-xs md:text-sm font-semibold hover:bg-green-700 transition text-center"
+                  >
+                    Visit →
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Time Period Selector */}

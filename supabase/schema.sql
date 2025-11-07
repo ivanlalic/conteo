@@ -369,7 +369,7 @@ RETURNS TABLE (
   ORDER BY pageviews DESC;
 $$ LANGUAGE SQL STABLE;
 
--- Function to get top pages with device breakdown
+-- Function to get top pages with device breakdown and bounce rate
 CREATE OR REPLACE FUNCTION get_top_pages_with_devices(
   site_uuid UUID,
   start_date TIMESTAMPTZ,
@@ -381,19 +381,45 @@ RETURNS TABLE (
   pageviews BIGINT,
   unique_visitors BIGINT,
   mobile_views BIGINT,
-  desktop_views BIGINT
+  desktop_views BIGINT,
+  bounce_rate NUMERIC
 ) AS $$
+  WITH visitor_page_counts AS (
+    SELECT
+      visitor_id,
+      COUNT(DISTINCT path) as pages_viewed
+    FROM pageviews
+    WHERE site_id = site_uuid
+      AND "timestamp" >= start_date
+      AND "timestamp" <= end_date
+    GROUP BY visitor_id
+  ),
+  page_stats AS (
+    SELECT
+      p.path,
+      COUNT(*) as pageviews,
+      COUNT(DISTINCT p.visitor_id) as unique_visitors,
+      COUNT(*) FILTER (WHERE p.device = 'Mobile') as mobile_views,
+      COUNT(*) FILTER (WHERE p.device = 'Desktop') as desktop_views,
+      COUNT(DISTINCT p.visitor_id) FILTER (WHERE vpc.pages_viewed = 1) as bounces
+    FROM pageviews p
+    LEFT JOIN visitor_page_counts vpc ON p.visitor_id = vpc.visitor_id
+    WHERE p.site_id = site_uuid
+      AND p."timestamp" >= start_date
+      AND p."timestamp" <= end_date
+    GROUP BY p.path
+  )
   SELECT
     path,
-    COUNT(*) as pageviews,
-    COUNT(DISTINCT visitor_id) as unique_visitors,
-    COUNT(*) FILTER (WHERE device = 'Mobile') as mobile_views,
-    COUNT(*) FILTER (WHERE device = 'Desktop') as desktop_views
-  FROM pageviews
-  WHERE site_id = site_uuid
-    AND timestamp >= start_date
-    AND timestamp <= end_date
-  GROUP BY path
+    pageviews,
+    unique_visitors,
+    mobile_views,
+    desktop_views,
+    CASE
+      WHEN unique_visitors > 0 THEN ROUND((bounces::NUMERIC / unique_visitors::NUMERIC) * 100, 1)
+      ELSE 0
+    END as bounce_rate
+  FROM page_stats
   ORDER BY pageviews DESC
   LIMIT page_limit;
 $$ LANGUAGE SQL STABLE;

@@ -20,6 +20,7 @@ interface TopPage {
   unique_visitors: number
   mobile_views: number
   desktop_views: number
+  bounce_rate: number
 }
 
 interface ReferrerSource {
@@ -862,6 +863,7 @@ function DashboardContent() {
                           <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">💻</th>
                           <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">📱</th>
                           <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Unique</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Bounce %</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -872,6 +874,7 @@ function DashboardContent() {
                             <td className="px-3 py-2 text-sm text-right text-gray-600">{Number(page.desktop_views).toLocaleString()}</td>
                             <td className="px-3 py-2 text-sm text-right text-gray-600">{Number(page.mobile_views).toLocaleString()}</td>
                             <td className="px-3 py-2 text-sm text-right text-gray-500">{Number(page.unique_visitors).toLocaleString()}</td>
+                            <td className="px-3 py-2 text-sm text-right font-medium text-orange-600">{Number(page.bounce_rate).toFixed(1)}%</td>
                           </tr>
                         ))}
                       </tbody>

@@ -218,26 +218,30 @@ RETURNS TABLE (
   LIMIT referrer_limit;
 $$ LANGUAGE SQL STABLE;
 
--- Function to get average session duration in seconds
+-- Function to get average session duration in seconds (with and without bounces)
 CREATE OR REPLACE FUNCTION get_avg_session_duration(
   site_uuid UUID,
   start_date TIMESTAMPTZ,
   end_date TIMESTAMPTZ
 )
-RETURNS NUMERIC AS $$
+RETURNS TABLE (
+  avg_duration_all NUMERIC,
+  avg_duration_multi_page NUMERIC
+) AS $$
   WITH session_durations AS (
     SELECT
       visitor_id,
-      EXTRACT(EPOCH FROM (MAX("timestamp") - MIN("timestamp"))) as duration_seconds
+      EXTRACT(EPOCH FROM (MAX("timestamp") - MIN("timestamp"))) as duration_seconds,
+      COUNT(*) as page_count
     FROM pageviews
     WHERE site_id = site_uuid
       AND "timestamp" >= start_date
       AND "timestamp" <= end_date
     GROUP BY visitor_id
-    HAVING COUNT(*) > 1  -- Only sessions with more than 1 page
   )
   SELECT
-    COALESCE(AVG(duration_seconds), 0)
+    COALESCE(AVG(duration_seconds), 0) as avg_duration_all,
+    COALESCE(AVG(duration_seconds) FILTER (WHERE page_count > 1), 0) as avg_duration_multi_page
   FROM session_durations;
 $$ LANGUAGE SQL STABLE;
 

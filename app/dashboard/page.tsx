@@ -94,7 +94,8 @@ function DashboardContent() {
     todayViews: 0,
     weekViews: 0,
     monthViews: 0,
-    avgSessionDuration: 0,
+    avgSessionDurationAll: 0,
+    avgSessionDurationMulti: 0,
   })
   const [topPages, setTopPages] = useState<TopPage[]>([])
   const [referrerSources, setReferrerSources] = useState<ReferrerSource[]>([])
@@ -344,12 +345,15 @@ function DashboardContent() {
           end_date: periodEnd.toISOString()
         })
 
+      const durationData = avgDurationData?.[0] || { avg_duration_all: 0, avg_duration_multi_page: 0 }
+
       setStats({
         liveUsers: liveUsersData || 0,
         todayViews: todayCount || 0,
         weekViews: weekCount || 0,
         monthViews: monthCount || 0,
-        avgSessionDuration: avgDurationData || 0,
+        avgSessionDurationAll: durationData.avg_duration_all || 0,
+        avgSessionDurationMulti: durationData.avg_duration_multi_page || 0,
       })
 
       // Top campaigns (first 5)
@@ -729,7 +733,7 @@ function DashboardContent() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Stats Grid - Compact */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
           {/* Live Users */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
             <div className="flex items-center justify-between mb-1">
@@ -760,12 +764,29 @@ function DashboardContent() {
             <p className="text-3xl font-bold text-gray-900 mt-1">{stats.monthViews.toLocaleString()}</p>
           </div>
 
-          {/* Avg Session Duration */}
+          {/* Avg Session Duration (All) */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Avg Session</span>
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Avg Time (All)</span>
             <p className="text-3xl font-bold text-gray-900 mt-1">
               {(() => {
-                const seconds = Math.floor(stats.avgSessionDuration)
+                const seconds = Math.floor(stats.avgSessionDurationAll)
+                if (seconds < 60) return `${seconds}s`
+                const minutes = Math.floor(seconds / 60)
+                const remainingSeconds = seconds % 60
+                if (minutes < 60) return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+                const hours = Math.floor(minutes / 60)
+                const remainingMinutes = minutes % 60
+                return `${hours}:${remainingMinutes.toString().padStart(2, '0')}h`
+              })()}
+            </p>
+          </div>
+
+          {/* Avg Session Duration (Multi-page) */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Avg Time (Multi)</span>
+            <p className="text-3xl font-bold text-gray-900 mt-1">
+              {(() => {
+                const seconds = Math.floor(stats.avgSessionDurationMulti)
                 if (seconds < 60) return `${seconds}s`
                 const minutes = Math.floor(seconds / 60)
                 const remainingSeconds = seconds % 60

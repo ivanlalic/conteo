@@ -100,5 +100,190 @@
   // Track hash changes (for hash-based routing)
   window.addEventListener('hashchange', trackPageview);
 
+  // ============================================
+  // COD TRACKING - Pixel Interceptor
+  // Intercepts Facebook & TikTok pixel events
+  // ============================================
+
+  // Get COD tracking endpoint
+  const codEndpoint = endpoint.replace('/api/track', '/api/track-cod');
+
+  // Track product page views
+  let lastProductPage = null;
+  if (window.location.pathname.includes('/products/')) {
+    lastProductPage = window.location.pathname;
+    sessionStorage.setItem('conteo_last_product', lastProductPage);
+  }
+
+  // Helper: Send COD event
+  function sendCODEvent(eventType, data = {}) {
+    const payload = {
+      api_key: apiKey,
+      visitor_id: getVisitorId(),
+      event_type: eventType,
+      source: getTrafficSource(),
+      ...data
+    };
+
+    fetch(codEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true
+    }).catch(() => {});
+  }
+
+  // Helper: Get visitor ID (consistent hash)
+  function getVisitorId() {
+    let vid = sessionStorage.getItem('conteo_visitor_id');
+    if (!vid) {
+      vid = 'v_' + Math.random().toString(36).substr(2, 9) + Date.now();
+      sessionStorage.setItem('conteo_visitor_id', vid);
+    }
+    return vid;
+  }
+
+  // Helper: Get traffic source
+  function getTrafficSource() {
+    const ref = document.referrer.toLowerCase();
+    if (!ref || ref.includes(window.location.hostname)) return 'Direct';
+    if (ref.includes('facebook.com') || ref.includes('fb.com')) return 'Facebook';
+    if (ref.includes('tiktok.com')) return 'TikTok';
+    if (ref.includes('google.')) return 'Google';
+    if (ref.includes('twitter.com') || ref.includes('t.co')) return 'Twitter';
+    if (ref.includes('instagram.com')) return 'Instagram';
+    return 'Other';
+  }
+
+  // Intercept Facebook Pixel (fbq)
+  if (typeof window.fbq !== 'undefined') {
+    const originalFbq = window.fbq;
+    window.fbq = function() {
+      const action = arguments[0];
+      const event = arguments[1];
+      const data = arguments[2] || {};
+
+      // Track InitiateCheckout
+      if (action === 'track' && event === 'InitiateCheckout') {
+        const productPage = sessionStorage.getItem('conteo_last_product') || '';
+        sendCODEvent('initiate_checkout', {
+          product_name: data.content_name || 'Unknown',
+          product_id: data.content_ids?.[0] || '',
+          product_page: productPage,
+          value: data.value || 0,
+          currency: data.currency || 'EUR'
+        });
+      }
+
+      // Track Purchase
+      if (action === 'track' && event === 'Purchase') {
+        const productPage = sessionStorage.getItem('conteo_last_product') || '';
+        sendCODEvent('purchase', {
+          product_name: data.content_name || 'Unknown',
+          product_id: data.content_ids?.[0] || '',
+          product_page: productPage,
+          value: data.value || 0,
+          currency: data.currency || 'EUR'
+        });
+      }
+
+      // Call original fbq
+      return originalFbq.apply(this, arguments);
+    };
+
+    // Copy properties from original function
+    Object.keys(originalFbq).forEach(key => {
+      window.fbq[key] = originalFbq[key];
+    });
+  } else {
+    // If fbq doesn't exist yet, wrap it when it loads
+    const fbqQueue = window.fbq || function() {
+      fbqQueue.callMethod ? fbqQueue.callMethod.apply(fbqQueue, arguments) : fbqQueue.queue.push(arguments);
+    };
+    fbqQueue.queue = fbqQueue.queue || [];
+    window.fbq = fbqQueue;
+
+    // Check periodically if Facebook Pixel loaded
+    const checkFbq = setInterval(function() {
+      if (typeof window.fbq === 'function' && window.fbq.version) {
+        clearInterval(checkFbq);
+        // Reapply wrapper
+        const originalFbq = window.fbq;
+        window.fbq = function() {
+          const action = arguments[0];
+          const event = arguments[1];
+          const data = arguments[2] || {};
+
+          if (action === 'track' && event === 'InitiateCheckout') {
+            const productPage = sessionStorage.getItem('conteo_last_product') || '';
+            sendCODEvent('initiate_checkout', {
+              product_name: data.content_name || 'Unknown',
+              product_id: data.content_ids?.[0] || '',
+              product_page: productPage,
+              value: data.value || 0,
+              currency: data.currency || 'EUR'
+            });
+          }
+
+          if (action === 'track' && event === 'Purchase') {
+            const productPage = sessionStorage.getItem('conteo_last_product') || '';
+            sendCODEvent('purchase', {
+              product_name: data.content_name || 'Unknown',
+              product_id: data.content_ids?.[0] || '',
+              product_page: productPage,
+              value: data.value || 0,
+              currency: data.currency || 'EUR'
+            });
+          }
+
+          return originalFbq.apply(this, arguments);
+        };
+
+        Object.keys(originalFbq).forEach(key => {
+          window.fbq[key] = originalFbq[key];
+        });
+      }
+    }, 100);
+
+    // Stop checking after 10 seconds
+    setTimeout(() => clearInterval(checkFbq), 10000);
+  }
+
+  // Intercept TikTok Pixel (ttq.track)
+  if (typeof window.ttq !== 'undefined' && typeof window.ttq.track === 'function') {
+    const originalTtq = window.ttq.track;
+    window.ttq.track = function() {
+      const event = arguments[0];
+      const data = arguments[1] || {};
+
+      // Track CompletePayment
+      if (event === 'CompletePayment') {
+        const productPage = sessionStorage.getItem('conteo_last_product') || '';
+        sendCODEvent('purchase', {
+          product_name: data.content_name || 'Unknown',
+          product_id: data.content_id || '',
+          product_page: productPage,
+          value: data.value || 0,
+          currency: data.currency || 'EUR'
+        });
+      }
+
+      // Track InitiateCheckout
+      if (event === 'InitiateCheckout') {
+        const productPage = sessionStorage.getItem('conteo_last_product') || '';
+        sendCODEvent('initiate_checkout', {
+          product_name: data.content_name || 'Unknown',
+          product_id: data.content_id || '',
+          product_page: productPage,
+          value: data.value || 0,
+          currency: data.currency || 'EUR'
+        });
+      }
+
+      // Call original ttq.track
+      return originalTtq.apply(this, arguments);
+    };
+  }
+
   console.log('[Conteo] Analytics initialized');
 })();

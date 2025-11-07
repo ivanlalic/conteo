@@ -11,6 +11,7 @@ interface Site {
   id: string
   domain: string
   api_key: string
+  cod_tracking_enabled: boolean
   created_at: string
 }
 
@@ -37,7 +38,7 @@ function SitesContent() {
     try {
       const { data, error } = await supabase
         .from('sites')
-        .select('*')
+        .select('id, domain, api_key, cod_tracking_enabled, created_at')
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -95,6 +96,27 @@ function SitesContent() {
       setSites(sites.filter(s => s.id !== siteId))
     } catch (err: any) {
       console.error('Error deleting site:', err)
+      setError(err.message)
+    }
+  }
+
+  async function toggleCODTracking(siteId: string, currentValue: boolean) {
+    try {
+      const { error } = await supabase
+        .from('sites')
+        .update({ cod_tracking_enabled: !currentValue })
+        .eq('id', siteId)
+
+      if (error) throw error
+
+      // Update local state
+      setSites(sites.map(s =>
+        s.id === siteId
+          ? { ...s, cod_tracking_enabled: !currentValue }
+          : s
+      ))
+    } catch (err: any) {
+      console.error('Error toggling COD tracking:', err)
       setError(err.message)
     }
   }
@@ -232,6 +254,29 @@ function SitesContent() {
                     <p className="text-xs text-gray-500 mt-2">
                       Add this snippet to your website's <code className="bg-gray-200 px-1 rounded">&lt;head&gt;</code> tag
                     </p>
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">COD Conversion Tracking</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Track Cash on Delivery conversions from Facebook & TikTok pixels
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => toggleCODTracking(site.id, site.cod_tracking_enabled)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          site.cod_tracking_enabled ? 'bg-green-500' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            site.cod_tracking_enabled ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -12,6 +12,7 @@ interface Site {
   id: string
   domain: string
   api_key: string
+  cod_tracking_enabled: boolean
 }
 
 interface TopPage {
@@ -84,6 +85,15 @@ interface SiteShare {
   is_public: boolean
 }
 
+interface CODConversion {
+  product_name: string
+  source: string
+  views: number
+  forms: number
+  purchases: number
+  revenue: number
+}
+
 function DashboardContent() {
   const { user, signOut } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -116,6 +126,7 @@ function DashboardContent() {
   const [countryCities, setCountryCities] = useState<{ [key: string]: City[] }>({})
   const [siteShare, setSiteShare] = useState<SiteShare | null>(null)
   const [copiedShareLink, setCopiedShareLink] = useState(false)
+  const [codConversions, setCodConversions] = useState<CODConversion[]>([])
 
   useEffect(() => {
     loadSites()
@@ -208,7 +219,7 @@ function DashboardContent() {
     try {
       const { data, error } = await supabase
         .from('sites')
-        .select('id, domain, api_key')
+        .select('id, domain, api_key, cod_tracking_enabled')
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -384,8 +395,34 @@ function DashboardContent() {
       setHasMoreCampaigns((campaignsData || []).length === 5)
       setCampaignsOffset(5)
 
+      // Load COD conversions if enabled
+      if (selectedSite.cod_tracking_enabled) {
+        loadCODConversions(periodStart, periodEnd)
+      } else {
+        setCodConversions([])
+      }
+
     } catch (error) {
       console.error('Error loading stats:', error)
+    }
+  }
+
+  async function loadCODConversions(periodStart: Date, periodEnd: Date) {
+    if (!selectedSite) return
+
+    try {
+      const { data, error } = await supabase
+        .rpc('get_cod_conversions', {
+          site_uuid: selectedSite.id,
+          start_date: periodStart.toISOString(),
+          end_date: periodEnd.toISOString()
+        })
+
+      if (error) throw error
+
+      setCodConversions(data || [])
+    } catch (error) {
+      console.error('Error loading COD conversions:', error)
     }
   }
 
@@ -503,6 +540,19 @@ function DashboardContent() {
       csv += 'Campaign,Source,Medium,Pageviews,Unique Visitors\n'
       campaigns.forEach(campaign => {
         csv += `${escapeCSV(campaign.utm_campaign)},${escapeCSV(campaign.utm_source)},${escapeCSV(campaign.utm_medium)},${campaign.pageviews},${campaign.unique_visitors}\n`
+      })
+      csv += '\n'
+    }
+
+    // COD Conversions
+    if (selectedSite.cod_tracking_enabled && codConversions.length > 0) {
+      csv += 'COD CONVERSIONS\n'
+      csv += 'Product,Source,Views,Forms Opened,Purchases,Conversion Rate,Revenue\n'
+      codConversions.forEach(conversion => {
+        const conversionRate = Number(conversion.views) > 0
+          ? ((Number(conversion.purchases) / Number(conversion.views)) * 100).toFixed(1)
+          : '0.0'
+        csv += `${escapeCSV(conversion.product_name)},${escapeCSV(conversion.source)},${conversion.views},${conversion.forms},${conversion.purchases},${conversionRate}%,€${Number(conversion.revenue || 0).toFixed(2)}\n`
       })
       csv += '\n'
     }
@@ -1122,6 +1172,75 @@ function DashboardContent() {
 
         {/* Close 2-Column Layout */}
         </div>
+
+        {/* COD Conversions Section - Full Width */}
+        {selectedSite?.cod_tracking_enabled && (
+          <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-4 py-3 border-b border-gray-200">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center">
+                <span className="mr-2">💰</span>
+                COD Conversions
+              </h3>
+            </div>
+            <div className="p-4">
+              {codConversions.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-8">
+                  No COD conversions tracked yet. Make sure your pixel events are configured correctly.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead>
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Views</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Forms</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Purchases</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Conv %</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Revenue</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {codConversions.map((conversion, i) => {
+                        const conversionRate = Number(conversion.views) > 0
+                          ? ((Number(conversion.purchases) / Number(conversion.views)) * 100).toFixed(1)
+                          : '0.0'
+
+                        // Source icon logic
+                        let sourceIcon = '🔗'
+                        const sourceLower = conversion.source.toLowerCase()
+                        if (sourceLower === 'direct') sourceIcon = '⚡'
+                        else if (sourceLower === 'google') sourceIcon = '🔍'
+                        else if (sourceLower === 'facebook') sourceIcon = '📘'
+                        else if (sourceLower === 'twitter') sourceIcon = '🐦'
+                        else if (sourceLower === 'instagram') sourceIcon = '📷'
+                        else if (sourceLower === 'tiktok') sourceIcon = '🎵'
+
+                        return (
+                          <tr key={i} className="hover:bg-gray-50">
+                            <td className="px-3 py-2 text-sm font-medium text-gray-900">{conversion.product_name}</td>
+                            <td className="px-3 py-2 text-sm text-gray-700">
+                              <span className="mr-1">{sourceIcon}</span>
+                              {conversion.source}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-right text-gray-600">{Number(conversion.views).toLocaleString()}</td>
+                            <td className="px-3 py-2 text-sm text-right text-gray-600">{Number(conversion.forms).toLocaleString()}</td>
+                            <td className="px-3 py-2 text-sm text-right font-semibold text-green-600">{Number(conversion.purchases).toLocaleString()}</td>
+                            <td className="px-3 py-2 text-sm text-right font-medium text-indigo-600">{conversionRate}%</td>
+                            <td className="px-3 py-2 text-sm text-right font-bold text-gray-900">
+                              €{Number(conversion.revenue || 0).toFixed(2)}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Recent Activity Feed - Full Width */}
         <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">

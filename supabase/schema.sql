@@ -15,6 +15,7 @@ CREATE TABLE sites (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   domain TEXT NOT NULL,
   api_key UUID NOT NULL DEFAULT uuid_generate_v4() UNIQUE,
+  cod_tracking_enabled BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -38,6 +39,44 @@ CREATE TABLE site_shares (
 -- Index for fast token lookups
 CREATE INDEX idx_site_shares_token ON site_shares(share_token);
 CREATE INDEX idx_site_shares_site_id ON site_shares(site_id);
+
+-- ============================================
+-- COD CONVERSIONS TABLE
+-- For Cash on Delivery conversion tracking
+-- ============================================
+CREATE TABLE cod_conversions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  site_id UUID NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
+  visitor_id TEXT NOT NULL,
+
+  -- Product info (from pixel events)
+  product_id TEXT,
+  product_name TEXT,
+  product_page TEXT, -- /products/xxx
+
+  -- Conversion funnel
+  viewed_product BOOLEAN DEFAULT false,
+  opened_form BOOLEAN DEFAULT false, -- InitiateCheckout
+  purchased BOOLEAN DEFAULT false,   -- Purchase
+
+  -- Purchase details
+  value NUMERIC,
+  currency TEXT,
+
+  -- Attribution
+  source TEXT, -- Facebook, Google, TikTok, Direct
+
+  -- Timestamps
+  product_view_at TIMESTAMPTZ,
+  form_opened_at TIMESTAMPTZ,
+  purchased_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Indexes for fast queries
+CREATE INDEX idx_cod_conversions_site_id ON cod_conversions(site_id, purchased_at DESC);
+CREATE INDEX idx_cod_conversions_visitor ON cod_conversions(visitor_id);
+CREATE INDEX idx_cod_conversions_product ON cod_conversions(site_id, product_name);
 
 -- ============================================
 -- PAGEVIEWS TABLE
@@ -108,6 +147,7 @@ CREATE INDEX idx_pageviews_utm_campaign ON pageviews(site_id, utm_campaign, time
 
 ALTER TABLE sites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pageviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cod_conversions ENABLE ROW LEVEL SECURITY;
 
 -- Sites policies: users can only access their own sites
 CREATE POLICY "Users can view their own sites"
@@ -140,6 +180,24 @@ CREATE POLICY "Users can view pageviews of their sites"
 CREATE POLICY "Allow anonymous pageview inserts"
   ON pageviews FOR INSERT
   WITH CHECK (true);
+
+-- COD Conversions policies: users can only view conversions of their sites
+CREATE POLICY "Users can view COD conversions of their sites"
+  ON cod_conversions FOR SELECT
+  USING (
+    site_id IN (
+      SELECT id FROM sites WHERE user_id = auth.uid()
+    )
+  );
+
+-- Allow anonymous inserts/updates for COD tracking
+CREATE POLICY "Allow anonymous COD conversion inserts"
+  ON cod_conversions FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Allow anonymous COD conversion updates"
+  ON cod_conversions FOR UPDATE
+  USING (true);
 
 -- ============================================
 -- HELPER FUNCTIONS FOR ANALYTICS
@@ -540,6 +598,35 @@ RETURNS TABLE (
   OFFSET campaign_offset;
 $$ LANGUAGE SQL STABLE;
 
+-- Function to get COD conversions funnel by product and source
+CREATE OR REPLACE FUNCTION get_cod_conversions(
+  site_uuid UUID,
+  start_date TIMESTAMPTZ,
+  end_date TIMESTAMPTZ
+)
+RETURNS TABLE (
+  product_name TEXT,
+  source TEXT,
+  views BIGINT,
+  forms BIGINT,
+  purchases BIGINT,
+  revenue NUMERIC
+) AS $$
+  SELECT
+    COALESCE(product_name, 'Unknown') as product_name,
+    COALESCE(source, 'Direct') as source,
+    COUNT(*) FILTER (WHERE viewed_product = true) as views,
+    COUNT(*) FILTER (WHERE opened_form = true) as forms,
+    COUNT(*) FILTER (WHERE purchased = true) as purchases,
+    SUM(value) FILTER (WHERE purchased = true) as revenue
+  FROM cod_conversions
+  WHERE site_id = site_uuid
+    AND created_at >= start_date
+    AND created_at <= end_date
+  GROUP BY product_name, source
+  ORDER BY revenue DESC NULLS LAST, purchases DESC;
+$$ LANGUAGE SQL STABLE;
+
 -- ============================================
 -- GRANT EXECUTE PERMISSIONS FOR PUBLIC DASHBOARDS
 -- Allow anonymous users to call analytics functions
@@ -558,6 +645,7 @@ GRANT EXECUTE ON FUNCTION get_top_pages_with_devices(UUID, TIMESTAMPTZ, TIMESTAM
 GRANT EXECUTE ON FUNCTION get_top_countries(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
 GRANT EXECUTE ON FUNCTION get_cities_by_country(UUID, TEXT, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
 GRANT EXECUTE ON FUNCTION get_top_campaigns(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT, INT) TO anon;
+GRANT EXECUTE ON FUNCTION get_cod_conversions(UUID, TIMESTAMPTZ, TIMESTAMPTZ) TO anon;
 
 -- ============================================
 -- AUTO-UPDATE TIMESTAMP TRIGGER

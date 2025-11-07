@@ -491,6 +491,35 @@ function DashboardContent() {
           <div className="flex justify-between items-center">
             <h1 className="text-lg md:text-2xl font-bold text-gray-900">conteo.online</h1>
             <div className="flex items-center space-x-2 md:space-x-4">
+              {/* Public Sharing Button */}
+              {siteShare?.is_public ? (
+                <div className="flex items-center space-x-2 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
+                  <span className="text-xs text-green-700 font-medium">🔗 Public</span>
+                  <button
+                    onClick={copyShareLink}
+                    className="text-xs text-green-700 hover:text-green-800 font-semibold"
+                  >
+                    {copiedShareLink ? '✓' : 'Copy'}
+                  </button>
+                  <a
+                    href={`/share/${siteShare.share_token}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-green-700 hover:text-green-800 font-semibold"
+                  >
+                    Visit
+                  </a>
+                </div>
+              ) : (
+                <button
+                  onClick={togglePublicSharing}
+                  className="text-xs md:text-sm text-gray-600 hover:text-indigo-600 font-medium flex items-center space-x-1"
+                >
+                  <span>🔗</span>
+                  <span>Make Public</span>
+                </button>
+              )}
+
               <Link
                 href="/sites"
                 className="text-xs md:text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
@@ -540,112 +569,47 @@ function DashboardContent() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+        {/* Stats Grid - Compact */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {/* Live Users */}
-          <div className="bg-white rounded-lg shadow p-4 md:p-6">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs md:text-sm font-medium text-gray-600">Live Users</h3>
-              <span className="flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Live</span>
+              <span className="flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
             </div>
-            <p className="text-2xl md:text-3xl font-bold text-gray-900">{stats.liveUsers}</p>
-            <p className="text-xs text-gray-500 mt-1">Last 5 min</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.liveUsers}</p>
           </div>
 
           {/* Today */}
-          <div className="bg-white rounded-lg shadow p-4 md:p-6">
-            <h3 className="text-xs md:text-sm font-medium text-gray-600 mb-2">Today</h3>
-            <p className="text-2xl md:text-3xl font-bold text-gray-900">{stats.todayViews.toLocaleString()}</p>
-            <p className="text-xs text-gray-500 mt-1">Pageviews</p>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Today</span>
+            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.todayViews.toLocaleString()}</p>
           </div>
 
           {/* This Week */}
-          <div className="bg-white rounded-lg shadow p-4 md:p-6">
-            <h3 className="text-xs md:text-sm font-medium text-gray-600 mb-2">This Week</h3>
-            <p className="text-2xl md:text-3xl font-bold text-gray-900">{stats.weekViews.toLocaleString()}</p>
-            <p className="text-xs text-gray-500 mt-1">Pageviews</p>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">This Week</span>
+            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.weekViews.toLocaleString()}</p>
           </div>
 
           {/* This Month */}
-          <div className="bg-white rounded-lg shadow p-4 md:p-6">
-            <h3 className="text-xs md:text-sm font-medium text-gray-600 mb-2">This Month</h3>
-            <p className="text-2xl md:text-3xl font-bold text-gray-900">{stats.monthViews.toLocaleString()}</p>
-            <p className="text-xs text-gray-500 mt-1">Pageviews</p>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">This Month</span>
+            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.monthViews.toLocaleString()}</p>
           </div>
-        </div>
-
-        {/* Public Sharing Section */}
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4 md:p-6 mb-6 md:mb-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-2">
-                <span className="text-2xl">🔗</span>
-                <h3 className="text-base md:text-lg font-semibold text-gray-900">Public Dashboard</h3>
-              </div>
-              <p className="text-xs md:text-sm text-gray-600">
-                Share your analytics publicly like Plausible. Perfect for building in public!
-              </p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <span className="text-xs md:text-sm text-gray-700 font-medium">
-                {siteShare?.is_public ? 'Public' : 'Private'}
-              </span>
-              <button
-                onClick={togglePublicSharing}
-                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                  siteShare?.is_public ? 'bg-green-500' : 'bg-gray-300'
-                }`}
-              >
-                <span
-                  className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-md ${
-                    siteShare?.is_public ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-
-          {siteShare?.is_public && (
-            <div className="mt-4 pt-4 border-t border-indigo-200">
-              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
-                <div className="flex-1 bg-white rounded-lg border border-indigo-300 px-3 py-2 overflow-x-auto">
-                  <code className="text-xs md:text-sm text-indigo-900 font-mono">
-                    {typeof window !== 'undefined' && `${window.location.origin}/share/${siteShare.share_token}`}
-                  </code>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={copyShareLink}
-                    className="flex-1 md:flex-none bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs md:text-sm font-semibold hover:bg-indigo-700 transition"
-                  >
-                    {copiedShareLink ? '✓ Copied!' : 'Copy Link'}
-                  </button>
-                  <a
-                    href={`/share/${siteShare.share_token}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 md:flex-none bg-green-600 text-white px-4 py-2 rounded-lg text-xs md:text-sm font-semibold hover:bg-green-700 transition text-center"
-                  >
-                    Visit →
-                  </a>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Time Period Selector */}
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-0 mb-6">
-          <h2 className="text-lg md:text-xl font-bold text-gray-900">Analytics Breakdown</h2>
-          <div className="flex items-center space-x-2 md:space-x-3">
-            <span className="text-xs md:text-sm text-gray-600">Period:</span>
+        <div className="flex justify-end items-center mb-5">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-gray-600">Period:</span>
             <select
               value={timePeriod}
               onChange={(e) => setTimePeriod(e.target.value as 'today' | '7days' | '30days')}
-              className="bg-white border border-gray-300 text-gray-900 px-3 md:px-4 py-2 rounded-lg text-sm md:text-base font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none"
+              className="bg-white border border-gray-300 text-gray-900 px-3 py-1.5 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none"
             >
               <option value="today">Today</option>
               <option value="7days">Last 7 Days</option>
@@ -654,32 +618,88 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* Device Breakdown Card */}
-        <div className="bg-white rounded-lg shadow p-4 md:p-6 mb-6 md:mb-8">
-          <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">Device Breakdown ({getPeriodLabel()})</h3>
+        {/* 2-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Left Column - Main Content (2/3) */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Chart - Prominent */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Pageviews Chart</h3>
+              <PageviewsChart data={chartData} />
+            </div>
+
+            {/* Top Pages - Compact Table */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="px-4 py-3 border-b border-gray-200">
+                <h3 className="text-base font-semibold text-gray-900">Top Pages</h3>
+              </div>
+              <div className="p-4">
+                {topPages.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-8">
+                    No pageviews yet.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead>
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Page</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Views</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">💻</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">📱</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Unique</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {topPages.map((page, i) => (
+                          <tr key={i} className="hover:bg-gray-50">
+                            <td className="px-3 py-2 text-sm font-medium text-gray-900">{page.path}</td>
+                            <td className="px-3 py-2 text-sm text-right font-semibold text-gray-900">{Number(page.pageviews).toLocaleString()}</td>
+                            <td className="px-3 py-2 text-sm text-right text-gray-600">{Number(page.desktop_views).toLocaleString()}</td>
+                            <td className="px-3 py-2 text-sm text-right text-gray-600">{Number(page.mobile_views).toLocaleString()}</td>
+                            <td className="px-3 py-2 text-sm text-right text-gray-500">{Number(page.unique_visitors).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Right Column - Sidebar (1/3) */}
+          <div className="space-y-4">
+
+        {/* Device Breakdown Card - Compact */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+            <span className="mr-2">📱</span>
+            Devices
+          </h3>
           {deviceBreakdown.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">No device data available yet.</p>
+            <p className="text-xs text-gray-500 text-center py-4">No data yet</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
+            <div className="space-y-2">
               {deviceBreakdown.map((device) => {
                 const totalViews = deviceBreakdown.reduce((sum, d) => sum + Number(d.pageviews), 0)
                 const percentage = totalViews > 0 ? ((Number(device.pageviews) / totalViews) * 100).toFixed(1) : '0.0'
 
                 return (
-                  <div key={device.device} className="flex items-center justify-between p-3 md:p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="text-xl md:text-2xl">
-                          {device.device === 'Mobile' ? '📱' : device.device === 'Desktop' ? '💻' : '❓'}
-                        </span>
-                        <h4 className="text-base md:text-lg font-semibold text-gray-900">{device.device}</h4>
+                  <div key={device.device} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">
+                        {device.device === 'Mobile' ? '📱' : device.device === 'Desktop' ? '💻' : '❓'}
+                      </span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{device.device}</p>
+                        <p className="text-xs text-gray-500">{Number(device.pageviews).toLocaleString()} views</p>
                       </div>
-                      <p className="text-xs md:text-sm text-gray-600">{Number(device.unique_visitors).toLocaleString()} visitors</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-2xl md:text-3xl font-bold text-indigo-600">{percentage}%</p>
-                      <p className="text-xs md:text-sm text-gray-500">{Number(device.pageviews).toLocaleString()} views</p>
-                    </div>
+                    <p className="text-lg font-bold text-indigo-600">{percentage}%</p>
                   </div>
                 )
               })}
@@ -687,249 +707,70 @@ function DashboardContent() {
           )}
         </div>
 
-        {/* Top Countries Card */}
-        <div className="bg-white rounded-lg shadow p-4 md:p-6 mb-6 md:mb-8">
-          <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">🌍 Top Countries ({getPeriodLabel()})</h3>
+        {/* Top Countries Card - Compact */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+            <span className="mr-2">🌍</span>
+            Countries
+          </h3>
           {topCountries.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">No country data available yet.</p>
+            <p className="text-xs text-gray-500 text-center py-4">No data yet</p>
           ) : (
             <div className="space-y-2">
-              {topCountries.map((country, i) => {
-                const isExpanded = expandedCountry === country.country
-                const cities = countryCities[country.country] || []
-
-                return (
-                  <div key={i}>
-                    {/* Country Row */}
-                    <div
-                      onClick={() => toggleCountry(country.country)}
-                      className="flex items-center justify-between p-3 md:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer"
-                    >
-                      <div className="flex items-center space-x-2 md:space-x-3 flex-1 min-w-0">
-                        <span className="text-2xl md:text-3xl flex-shrink-0">{getCountryFlag(country.country)}</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs md:text-sm font-semibold text-gray-900 truncate">{getCountryName(country.country)}</p>
-                          <p className="text-xs text-gray-500">{Number(country.unique_visitors).toLocaleString()} visitors</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
-                        <div className="text-right">
-                          <p className="text-sm md:text-lg font-bold text-indigo-600">{Number(country.pageviews).toLocaleString()}</p>
-                          <p className="text-xs text-gray-500 hidden md:block">pageviews</p>
-                        </div>
-                        <span className="text-gray-400 transition-transform text-xs md:text-sm" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                          ▼
-                        </span>
-                      </div>
+              {topCountries.map((country, i) => (
+                <div key={i} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div className="flex items-center space-x-2 flex-1 min-w-0">
+                    <span className="text-lg flex-shrink-0">{getCountryFlag(country.country)}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">{getCountryName(country.country)}</p>
+                      <p className="text-xs text-gray-500">{Number(country.pageviews).toLocaleString()} views</p>
                     </div>
-
-                    {/* Cities Dropdown */}
-                    {isExpanded && (
-                      <div className="ml-4 md:ml-8 mt-2 space-y-2 border-l-2 border-gray-200 pl-3 md:pl-4">
-                        {cities.length === 0 ? (
-                          <p className="text-xs text-gray-400 py-2">Loading cities...</p>
-                        ) : (
-                          cities.map((city, j) => (
-                            <div key={j} className="flex items-center justify-between py-2 px-2 md:px-3 bg-white rounded border border-gray-100">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-gray-700 truncate">{city.city}</p>
-                                <p className="text-xs text-gray-400">{Number(city.unique_visitors).toLocaleString()} visitors</p>
-                              </div>
-                              <p className="text-xs md:text-sm font-semibold text-gray-600 ml-2">{Number(city.pageviews).toLocaleString()}</p>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    )}
                   </div>
-                )
-              })}
+                </div>
+              ))}
             </div>
           )}
         </div>
 
-        {/* Top Campaigns Card */}
-        <div className="bg-white rounded-lg shadow p-4 md:p-6 mb-6 md:mb-8">
-          <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">
-            📢 Top Campaigns ({getPeriodLabel()})
+        {/* Top Campaigns Card - Compact */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+            <span className="mr-2">📢</span>
+            Campaigns
           </h3>
           {campaigns.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">
-              No campaign data yet. Use UTM parameters in your links to track campaigns.
-            </p>
+            <p className="text-xs text-gray-500 text-center py-4">No data yet</p>
           ) : (
             <>
-              <div className="space-y-3">
-                {campaigns.map((campaign, i) => (
-                  <div key={i} className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="text-lg">🎯</span>
-                          <h4 className="text-sm md:text-base font-semibold text-gray-900 truncate">
-                            {campaign.utm_campaign}
-                          </h4>
-                        </div>
-                        <p className="text-xs md:text-sm text-gray-600">
-                          {campaign.utm_source} / {campaign.utm_medium}
-                        </p>
-                      </div>
-                      <div className="text-right ml-3">
-                        <p className="text-base md:text-lg font-bold text-indigo-600">
-                          {Number(campaign.pageviews).toLocaleString()}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {Number(campaign.unique_visitors).toLocaleString()} visitors
-                        </p>
-                      </div>
+              <div className="space-y-2">
+                {campaigns.slice(0, 5).map((campaign, i) => (
+                  <div key={i} className="p-2 bg-gray-50 rounded">
+                    <p className="text-sm font-medium text-gray-900 truncate">{campaign.utm_campaign}</p>
+                    <div className="flex justify-between items-center mt-1">
+                      <p className="text-xs text-gray-500 truncate">{campaign.utm_source}</p>
+                      <p className="text-xs font-semibold text-indigo-600">{Number(campaign.pageviews).toLocaleString()}</p>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {hasMoreCampaigns && (
+              {campaigns.length > 5 && (
                 <button
                   onClick={loadMoreCampaigns}
                   disabled={loadingMoreCampaigns}
-                  className="mt-4 w-full py-2 px-4 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="mt-3 w-full py-1.5 px-3 bg-gray-100 text-gray-700 rounded text-xs font-medium hover:bg-gray-200 transition"
                 >
-                  {loadingMoreCampaigns ? 'Loading...' : 'Load More Campaigns'}
+                  {loadingMoreCampaigns ? 'Loading...' : `+${campaigns.length - 5} more`}
                 </button>
               )}
             </>
           )}
         </div>
 
-        {/* Charts & Tables */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-          {/* Top Pages */}
-          <div className="bg-white rounded-lg shadow lg:col-span-2">
-            <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200">
-              <h3 className="text-base md:text-lg font-semibold text-gray-900">Top Pages ({getPeriodLabel()})</h3>
-            </div>
-            <div className="p-4 md:p-6">
-              {topPages.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">
-                  No pageviews yet. Install the tracking script to start collecting data.
-                </p>
-              ) : (
-                <>
-                  {/* Desktop Table */}
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead>
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Page
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Total Views
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            💻 Desktop
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            📱 Mobile
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Unique
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {topPages.map((page, i) => (
-                          <tr key={i}>
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                              {page.path}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
-                              {Number(page.pageviews).toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-right text-gray-600">
-                              {Number(page.desktop_views).toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-right text-gray-600">
-                              {Number(page.mobile_views).toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-right text-gray-500">
-                              {Number(page.unique_visitors).toLocaleString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Mobile Cards */}
-                  <div className="md:hidden space-y-3">
-                    {topPages.map((page, i) => (
-                      <div key={i} className="bg-gray-50 rounded-lg p-3 space-y-2">
-                        <div className="font-semibold text-sm text-gray-900 break-words">
-                          {page.path}
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div className="bg-white rounded p-2">
-                            <div className="text-gray-500">Total</div>
-                            <div className="font-bold text-indigo-600">{Number(page.pageviews).toLocaleString()}</div>
-                          </div>
-                          <div className="bg-white rounded p-2">
-                            <div className="text-gray-500">Unique</div>
-                            <div className="font-semibold text-gray-900">{Number(page.unique_visitors).toLocaleString()}</div>
-                          </div>
-                          <div className="bg-white rounded p-2">
-                            <div className="text-gray-500">💻 Desktop</div>
-                            <div className="font-semibold text-gray-700">{Number(page.desktop_views).toLocaleString()}</div>
-                          </div>
-                          <div className="bg-white rounded p-2">
-                            <div className="text-gray-500">📱 Mobile</div>
-                            <div className="font-semibold text-gray-700">{Number(page.mobile_views).toLocaleString()}</div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+          {/* Close Right Column */}
           </div>
 
-          {/* Referrers */}
-          <div className="bg-white rounded-lg shadow lg:col-span-2">
-            <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200">
-              <h3 className="text-base md:text-lg font-semibold text-gray-900">Top Referrers ({getPeriodLabel()})</h3>
-            </div>
-            <div className="p-4 md:p-6">
-              {topReferrers.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">
-                  No referrer data yet. Install the tracking script to start collecting data.
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                  {topReferrers.map((ref, i) => (
-                    <div key={i} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                      <div className="flex-1 min-w-0 mr-3">
-                        <p className="text-xs md:text-sm font-medium text-gray-900 truncate">{ref.referrer}</p>
-                        <p className="text-xs text-gray-500">{ref.unique_visitors} visitors</p>
-                      </div>
-                      <p className="text-sm font-semibold text-gray-900 flex-shrink-0">{ref.visits}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Chart */}
-          <div className="bg-white rounded-lg shadow lg:col-span-2">
-            <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200">
-              <h3 className="text-base md:text-lg font-semibold text-gray-900">Pageviews Chart ({getPeriodLabel()})</h3>
-            </div>
-            <div className="p-4 md:p-6">
-              <PageviewsChart data={chartData} />
-            </div>
-          </div>
-
+        {/* Close 2-Column Layout */}
         </div>
 
         {/* Installation Instructions */}

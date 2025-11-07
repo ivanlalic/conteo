@@ -249,11 +249,15 @@ function DashboardContent() {
         })
 
       // Chart data (last 7 days)
+      // Get user's timezone offset in minutes (inverted because getTimezoneOffset returns negative for positive offsets)
+      const timezoneOffsetMinutes = -new Date().getTimezoneOffset()
+
       const { data: chartDataRaw, error: chartError } = await supabase
         .rpc('get_pageviews_chart', {
           site_uuid: selectedSite.id,
           start_date: weekAgo.toISOString(),
-          end_date: now.toISOString()
+          end_date: now.toISOString(),
+          tz_offset_minutes: timezoneOffsetMinutes
         })
 
       setStats({

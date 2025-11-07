@@ -192,10 +192,12 @@ RETURNS TABLE (
 $$ LANGUAGE SQL STABLE;
 
 -- Function to get pageviews over time (for charts)
+-- Now supports timezone offset to display dates in user's local timezone
 CREATE OR REPLACE FUNCTION get_pageviews_chart(
   site_uuid UUID,
   start_date TIMESTAMPTZ,
-  end_date TIMESTAMPTZ
+  end_date TIMESTAMPTZ,
+  tz_offset_minutes INT DEFAULT 0
 )
 RETURNS TABLE (
   date DATE,
@@ -203,14 +205,14 @@ RETURNS TABLE (
   unique_visitors BIGINT
 ) AS $$
   SELECT
-    DATE(timestamp) as date,
+    DATE(timestamp + (tz_offset_minutes || ' minutes')::INTERVAL) as date,
     COUNT(*) as pageviews,
     COUNT(DISTINCT visitor_id) as unique_visitors
   FROM pageviews
   WHERE site_id = site_uuid
     AND timestamp >= start_date
     AND timestamp <= end_date
-  GROUP BY DATE(timestamp)
+  GROUP BY DATE(timestamp + (tz_offset_minutes || ' minutes')::INTERVAL)
   ORDER BY date;
 $$ LANGUAGE SQL STABLE;
 

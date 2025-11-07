@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     // Verify API key and get site_id
     const { data: site, error: siteError } = await supabase
       .from('sites')
-      .select('id, cod_tracking_enabled')
+      .select('id, domain, cod_tracking_enabled')
       .eq('api_key', api_key)
       .single()
 
@@ -40,6 +40,30 @@ export async function POST(request: NextRequest) {
         { error: 'Invalid API key' },
         { status: 401 }
       )
+    }
+
+    // Validate domain (security: prevent API key abuse)
+    const referer = request.headers.get('referer') || request.headers.get('origin')
+    if (referer) {
+      try {
+        const refererUrl = new URL(referer)
+        const refererHostname = refererUrl.hostname.replace(/^www\./, '') // Remove www.
+        const siteDomain = site.domain.replace(/^www\./, '') // Remove www.
+
+        // Check if referer matches site domain (allow subdomains)
+        if (!refererHostname.endsWith(siteDomain) && refererHostname !== siteDomain) {
+          return NextResponse.json(
+            { error: 'Invalid domain' },
+            { status: 403 }
+          )
+        }
+      } catch (e) {
+        // Invalid URL in referer, reject request
+        return NextResponse.json(
+          { error: 'Invalid referer' },
+          { status: 403 }
+        )
+      }
     }
 
     // Check if COD tracking is enabled for this site

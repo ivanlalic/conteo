@@ -218,6 +218,30 @@ RETURNS TABLE (
   LIMIT referrer_limit;
 $$ LANGUAGE SQL STABLE;
 
+-- Function to get recent activity feed (last N visits)
+CREATE OR REPLACE FUNCTION get_recent_activity(
+  site_uuid UUID,
+  activity_limit INT DEFAULT 20
+)
+RETURNS TABLE (
+  path TEXT,
+  country TEXT,
+  browser TEXT,
+  device TEXT,
+  timestamp TIMESTAMPTZ
+) AS $$
+  SELECT
+    path,
+    COALESCE(country, 'Unknown') as country,
+    COALESCE(browser, 'Unknown') as browser,
+    COALESCE(device, 'Unknown') as device,
+    timestamp
+  FROM pageviews
+  WHERE site_id = site_uuid
+  ORDER BY timestamp DESC
+  LIMIT activity_limit;
+$$ LANGUAGE SQL STABLE;
+
 -- Function to get referrer sources grouped by domain
 CREATE OR REPLACE FUNCTION get_referrer_sources(
   site_uuid UUID,
@@ -470,6 +494,7 @@ $$ LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION get_live_users(UUID) TO anon;
 GRANT EXECUTE ON FUNCTION get_unique_visitors(UUID, TIMESTAMPTZ, TIMESTAMPTZ) TO anon;
 GRANT EXECUTE ON FUNCTION get_top_pages(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
+GRANT EXECUTE ON FUNCTION get_recent_activity(UUID, INT) TO anon;
 GRANT EXECUTE ON FUNCTION get_top_referrers(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
 GRANT EXECUTE ON FUNCTION get_referrer_sources(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
 GRANT EXECUTE ON FUNCTION get_pageviews_chart(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;

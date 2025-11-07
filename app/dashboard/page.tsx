@@ -68,6 +68,14 @@ interface Campaign {
   unique_visitors: number
 }
 
+interface ActivityItem {
+  path: string
+  country: string
+  browser: string
+  device: string
+  timestamp: string
+}
+
 interface SiteShare {
   id: string
   site_id: string
@@ -96,6 +104,7 @@ function DashboardContent() {
   const [campaignsOffset, setCampaignsOffset] = useState(0)
   const [hasMoreCampaigns, setHasMoreCampaigns] = useState(true)
   const [loadingMoreCampaigns, setLoadingMoreCampaigns] = useState(false)
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([])
   const [trackerUrl, setTrackerUrl] = useState('')
   const [timePeriod, setTimePeriod] = useState<'today' | '7days' | '30days'>('7days')
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null)
@@ -320,6 +329,13 @@ function DashboardContent() {
           campaign_offset: 0
         })
 
+      // Recent activity (last 15 visits)
+      const { data: activityData, error: activityError } = await supabase
+        .rpc('get_recent_activity', {
+          site_uuid: selectedSite.id,
+          activity_limit: 15
+        })
+
       setTopPages(topPagesData || [])
       setReferrerSources(referrerSourcesData || [])
       setChartData(chartDataRaw || [])
@@ -327,6 +343,7 @@ function DashboardContent() {
       setBrowserBreakdown(browserData || [])
       setTopCountries(topCountriesData || [])
       setCampaigns(campaignsData || [])
+      setRecentActivity(activityData || [])
       setHasMoreCampaigns((campaignsData || []).length === 5)
       setCampaignsOffset(5)
 
@@ -878,6 +895,83 @@ function DashboardContent() {
           </div>
 
         {/* Close 2-Column Layout */}
+        </div>
+
+        {/* Recent Activity Feed - Full Width */}
+        <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <h3 className="text-base font-semibold text-gray-900 flex items-center">
+              <span className="mr-2">⚡</span>
+              Recent Activity
+            </h3>
+            <span className="text-xs text-gray-500">Last 15 visits</span>
+          </div>
+          <div className="p-4">
+            {recentActivity.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-8">
+                No recent activity yet.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {recentActivity.map((activity, i) => {
+                  // Format timestamp as relative time
+                  const activityTime = new Date(activity.timestamp)
+                  const now = new Date()
+                  const diffMs = now.getTime() - activityTime.getTime()
+                  const diffMins = Math.floor(diffMs / 60000)
+                  const diffHours = Math.floor(diffMs / 3600000)
+
+                  let timeAgo = ''
+                  if (diffMins < 1) timeAgo = 'Just now'
+                  else if (diffMins < 60) timeAgo = `${diffMins}m ago`
+                  else if (diffHours < 24) timeAgo = `${diffHours}h ago`
+                  else timeAgo = activityTime.toLocaleDateString()
+
+                  // Device icon
+                  const deviceIcon = activity.device === 'Mobile' ? '📱' : activity.device === 'Desktop' ? '💻' : '❓'
+
+                  // Browser icon
+                  let browserIcon = '🌐'
+                  const browserLower = activity.browser.toLowerCase()
+                  if (browserLower.includes('chrome')) browserIcon = '🟢'
+                  else if (browserLower.includes('safari')) browserIcon = '🔵'
+                  else if (browserLower.includes('firefox')) browserIcon = '🟠'
+                  else if (browserLower.includes('edge')) browserIcon = '🔷'
+
+                  return (
+                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded hover:bg-gray-100 transition">
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        {/* Path */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{activity.path}</p>
+                        </div>
+
+                        {/* Country Flag */}
+                        <div className="flex-shrink-0">
+                          <span className="text-lg">{getCountryFlag(activity.country)}</span>
+                        </div>
+
+                        {/* Device */}
+                        <div className="flex-shrink-0">
+                          <span className="text-base">{deviceIcon}</span>
+                        </div>
+
+                        {/* Browser */}
+                        <div className="flex-shrink-0">
+                          <span className="text-base">{browserIcon}</span>
+                        </div>
+
+                        {/* Time ago */}
+                        <div className="flex-shrink-0">
+                          <span className="text-xs text-gray-500 font-medium">{timeAgo}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Installation Instructions */}

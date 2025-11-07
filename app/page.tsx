@@ -10,7 +10,6 @@ export default function Home() {
             </div>
             <div className="flex items-center space-x-8">
               <a href="#features" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Features</a>
-              <a href="#pricing" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Pricing</a>
               <a href="/login" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Login</a>
               <a
                 href="/signup"
@@ -39,18 +38,12 @@ export default function Home() {
             <p className="text-lg text-gray-500 mb-8">
               No credit card required. Free forever for small sites.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div className="flex justify-center">
               <a
                 href="/signup"
-                className="w-full sm:w-auto bg-indigo-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-indigo-700 transition shadow-lg"
+                className="bg-indigo-600 text-white px-10 py-4 rounded-lg text-lg font-semibold hover:bg-indigo-700 transition shadow-lg"
               >
                 Start tracking for free →
-              </a>
-              <a
-                href="#demo"
-                className="w-full sm:w-auto bg-white text-gray-700 px-8 py-4 rounded-lg text-lg font-semibold border-2 border-gray-200 hover:border-gray-300 transition"
-              >
-                View live demo
               </a>
             </div>
             <p className="text-sm text-gray-500 mt-6">
@@ -195,141 +188,6 @@ export default function Home() {
               </p>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Pricing Comparison */}
-      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Transparent pricing.<br />No surprises.
-            </h2>
-            <p className="text-xl text-gray-600">
-              Start free. Upgrade when you grow.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Free Plan */}
-            <div className="bg-white rounded-lg border-2 border-gray-200 p-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Free</h3>
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-gray-900">$0</span>
-                <span className="text-gray-600">/month</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span className="text-gray-700">1 website</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span className="text-gray-700">10,000 pageviews/month</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span className="text-gray-700">7 days data retention</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span className="text-gray-700">All core features</span>
-                </li>
-              </ul>
-              <a
-                href="/signup"
-                className="block w-full text-center bg-gray-100 text-gray-900 px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition"
-              >
-                Start Free
-              </a>
-            </div>
-
-            {/* Pro Plan */}
-            <div className="bg-indigo-600 rounded-lg border-2 border-indigo-600 p-8 relative">
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <span className="bg-yellow-400 text-gray-900 text-xs font-bold px-3 py-1 rounded-full">
-                  POPULAR
-                </span>
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Pro</h3>
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-white">$19</span>
-                <span className="text-indigo-200">/month</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start">
-                  <span className="text-green-300 mr-2">✓</span>
-                  <span className="text-white">3 websites</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-300 mr-2">✓</span>
-                  <span className="text-white">100,000 pageviews/month</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-300 mr-2">✓</span>
-                  <span className="text-white">90 days data retention</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-300 mr-2">✓</span>
-                  <span className="text-white">COD tracking</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-300 mr-2">✓</span>
-                  <span className="text-white">CSV exports</span>
-                </li>
-              </ul>
-              <a
-                href="/signup"
-                className="block w-full text-center bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition"
-              >
-                Start Pro Trial
-              </a>
-              <p className="text-xs text-indigo-200 text-center mt-3">
-                vs Google Analytics 360: $150k/year
-              </p>
-            </div>
-
-            {/* Enterprise Plan */}
-            <div className="bg-white rounded-lg border-2 border-gray-200 p-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Enterprise</h3>
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-gray-900">$99</span>
-                <span className="text-gray-600">/month</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span className="text-gray-700">10 websites</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span className="text-gray-700">1M pageviews/month</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span className="text-gray-700">2 years data retention</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span className="text-gray-700">Priority support</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span className="text-gray-700">API access</span>
-                </li>
-              </ul>
-              <a
-                href="/signup"
-                className="block w-full text-center bg-gray-100 text-gray-900 px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition"
-              >
-                Start Enterprise
-              </a>
-            </div>
-          </div>
-
-          <p className="text-center text-gray-600 mt-12">
-            Compare to competitors: Plausible ($9-$150/mo), Simple Analytics ($9-$148/mo), Fathom ($14-$114/mo)
-          </p>
         </div>
       </section>
 

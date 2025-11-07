@@ -35,8 +35,12 @@ interface PageviewsChartProps {
 
 export default function PageviewsChart({ data }: PageviewsChartProps) {
   // Format dates for display (e.g., "Jan 15")
+  // IMPORTANT: data.date comes already adjusted to user's timezone from SQL
+  // We need to parse it WITHOUT timezone conversion to avoid double-conversion
   const labels = data.map(item => {
-    const date = new Date(item.date)
+    // Parse date as local date, not UTC (avoids timezone shift)
+    const [year, month, day] = item.date.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   })
 

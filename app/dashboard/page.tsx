@@ -73,7 +73,7 @@ interface ActivityItem {
   country: string
   browser: string
   device: string
-  timestamp: string
+  visit_time: string
 }
 
 interface SiteShare {
@@ -915,7 +915,7 @@ function DashboardContent() {
               <div className="space-y-2">
                 {recentActivity.map((activity, i) => {
                   // Format timestamp as relative time
-                  const activityTime = new Date(activity.timestamp)
+                  const activityTime = new Date(activity.visit_time)
                   const now = new Date()
                   const diffMs = now.getTime() - activityTime.getTime()
                   const diffMins = Math.floor(diffMs / 60000)

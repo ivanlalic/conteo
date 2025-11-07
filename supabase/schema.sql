@@ -228,17 +228,17 @@ RETURNS TABLE (
   country TEXT,
   browser TEXT,
   device TEXT,
-  timestamp TIMESTAMPTZ
+  visit_time TIMESTAMPTZ
 ) AS $$
   SELECT
     path,
     COALESCE(country, 'Unknown') as country,
     COALESCE(browser, 'Unknown') as browser,
     COALESCE(device, 'Unknown') as device,
-    timestamp
+    "timestamp" as visit_time
   FROM pageviews
   WHERE site_id = site_uuid
-  ORDER BY timestamp DESC
+  ORDER BY "timestamp" DESC
   LIMIT activity_limit;
 $$ LANGUAGE SQL STABLE;
 
@@ -285,8 +285,8 @@ RETURNS TABLE (
       visitor_id
     FROM pageviews
     WHERE site_id = site_uuid
-      AND timestamp >= start_date
-      AND timestamp <= end_date
+      AND "timestamp" >= start_date
+      AND "timestamp" <= end_date
   )
   SELECT
     source,

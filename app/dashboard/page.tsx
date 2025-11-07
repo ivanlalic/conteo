@@ -106,7 +106,9 @@ function DashboardContent() {
   const [loadingMoreCampaigns, setLoadingMoreCampaigns] = useState(false)
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([])
   const [trackerUrl, setTrackerUrl] = useState('')
-  const [timePeriod, setTimePeriod] = useState<'today' | '7days' | '30days'>('7days')
+  const [timePeriod, setTimePeriod] = useState<'today' | '7days' | '30days' | 'custom'>('7days')
+  const [customStartDate, setCustomStartDate] = useState('')
+  const [customEndDate, setCustomEndDate] = useState('')
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null)
   const [countryCities, setCountryCities] = useState<{ [key: string]: City[] }>({})
   const [siteShare, setSiteShare] = useState<SiteShare | null>(null)
@@ -162,7 +164,16 @@ function DashboardContent() {
       const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
 
       let periodStart: Date
-      if (timePeriod === 'today') {
+      let periodEnd: Date = now
+
+      if (timePeriod === 'custom') {
+        if (customStartDate && customEndDate) {
+          periodStart = new Date(customStartDate + 'T00:00:00')
+          periodEnd = new Date(customEndDate + 'T23:59:59')
+        } else {
+          periodStart = weekAgo
+        }
+      } else if (timePeriod === 'today') {
         periodStart = today
       } else if (timePeriod === '7days') {
         periodStart = weekAgo
@@ -175,7 +186,7 @@ function DashboardContent() {
           site_uuid: selectedSite.id,
           country_code: countryCode,
           start_date: periodStart.toISOString(),
-          end_date: now.toISOString(),
+          end_date: periodEnd.toISOString(),
           city_limit: 5
         })
 
@@ -224,7 +235,18 @@ function DashboardContent() {
 
       // Calculate period start date based on selected time period
       let periodStart: Date
-      if (timePeriod === 'today') {
+      let periodEnd: Date = now
+
+      if (timePeriod === 'custom') {
+        // Use custom date range
+        if (customStartDate && customEndDate) {
+          periodStart = new Date(customStartDate + 'T00:00:00')
+          periodEnd = new Date(customEndDate + 'T23:59:59')
+        } else {
+          // Fallback to 7 days if custom dates not set
+          periodStart = weekAgo
+        }
+      } else if (timePeriod === 'today') {
         periodStart = today
       } else if (timePeriod === '7days') {
         periodStart = weekAgo
@@ -262,7 +284,7 @@ function DashboardContent() {
         .rpc('get_top_pages_with_devices', {
           site_uuid: selectedSite.id,
           start_date: periodStart.toISOString(),
-          end_date: now.toISOString(),
+          end_date: periodEnd.toISOString(),
           page_limit: 5
         })
 
@@ -271,7 +293,7 @@ function DashboardContent() {
         .rpc('get_device_breakdown', {
           site_uuid: selectedSite.id,
           start_date: periodStart.toISOString(),
-          end_date: now.toISOString()
+          end_date: periodEnd.toISOString()
         })
 
       // Browser breakdown (uses selected period)
@@ -279,7 +301,7 @@ function DashboardContent() {
         .rpc('get_browser_breakdown', {
           site_uuid: selectedSite.id,
           start_date: periodStart.toISOString(),
-          end_date: now.toISOString()
+          end_date: periodEnd.toISOString()
         })
 
       // Referrer sources (uses selected period)
@@ -287,7 +309,7 @@ function DashboardContent() {
         .rpc('get_referrer_sources', {
           site_uuid: selectedSite.id,
           start_date: periodStart.toISOString(),
-          end_date: now.toISOString(),
+          end_date: periodEnd.toISOString(),
           source_limit: 5
         })
 
@@ -296,7 +318,7 @@ function DashboardContent() {
         .rpc('get_top_countries', {
           site_uuid: selectedSite.id,
           start_date: periodStart.toISOString(),
-          end_date: now.toISOString(),
+          end_date: periodEnd.toISOString(),
           country_limit: 5
         })
 
@@ -308,7 +330,7 @@ function DashboardContent() {
         .rpc('get_pageviews_chart', {
           site_uuid: selectedSite.id,
           start_date: periodStart.toISOString(),
-          end_date: now.toISOString(),
+          end_date: periodEnd.toISOString(),
           tz_offset_minutes: timezoneOffsetMinutes
         })
 
@@ -324,7 +346,7 @@ function DashboardContent() {
         .rpc('get_top_campaigns', {
           site_uuid: selectedSite.id,
           start_date: periodStart.toISOString(),
-          end_date: now.toISOString(),
+          end_date: periodEnd.toISOString(),
           campaign_limit: 5,
           campaign_offset: 0
         })
@@ -364,7 +386,16 @@ function DashboardContent() {
       const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
 
       let periodStart: Date
-      if (timePeriod === 'today') {
+      let periodEnd: Date = now
+
+      if (timePeriod === 'custom') {
+        if (customStartDate && customEndDate) {
+          periodStart = new Date(customStartDate + 'T00:00:00')
+          periodEnd = new Date(customEndDate + 'T23:59:59')
+        } else {
+          periodStart = weekAgo
+        }
+      } else if (timePeriod === 'today') {
         periodStart = today
       } else if (timePeriod === '7days') {
         periodStart = weekAgo
@@ -376,7 +407,7 @@ function DashboardContent() {
         .rpc('get_top_campaigns', {
           site_uuid: selectedSite.id,
           start_date: periodStart.toISOString(),
-          end_date: now.toISOString(),
+          end_date: periodEnd.toISOString(),
           campaign_limit: 10,
           campaign_offset: campaignsOffset
         })
@@ -640,19 +671,74 @@ function DashboardContent() {
         </div>
 
         {/* Time Period Selector */}
-        <div className="flex justify-end items-center mb-5">
+        <div className="flex flex-col md:flex-row justify-end items-start md:items-center gap-3 mb-5">
           <div className="flex items-center space-x-2">
-            <span className="text-xs text-gray-600">Period:</span>
-            <select
-              value={timePeriod}
-              onChange={(e) => setTimePeriod(e.target.value as 'today' | '7days' | '30days')}
-              className="bg-white border border-gray-300 text-gray-900 px-3 py-1.5 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none"
-            >
-              <option value="today">Today</option>
-              <option value="7days">Last 7 Days</option>
-              <option value="30days">Last 30 Days</option>
-            </select>
+            <span className="text-xs text-gray-600 font-medium">Period:</span>
+            <div className="flex space-x-1">
+              <button
+                onClick={() => setTimePeriod('today')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                  timePeriod === 'today'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => setTimePeriod('7days')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                  timePeriod === '7days'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                7 Days
+              </button>
+              <button
+                onClick={() => setTimePeriod('30days')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                  timePeriod === '30days'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                30 Days
+              </button>
+              <button
+                onClick={() => setTimePeriod('custom')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                  timePeriod === 'custom'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Custom
+              </button>
+            </div>
           </div>
+
+          {/* Custom Date Range Inputs */}
+          {timePeriod === 'custom' && (
+            <div className="flex items-center space-x-2">
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="bg-white border border-gray-300 text-gray-900 px-2 py-1.5 rounded-lg text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none"
+                max={customEndDate || new Date().toISOString().split('T')[0]}
+              />
+              <span className="text-xs text-gray-500">to</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="bg-white border border-gray-300 text-gray-900 px-2 py-1.5 rounded-lg text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none"
+                min={customStartDate}
+                max={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+          )}
         </div>
 
         {/* 2-Column Layout */}

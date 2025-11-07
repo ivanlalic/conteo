@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const {
       api_key,
       visitor_id,
-      event_type, // 'product_view', 'initiate_checkout', 'purchase'
+      event_type, // 'product_view', 'initiate_checkout', 'purchase', 'update_product_info'
       product_id,
       product_name,
       product_page,
@@ -161,6 +161,30 @@ export async function POST(request: NextRequest) {
             source: source || 'Direct',
             purchased_at: new Date().toISOString()
           })
+
+        if (error) throw error
+      }
+    } else if (event_type === 'update_product_info') {
+      // Update existing record with product info (fired when AddToCart comes after InitiateCheckout)
+      const { data: existing } = await supabase
+        .from('cod_conversions')
+        .select('*')
+        .eq('site_id', site_id)
+        .eq('visitor_id', visitor_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (existing && product_name && product_name !== 'Unknown') {
+        // Update with real product info
+        const { error } = await supabase
+          .from('cod_conversions')
+          .update({
+            product_name: product_name,
+            product_id: product_id || existing.product_id,
+            product_page: product_page || existing.product_page
+          })
+          .eq('id', existing.id)
 
         if (error) throw error
       }

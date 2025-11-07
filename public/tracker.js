@@ -171,6 +171,32 @@
         if (data.content_ids && data.content_ids[0]) {
           sessionStorage.setItem('conteo_last_product_id', data.content_ids[0]);
         }
+
+        // Send update to API (in case AddToCart fires after InitiateCheckout)
+        const productPage = sessionStorage.getItem('conteo_last_product') || window.location.pathname;
+        sendCODEvent('update_product_info', {
+          product_name: data.content_name,
+          product_id: data.content_ids?.[0] || '',
+          product_page: productPage
+        });
+      }
+
+      // Handle Shopify trackShopify AddToCart (fires after InitiateCheckout on Releasit)
+      if (action === 'trackShopify' && event === 'AddToCart') {
+        if (data.content_name) {
+          sessionStorage.setItem('conteo_last_product_name', data.content_name);
+        }
+        if (data.content_ids && data.content_ids[0]) {
+          sessionStorage.setItem('conteo_last_product_id', data.content_ids[0]);
+        }
+
+        // Send update to API to update existing COD record with product info
+        const productPage = sessionStorage.getItem('conteo_last_product') || window.location.pathname;
+        sendCODEvent('update_product_info', {
+          product_name: data.content_name,
+          product_id: data.content_ids?.[0] || '',
+          product_page: productPage
+        });
       }
 
       // Track InitiateCheckout
@@ -238,6 +264,32 @@
             if (data.content_ids && data.content_ids[0]) {
               sessionStorage.setItem('conteo_last_product_id', data.content_ids[0]);
             }
+
+            // Send update to API
+            const productPage = sessionStorage.getItem('conteo_last_product') || window.location.pathname;
+            sendCODEvent('update_product_info', {
+              product_name: data.content_name,
+              product_id: data.content_ids?.[0] || '',
+              product_page: productPage
+            });
+          }
+
+          // Handle Shopify trackShopify AddToCart
+          if (action === 'trackShopify' && event === 'AddToCart') {
+            if (data.content_name) {
+              sessionStorage.setItem('conteo_last_product_name', data.content_name);
+            }
+            if (data.content_ids && data.content_ids[0]) {
+              sessionStorage.setItem('conteo_last_product_id', data.content_ids[0]);
+            }
+
+            // Send update to API
+            const productPage = sessionStorage.getItem('conteo_last_product') || window.location.pathname;
+            sendCODEvent('update_product_info', {
+              product_name: data.content_name,
+              product_id: data.content_ids?.[0] || '',
+              product_page: productPage
+            });
           }
 
           if (action === 'track' && event === 'InitiateCheckout') {

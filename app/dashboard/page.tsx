@@ -424,6 +424,86 @@ function DashboardContent() {
     }
   }
 
+  function exportToCSV() {
+    if (!selectedSite) return
+
+    // Helper function to escape CSV values
+    const escapeCSV = (value: any) => {
+      if (value === null || value === undefined) return ''
+      const str = String(value)
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`
+      }
+      return str
+    }
+
+    // Build CSV content
+    let csv = `Analytics Export - ${selectedSite.domain}\n`
+    csv += `Export Date: ${new Date().toLocaleString()}\n`
+    csv += `Period: ${timePeriod === 'custom' ? `${customStartDate} to ${customEndDate}` : timePeriod}\n\n`
+
+    // Top Pages
+    csv += 'TOP PAGES\n'
+    csv += 'Page,Pageviews,Desktop Views,Mobile Views,Unique Visitors\n'
+    topPages.forEach(page => {
+      csv += `${escapeCSV(page.path)},${page.pageviews},${page.desktop_views},${page.mobile_views},${page.unique_visitors}\n`
+    })
+    csv += '\n'
+
+    // Devices
+    csv += 'DEVICES\n'
+    csv += 'Device,Pageviews,Unique Visitors\n'
+    deviceBreakdown.forEach(device => {
+      csv += `${escapeCSV(device.device)},${device.pageviews},${device.unique_visitors}\n`
+    })
+    csv += '\n'
+
+    // Browsers
+    csv += 'BROWSERS\n'
+    csv += 'Browser,Pageviews,Unique Visitors\n'
+    browserBreakdown.forEach(browser => {
+      csv += `${escapeCSV(browser.browser)},${browser.pageviews},${browser.unique_visitors}\n`
+    })
+    csv += '\n'
+
+    // Countries
+    csv += 'COUNTRIES\n'
+    csv += 'Country,Pageviews,Unique Visitors\n'
+    topCountries.forEach(country => {
+      csv += `${escapeCSV(getCountryName(country.country))},${country.pageviews},${country.unique_visitors}\n`
+    })
+    csv += '\n'
+
+    // Traffic Sources
+    csv += 'TRAFFIC SOURCES\n'
+    csv += 'Source,Visits,Unique Visitors\n'
+    referrerSources.forEach(source => {
+      csv += `${escapeCSV(source.source)},${source.visits},${source.unique_visitors}\n`
+    })
+    csv += '\n'
+
+    // Campaigns
+    if (campaigns.length > 0) {
+      csv += 'CAMPAIGNS\n'
+      csv += 'Campaign,Source,Medium,Pageviews,Unique Visitors\n'
+      campaigns.forEach(campaign => {
+        csv += `${escapeCSV(campaign.utm_campaign)},${escapeCSV(campaign.utm_source)},${escapeCSV(campaign.utm_medium)},${campaign.pageviews},${campaign.unique_visitors}\n`
+      })
+      csv += '\n'
+    }
+
+    // Create download
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `analytics-${selectedSite.domain}-${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   function generateShareToken(): string {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
     let token = ''
@@ -670,8 +750,17 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* Time Period Selector */}
-        <div className="flex flex-col md:flex-row justify-end items-start md:items-center gap-3 mb-5">
+        {/* Time Period Selector & Export */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-5">
+          {/* Export CSV Button */}
+          <button
+            onClick={exportToCSV}
+            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition shadow-sm"
+          >
+            <span>📊</span>
+            <span>Export CSV</span>
+          </button>
+
           <div className="flex items-center space-x-2">
             <span className="text-xs text-gray-600 font-medium">Period:</span>
             <div className="flex space-x-1">

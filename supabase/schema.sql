@@ -24,6 +24,22 @@ CREATE INDEX idx_sites_user_id ON sites(user_id);
 CREATE INDEX idx_sites_api_key ON sites(api_key);
 
 -- ============================================
+-- SITE SHARES TABLE
+-- For public dashboard sharing feature
+-- ============================================
+CREATE TABLE site_shares (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  site_id UUID NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
+  share_token TEXT UNIQUE NOT NULL,
+  is_public BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Index for fast token lookups
+CREATE INDEX idx_site_shares_token ON site_shares(share_token);
+CREATE INDEX idx_site_shares_site_id ON site_shares(site_id);
+
+-- ============================================
 -- PAGEVIEWS TABLE
 -- Stores every page visit (the core data!)
 -- ============================================

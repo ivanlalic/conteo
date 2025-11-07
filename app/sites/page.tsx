@@ -14,6 +14,13 @@ interface Site {
   created_at: string
 }
 
+interface SiteShare {
+  id: string
+  site_id: string
+  share_token: string
+  is_public: boolean
+}
+
 function SitesContent() {
   const { user, signOut } = useAuth()
   const router = useRouter()
@@ -24,6 +31,8 @@ function SitesContent() {
   const [error, setError] = useState('')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [trackerUrl, setTrackerUrl] = useState('')
+  const [siteShares, setSiteShares] = useState<{ [key: string]: SiteShare }>({})
+  const [copiedShareLink, setCopiedShareLink] = useState<string | null>(null)
 
   useEffect(() => {
     loadSites()
@@ -43,6 +52,19 @@ function SitesContent() {
       if (error) throw error
 
       setSites(data || [])
+
+      // Load site shares
+      const { data: sharesData, error: sharesError } = await supabase
+        .from('site_shares')
+        .select('*')
+
+      if (!sharesError && sharesData) {
+        const sharesMap: { [key: string]: SiteShare } = {}
+        sharesData.forEach((share) => {
+          sharesMap[share.site_id] = share
+        })
+        setSiteShares(sharesMap)
+      }
     } catch (err: any) {
       console.error('Error loading sites:', err)
       setError(err.message)
@@ -103,6 +125,66 @@ function SitesContent() {
     navigator.clipboard.writeText(apiKey)
     setCopiedKey(apiKey)
     setTimeout(() => setCopiedKey(null), 2000)
+  }
+
+  function generateShareToken(): string {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    let token = ''
+    for (let i = 0; i < 16; i++) {
+      token += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return token
+  }
+
+  async function togglePublicSharing(siteId: string) {
+    try {
+      const existingShare = siteShares[siteId]
+
+      if (existingShare) {
+        // Toggle existing share
+        const newPublicState = !existingShare.is_public
+        const { error } = await supabase
+          .from('site_shares')
+          .update({ is_public: newPublicState })
+          .eq('id', existingShare.id)
+
+        if (error) throw error
+
+        setSiteShares({
+          ...siteShares,
+          [siteId]: { ...existingShare, is_public: newPublicState }
+        })
+      } else {
+        // Create new share token
+        const shareToken = generateShareToken()
+        const { data, error } = await supabase
+          .from('site_shares')
+          .insert({
+            site_id: siteId,
+            share_token: shareToken,
+            is_public: true
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        setSiteShares({
+          ...siteShares,
+          [siteId]: data
+        })
+      }
+    } catch (err: any) {
+      console.error('Error toggling public sharing:', err)
+      setError(err.message)
+    }
+  }
+
+  function copyShareLink(shareToken: string) {
+    const shareUrl = `${window.location.origin}/share/${shareToken}`
+    navigator.clipboard.writeText(shareUrl)
+    setCopiedShareLink(shareToken)
+    setTimeout(() => setCopiedShareLink(null), 2000)
   }
 
   if (loading) {
@@ -232,6 +314,55 @@ function SitesContent() {
                     <p className="text-xs text-gray-500 mt-2">
                       Add this snippet to your website's <code className="bg-gray-200 px-1 rounded">&lt;head&gt;</code> tag
                     </p>
+                  </div>
+
+                  {/* Public Sharing Section */}
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Public Dashboard</p>
+                        <p className="text-xs text-gray-500">Share your analytics publicly (like Plausible)</p>
+                      </div>
+                      <button
+                        onClick={() => togglePublicSharing(site.id)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          siteShares[site.id]?.is_public ? 'bg-indigo-600' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            siteShares[site.id]?.is_public ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {siteShares[site.id]?.is_public && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-medium text-green-800">✓ Public dashboard is live!</p>
+                          <button
+                            onClick={() => copyShareLink(siteShares[site.id].share_token)}
+                            className="text-xs text-green-700 hover:text-green-800 font-semibold"
+                          >
+                            {copiedShareLink === siteShares[site.id].share_token ? '✓ Copied!' : 'Copy Link'}
+                          </button>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <code className="flex-1 text-xs text-green-900 bg-white px-2 py-1.5 rounded border border-green-300 overflow-x-auto">
+                            {window.location.origin}/share/{siteShares[site.id].share_token}
+                          </code>
+                          <a
+                            href={`/share/${siteShares[site.id].share_token}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-shrink-0 bg-green-600 text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-green-700 transition"
+                          >
+                            Visit →
+                          </a>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

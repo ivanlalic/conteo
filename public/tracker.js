@@ -160,8 +160,17 @@
     const originalFbq = window.fbq;
     window.fbq = function() {
       const action = arguments[0];
-      const event = arguments[1];
-      const data = arguments[2] || {};
+
+      // trackShopify has different format: ['trackShopify', pixelId, eventName, data]
+      // track has format: ['track', eventName, data]
+      let event, data;
+      if (action === 'trackShopify') {
+        event = arguments[2]; // eventName is 3rd argument
+        data = arguments[3] || {}; // data is 4th argument
+      } else {
+        event = arguments[1]; // eventName is 2nd argument
+        data = arguments[2] || {}; // data is 3rd argument
+      }
 
       // Capture product name from AddToCart event (contains product details)
       if (action === 'track' && event === 'AddToCart') {
@@ -253,8 +262,17 @@
         const originalFbq = window.fbq;
         window.fbq = function() {
           const action = arguments[0];
-          const event = arguments[1];
-          const data = arguments[2] || {};
+
+          // trackShopify has different format: ['trackShopify', pixelId, eventName, data]
+          // track has format: ['track', eventName, data]
+          let event, data;
+          if (action === 'trackShopify') {
+            event = arguments[2]; // eventName is 3rd argument
+            data = arguments[3] || {}; // data is 4th argument
+          } else {
+            event = arguments[1]; // eventName is 2nd argument
+            data = arguments[2] || {}; // data is 3rd argument
+          }
 
           // Capture product name from AddToCart
           if (action === 'track' && event === 'AddToCart') {

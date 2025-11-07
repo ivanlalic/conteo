@@ -218,6 +218,29 @@ RETURNS TABLE (
   LIMIT referrer_limit;
 $$ LANGUAGE SQL STABLE;
 
+-- Function to get average session duration in seconds
+CREATE OR REPLACE FUNCTION get_avg_session_duration(
+  site_uuid UUID,
+  start_date TIMESTAMPTZ,
+  end_date TIMESTAMPTZ
+)
+RETURNS NUMERIC AS $$
+  WITH session_durations AS (
+    SELECT
+      visitor_id,
+      EXTRACT(EPOCH FROM (MAX("timestamp") - MIN("timestamp"))) as duration_seconds
+    FROM pageviews
+    WHERE site_id = site_uuid
+      AND "timestamp" >= start_date
+      AND "timestamp" <= end_date
+    GROUP BY visitor_id
+    HAVING COUNT(*) > 1  -- Only sessions with more than 1 page
+  )
+  SELECT
+    COALESCE(AVG(duration_seconds), 0)
+  FROM session_durations;
+$$ LANGUAGE SQL STABLE;
+
 -- Function to get recent activity feed (last N visits)
 CREATE OR REPLACE FUNCTION get_recent_activity(
   site_uuid UUID,
@@ -520,6 +543,7 @@ $$ LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION get_live_users(UUID) TO anon;
 GRANT EXECUTE ON FUNCTION get_unique_visitors(UUID, TIMESTAMPTZ, TIMESTAMPTZ) TO anon;
 GRANT EXECUTE ON FUNCTION get_top_pages(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
+GRANT EXECUTE ON FUNCTION get_avg_session_duration(UUID, TIMESTAMPTZ, TIMESTAMPTZ) TO anon;
 GRANT EXECUTE ON FUNCTION get_recent_activity(UUID, INT) TO anon;
 GRANT EXECUTE ON FUNCTION get_top_referrers(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
 GRANT EXECUTE ON FUNCTION get_referrer_sources(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;

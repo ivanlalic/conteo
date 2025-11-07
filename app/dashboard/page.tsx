@@ -127,6 +127,7 @@ function DashboardContent() {
   const [siteShare, setSiteShare] = useState<SiteShare | null>(null)
   const [copiedShareLink, setCopiedShareLink] = useState(false)
   const [codConversions, setCodConversions] = useState<CODConversion[]>([])
+  const [activeTab, setActiveTab] = useState<'overview' | 'cod' | 'campaigns' | 'activity'>('overview')
 
   useEffect(() => {
     loadSites()
@@ -783,9 +784,9 @@ function DashboardContent() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Stats Grid - Compact */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-5">
           {/* Live Users */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Live</span>
               <span className="flex h-2 w-2">
@@ -793,31 +794,31 @@ function DashboardContent() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.liveUsers}</p>
+            <p className="text-2xl md:text-3xl font-bold text-gray-900">{stats.liveUsers}</p>
           </div>
 
           {/* Today */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Today</span>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.todayViews.toLocaleString()}</p>
+            <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">{stats.todayViews.toLocaleString()}</p>
           </div>
 
           {/* This Week */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">This Week</span>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.weekViews.toLocaleString()}</p>
+            <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">{stats.weekViews.toLocaleString()}</p>
           </div>
 
           {/* This Month */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">This Month</span>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.monthViews.toLocaleString()}</p>
+            <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">{stats.monthViews.toLocaleString()}</p>
           </div>
 
           {/* Avg Session Duration (All) */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Avg Time (All)</span>
-            <p className="text-3xl font-bold text-gray-900 mt-1">
+            <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">
               {(() => {
                 const seconds = Math.floor(stats.avgSessionDurationAll)
                 if (seconds < 60) return `${seconds}s`
@@ -832,9 +833,9 @@ function DashboardContent() {
           </div>
 
           {/* Avg Session Duration (Multi-page) */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Avg Time (Multi)</span>
-            <p className="text-3xl font-bold text-gray-900 mt-1">
+            <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">
               {(() => {
                 const seconds = Math.floor(stats.avgSessionDurationMulti)
                 if (seconds < 60) return `${seconds}s`
@@ -929,16 +930,70 @@ function DashboardContent() {
           )}
         </div>
 
-        {/* 2-Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Tabs Navigation */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1 mb-6">
+          <div className="flex flex-wrap gap-1">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`flex-1 min-w-[100px] px-4 py-2 rounded-md text-sm font-medium transition ${
+                activeTab === 'overview'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              📊 Overview
+            </button>
+
+            {selectedSite?.cod_tracking_enabled && (
+              <button
+                onClick={() => setActiveTab('cod')}
+                className={`flex-1 min-w-[100px] px-4 py-2 rounded-md text-sm font-medium transition ${
+                  activeTab === 'cod'
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                💰 COD Tracking
+              </button>
+            )}
+
+            <button
+              onClick={() => setActiveTab('campaigns')}
+              className={`flex-1 min-w-[100px] px-4 py-2 rounded-md text-sm font-medium transition ${
+                activeTab === 'campaigns'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              📢 Campaigns
+            </button>
+
+            <button
+              onClick={() => setActiveTab('activity')}
+              className={`flex-1 min-w-[100px] px-4 py-2 rounded-md text-sm font-medium transition ${
+                activeTab === 'activity'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              ⚡ Activity
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content: Overview */}
+        {activeTab === 'overview' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
           {/* Left Column - Main Content (2/3) */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
 
-            {/* Chart - Prominent */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Pageviews Chart</h3>
-              <PageviewsChart data={chartData} />
+            {/* Chart - Compact */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h3 className="text-base font-semibold text-gray-900 mb-3">Pageviews Chart</h3>
+              <div className="h-64">
+                <PageviewsChart data={chartData} />
+              </div>
             </div>
 
             {/* Top Pages - Compact Table */}
@@ -985,10 +1040,10 @@ function DashboardContent() {
           </div>
 
           {/* Right Column - Sidebar (1/3) */}
-          <div className="space-y-4">
+          <div className="space-y-3">
 
         {/* Device Breakdown Card - Compact */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
           <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
             <span className="mr-2">📱</span>
             Devices
@@ -1021,7 +1076,7 @@ function DashboardContent() {
         </div>
 
         {/* Browser Breakdown Card - Compact */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
           <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
             <span className="mr-2">🌐</span>
             Browsers
@@ -1061,7 +1116,7 @@ function DashboardContent() {
         </div>
 
         {/* Referrer Sources Card - Compact */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
           <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
             <span className="mr-2">🔗</span>
             Traffic Sources
@@ -1108,7 +1163,7 @@ function DashboardContent() {
         </div>
 
         {/* Top Countries Card - Compact */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
           <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
             <span className="mr-2">🌍</span>
             Countries
@@ -1132,50 +1187,16 @@ function DashboardContent() {
           )}
         </div>
 
-        {/* Top Campaigns Card - Compact */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-            <span className="mr-2">📢</span>
-            Campaigns
-          </h3>
-          {campaigns.length === 0 ? (
-            <p className="text-xs text-gray-500 text-center py-4">No data yet</p>
-          ) : (
-            <>
-              <div className="space-y-2">
-                {campaigns.slice(0, 5).map((campaign, i) => (
-                  <div key={i} className="p-2 bg-gray-50 rounded">
-                    <p className="text-sm font-medium text-gray-900 truncate">{campaign.utm_campaign}</p>
-                    <div className="flex justify-between items-center mt-1">
-                      <p className="text-xs text-gray-500 truncate">{campaign.utm_source}</p>
-                      <p className="text-xs font-semibold text-indigo-600">{Number(campaign.pageviews).toLocaleString()}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {campaigns.length > 5 && (
-                <button
-                  onClick={loadMoreCampaigns}
-                  disabled={loadingMoreCampaigns}
-                  className="mt-3 w-full py-1.5 px-3 bg-gray-100 text-gray-700 rounded text-xs font-medium hover:bg-gray-200 transition"
-                >
-                  {loadingMoreCampaigns ? 'Loading...' : `+${campaigns.length - 5} more`}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-
           {/* Close Right Column */}
           </div>
 
         {/* Close 2-Column Layout */}
         </div>
+        )}
 
-        {/* COD Conversions Section - Full Width */}
-        {selectedSite?.cod_tracking_enabled && (
-          <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* Tab Content: COD Tracking */}
+        {activeTab === 'cod' && selectedSite?.cod_tracking_enabled && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="px-4 py-3 border-b border-gray-200">
               <h3 className="text-base font-semibold text-gray-900 flex items-center">
                 <span className="mr-2">💰</span>
@@ -1242,8 +1263,71 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* Recent Activity Feed - Full Width */}
-        <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* Tab Content: Campaigns */}
+        {activeTab === 'campaigns' && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-4 py-3 border-b border-gray-200">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center">
+                <span className="mr-2">📢</span>
+                UTM Campaigns
+              </h3>
+            </div>
+            <div className="p-4">
+              {campaigns.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-8">
+                  No campaigns tracked yet. Use UTM parameters in your URLs to track campaigns.
+                </p>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead>
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Campaign</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Medium</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Content</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Term</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Pageviews</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Unique</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {campaigns.map((campaign, i) => (
+                          <tr key={i} className="hover:bg-gray-50">
+                            <td className="px-3 py-2 text-sm font-medium text-gray-900">{campaign.utm_campaign || '-'}</td>
+                            <td className="px-3 py-2 text-sm text-gray-700">{campaign.utm_source || '-'}</td>
+                            <td className="px-3 py-2 text-sm text-gray-600">{campaign.utm_medium || '-'}</td>
+                            <td className="px-3 py-2 text-sm text-gray-600">{campaign.utm_content || '-'}</td>
+                            <td className="px-3 py-2 text-sm text-gray-600">{campaign.utm_term || '-'}</td>
+                            <td className="px-3 py-2 text-sm text-right font-semibold text-gray-900">{Number(campaign.pageviews).toLocaleString()}</td>
+                            <td className="px-3 py-2 text-sm text-right text-gray-600">{Number(campaign.unique_visitors).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {hasMoreCampaigns && (
+                    <div className="mt-4 text-center">
+                      <button
+                        onClick={loadMoreCampaigns}
+                        disabled={loadingMoreCampaigns}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition"
+                      >
+                        {loadingMoreCampaigns ? 'Loading...' : 'Load More Campaigns'}
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab Content: Recent Activity */}
+        {activeTab === 'activity' && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-base font-semibold text-gray-900 flex items-center">
               <span className="mr-2">⚡</span>
@@ -1318,8 +1402,9 @@ function DashboardContent() {
             )}
           </div>
         </div>
+        )}
 
-        {/* Installation Instructions */}
+        {/* Installation Instructions - Always visible */}
         <div className="mt-6 md:mt-8 bg-indigo-50 border border-indigo-200 rounded-lg p-4 md:p-6">
           <h3 className="text-base md:text-lg font-semibold text-indigo-900 mb-2">
             🚀 Add tracking to {selectedSite?.domain}

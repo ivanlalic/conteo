@@ -136,7 +136,7 @@ export default function AdminPage() {
       if (error) throw error
 
       // Get user emails
-      const userIds = [...new Set(data?.map(s => s.user_id) || [])]
+      const userIds = Array.from(new Set(data?.map(s => s.user_id) || []))
       const { data: profiles } = await supabase
         .from('user_profiles')
         .select('id, email')
@@ -196,7 +196,7 @@ export default function AdminPage() {
       if (error) throw error
 
       // Get admin emails
-      const adminIds = [...new Set(data?.map(l => l.details?.admin_id) || [])]
+      const adminIds = Array.from(new Set(data?.map(l => l.details?.admin_id) || []))
       const { data: profiles } = await supabase
         .from('user_profiles')
         .select('id, email')

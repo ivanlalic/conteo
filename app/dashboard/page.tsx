@@ -491,35 +491,6 @@ function DashboardContent() {
           <div className="flex justify-between items-center">
             <h1 className="text-lg md:text-2xl font-bold text-gray-900">conteo.online</h1>
             <div className="flex items-center space-x-2 md:space-x-4">
-              {/* Public Sharing Button */}
-              {siteShare?.is_public ? (
-                <div className="flex items-center space-x-2 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5">
-                  <span className="text-xs text-green-700 font-medium">🔗 Public</span>
-                  <button
-                    onClick={copyShareLink}
-                    className="text-xs text-green-700 hover:text-green-800 font-semibold"
-                  >
-                    {copiedShareLink ? '✓' : 'Copy'}
-                  </button>
-                  <a
-                    href={`/share/${siteShare.share_token}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-green-700 hover:text-green-800 font-semibold"
-                  >
-                    Visit
-                  </a>
-                </div>
-              ) : (
-                <button
-                  onClick={togglePublicSharing}
-                  className="text-xs md:text-sm text-gray-600 hover:text-indigo-600 font-medium flex items-center space-x-1"
-                >
-                  <span>🔗</span>
-                  <span>Make Public</span>
-                </button>
-              )}
-
               <Link
                 href="/sites"
                 className="text-xs md:text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
@@ -541,7 +512,7 @@ function DashboardContent() {
       {/* Site Selector Bar */}
       <div className="bg-indigo-600 border-b border-indigo-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 md:py-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex items-center space-x-2 md:space-x-4">
               <span className="text-indigo-100 text-xs md:text-sm font-medium">Viewing:</span>
               <select
@@ -559,8 +530,41 @@ function DashboardContent() {
                 ))}
               </select>
             </div>
-            <div className="text-indigo-100 text-xs md:text-sm">
-              {sites.length} {sites.length === 1 ? 'site' : 'sites'} total
+
+            {/* Public Sharing Toggle */}
+            <div className="flex items-center space-x-3">
+              <span className="text-indigo-100 text-xs font-medium">Public Sharing:</span>
+              <button
+                onClick={togglePublicSharing}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  siteShare?.is_public ? 'bg-green-500' : 'bg-indigo-800'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    siteShare?.is_public ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+
+              {siteShare?.is_public && (
+                <>
+                  <button
+                    onClick={copyShareLink}
+                    className="text-xs text-white bg-indigo-700 hover:bg-indigo-800 px-3 py-1 rounded font-medium transition"
+                  >
+                    {copiedShareLink ? '✓ Copied' : 'Copy Link'}
+                  </button>
+                  <a
+                    href={`/share/${siteShare.share_token}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded font-medium transition"
+                  >
+                    Visit →
+                  </a>
+                </>
+              )}
             </div>
           </div>
         </div>

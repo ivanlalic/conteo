@@ -163,12 +163,25 @@
       const event = arguments[1];
       const data = arguments[2] || {};
 
+      // Capture product name from AddToCart event (contains product details)
+      if (action === 'track' && event === 'AddToCart') {
+        if (data.content_name) {
+          sessionStorage.setItem('conteo_last_product_name', data.content_name);
+        }
+        if (data.content_ids && data.content_ids[0]) {
+          sessionStorage.setItem('conteo_last_product_id', data.content_ids[0]);
+        }
+      }
+
       // Track InitiateCheckout
       if (action === 'track' && event === 'InitiateCheckout') {
         const productPage = sessionStorage.getItem('conteo_last_product') || '';
+        const productName = data.content_name || sessionStorage.getItem('conteo_last_product_name') || 'Unknown';
+        const productId = data.content_ids?.[0] || sessionStorage.getItem('conteo_last_product_id') || '';
+
         sendCODEvent('initiate_checkout', {
-          product_name: data.content_name || 'Unknown',
-          product_id: data.content_ids?.[0] || '',
+          product_name: productName,
+          product_id: productId,
           product_page: productPage,
           value: data.value || 0,
           currency: data.currency || 'EUR'
@@ -178,9 +191,12 @@
       // Track Purchase
       if (action === 'track' && event === 'Purchase') {
         const productPage = sessionStorage.getItem('conteo_last_product') || '';
+        const productName = data.content_name || sessionStorage.getItem('conteo_last_product_name') || 'Unknown';
+        const productId = data.content_ids?.[0] || sessionStorage.getItem('conteo_last_product_id') || '';
+
         sendCODEvent('purchase', {
-          product_name: data.content_name || 'Unknown',
-          product_id: data.content_ids?.[0] || '',
+          product_name: productName,
+          product_id: productId,
           product_page: productPage,
           value: data.value || 0,
           currency: data.currency || 'EUR'
@@ -214,11 +230,24 @@
           const event = arguments[1];
           const data = arguments[2] || {};
 
+          // Capture product name from AddToCart
+          if (action === 'track' && event === 'AddToCart') {
+            if (data.content_name) {
+              sessionStorage.setItem('conteo_last_product_name', data.content_name);
+            }
+            if (data.content_ids && data.content_ids[0]) {
+              sessionStorage.setItem('conteo_last_product_id', data.content_ids[0]);
+            }
+          }
+
           if (action === 'track' && event === 'InitiateCheckout') {
             const productPage = sessionStorage.getItem('conteo_last_product') || '';
+            const productName = data.content_name || sessionStorage.getItem('conteo_last_product_name') || 'Unknown';
+            const productId = data.content_ids?.[0] || sessionStorage.getItem('conteo_last_product_id') || '';
+
             sendCODEvent('initiate_checkout', {
-              product_name: data.content_name || 'Unknown',
-              product_id: data.content_ids?.[0] || '',
+              product_name: productName,
+              product_id: productId,
               product_page: productPage,
               value: data.value || 0,
               currency: data.currency || 'EUR'
@@ -227,9 +256,12 @@
 
           if (action === 'track' && event === 'Purchase') {
             const productPage = sessionStorage.getItem('conteo_last_product') || '';
+            const productName = data.content_name || sessionStorage.getItem('conteo_last_product_name') || 'Unknown';
+            const productId = data.content_ids?.[0] || sessionStorage.getItem('conteo_last_product_id') || '';
+
             sendCODEvent('purchase', {
-              product_name: data.content_name || 'Unknown',
-              product_id: data.content_ids?.[0] || '',
+              product_name: productName,
+              product_id: productId,
               product_page: productPage,
               value: data.value || 0,
               currency: data.currency || 'EUR'
@@ -256,12 +288,25 @@
       const event = arguments[0];
       const data = arguments[1] || {};
 
+      // Capture product name from AddToCart
+      if (event === 'AddToCart') {
+        if (data.content_name) {
+          sessionStorage.setItem('conteo_last_product_name', data.content_name);
+        }
+        if (data.content_id) {
+          sessionStorage.setItem('conteo_last_product_id', data.content_id);
+        }
+      }
+
       // Track CompletePayment
       if (event === 'CompletePayment') {
         const productPage = sessionStorage.getItem('conteo_last_product') || '';
+        const productName = data.content_name || sessionStorage.getItem('conteo_last_product_name') || 'Unknown';
+        const productId = data.content_id || sessionStorage.getItem('conteo_last_product_id') || '';
+
         sendCODEvent('purchase', {
-          product_name: data.content_name || 'Unknown',
-          product_id: data.content_id || '',
+          product_name: productName,
+          product_id: productId,
           product_page: productPage,
           value: data.value || 0,
           currency: data.currency || 'EUR'
@@ -271,9 +316,12 @@
       // Track InitiateCheckout
       if (event === 'InitiateCheckout') {
         const productPage = sessionStorage.getItem('conteo_last_product') || '';
+        const productName = data.content_name || sessionStorage.getItem('conteo_last_product_name') || 'Unknown';
+        const productId = data.content_id || sessionStorage.getItem('conteo_last_product_id') || '';
+
         sendCODEvent('initiate_checkout', {
-          product_name: data.content_name || 'Unknown',
-          product_id: data.content_id || '',
+          product_name: productName,
+          product_id: productId,
           product_page: productPage,
           value: data.value || 0,
           currency: data.currency || 'EUR'

@@ -92,6 +92,8 @@ export async function POST(request: NextRequest) {
           .update({
             product_name: product_name || existing.product_name || 'Unknown',
             product_id: product_id || existing.product_id,
+            product_page: product_page || existing.product_page,
+            viewed_product: true, // If they opened form, they viewed the product
             opened_form: true,
             form_opened_at: new Date().toISOString()
           })
@@ -108,6 +110,7 @@ export async function POST(request: NextRequest) {
             product_name: product_name || 'Unknown',
             product_id: product_id || '',
             product_page: product_page || '',
+            viewed_product: true, // If they opened form, they viewed the product
             opened_form: true,
             source: source || 'Direct',
             form_opened_at: new Date().toISOString()
@@ -131,6 +134,8 @@ export async function POST(request: NextRequest) {
         const { error } = await supabase
           .from('cod_conversions')
           .update({
+            viewed_product: true, // If they purchased, they viewed the product
+            opened_form: true, // If they purchased, they opened the form
             purchased: true,
             value: value || 0,
             currency: currency || 'EUR',
@@ -147,6 +152,9 @@ export async function POST(request: NextRequest) {
             site_id,
             visitor_id,
             product_name: product_name || 'Unknown',
+            product_page: product_page || '',
+            viewed_product: true, // If they purchased, they viewed the product
+            opened_form: true, // If they purchased, they opened the form
             purchased: true,
             value: value || 0,
             currency: currency || 'EUR',

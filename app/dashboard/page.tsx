@@ -548,12 +548,15 @@ function DashboardContent() {
     // COD Conversions
     if (selectedSite.cod_tracking_enabled && codConversions.length > 0) {
       csv += 'COD CONVERSIONS\n'
-      csv += 'Product,Source,Views,Forms Opened,Purchases,Conversion Rate,Revenue\n'
+      csv += 'Product,Source,Views,Forms Opened,Purchases,View→Purchase %,Form→Purchase %,Revenue\n'
       codConversions.forEach(conversion => {
-        const conversionRate = Number(conversion.views) > 0
+        const viewToPurchaseRate = Number(conversion.views) > 0
           ? ((Number(conversion.purchases) / Number(conversion.views)) * 100).toFixed(1)
           : '0.0'
-        csv += `${escapeCSV(conversion.product_name)},${escapeCSV(conversion.source)},${conversion.views},${conversion.forms},${conversion.purchases},${conversionRate}%,€${Number(conversion.revenue || 0).toFixed(2)}\n`
+        const formToPurchaseRate = Number(conversion.forms) > 0
+          ? ((Number(conversion.purchases) / Number(conversion.forms)) * 100).toFixed(1)
+          : '0.0'
+        csv += `${escapeCSV(conversion.product_name)},${escapeCSV(conversion.source)},${conversion.views},${conversion.forms},${conversion.purchases},${viewToPurchaseRate}%,${formToPurchaseRate}%,€${Number(conversion.revenue || 0).toFixed(2)}\n`
       })
       csv += '\n'
     }
@@ -1218,14 +1221,21 @@ function DashboardContent() {
                         <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Views</th>
                         <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Forms</th>
                         <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Purchases</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Conv %</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase" title="View to Purchase">V→P %</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase" title="Form to Purchase">F→P %</th>
                         <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Revenue</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                       {codConversions.map((conversion, i) => {
-                        const conversionRate = Number(conversion.views) > 0
+                        // View to Purchase conversion rate
+                        const viewToPurchaseRate = Number(conversion.views) > 0
                           ? ((Number(conversion.purchases) / Number(conversion.views)) * 100).toFixed(1)
+                          : '0.0'
+
+                        // Form to Purchase conversion rate
+                        const formToPurchaseRate = Number(conversion.forms) > 0
+                          ? ((Number(conversion.purchases) / Number(conversion.forms)) * 100).toFixed(1)
                           : '0.0'
 
                         // Source icon logic
@@ -1248,7 +1258,8 @@ function DashboardContent() {
                             <td className="px-3 py-2 text-sm text-right text-gray-600">{Number(conversion.views).toLocaleString()}</td>
                             <td className="px-3 py-2 text-sm text-right text-gray-600">{Number(conversion.forms).toLocaleString()}</td>
                             <td className="px-3 py-2 text-sm text-right font-semibold text-green-600">{Number(conversion.purchases).toLocaleString()}</td>
-                            <td className="px-3 py-2 text-sm text-right font-medium text-indigo-600">{conversionRate}%</td>
+                            <td className="px-3 py-2 text-sm text-right font-medium text-blue-600" title="View to Purchase">{viewToPurchaseRate}%</td>
+                            <td className="px-3 py-2 text-sm text-right font-medium text-indigo-600" title="Form to Purchase">{formToPurchaseRate}%</td>
                             <td className="px-3 py-2 text-sm text-right font-bold text-gray-900">
                               €{Number(conversion.revenue || 0).toFixed(2)}
                             </td>

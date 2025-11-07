@@ -40,6 +40,12 @@ interface DeviceBreakdown {
   unique_visitors: number
 }
 
+interface BrowserBreakdown {
+  browser: string
+  pageviews: number
+  unique_visitors: number
+}
+
 interface TopCountry {
   country: string
   pageviews: number
@@ -84,6 +90,7 @@ function DashboardContent() {
   const [topReferrers, setTopReferrers] = useState<TopReferrer[]>([])
   const [chartData, setChartData] = useState<ChartData[]>([])
   const [deviceBreakdown, setDeviceBreakdown] = useState<DeviceBreakdown[]>([])
+  const [browserBreakdown, setBrowserBreakdown] = useState<BrowserBreakdown[]>([])
   const [topCountries, setTopCountries] = useState<TopCountry[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [campaignsOffset, setCampaignsOffset] = useState(0)
@@ -258,6 +265,14 @@ function DashboardContent() {
           end_date: now.toISOString()
         })
 
+      // Browser breakdown (uses selected period)
+      const { data: browserData, error: browserError } = await supabase
+        .rpc('get_browser_breakdown', {
+          site_uuid: selectedSite.id,
+          start_date: periodStart.toISOString(),
+          end_date: now.toISOString()
+        })
+
       // Top referrers (uses selected period)
       const { data: topReferrersData, error: referrersError } = await supabase
         .rpc('get_top_referrers', {
@@ -309,6 +324,7 @@ function DashboardContent() {
       setTopReferrers(topReferrersData || [])
       setChartData(chartDataRaw || [])
       setDeviceBreakdown(deviceData || [])
+      setBrowserBreakdown(browserData || [])
       setTopCountries(topCountriesData || [])
       setCampaigns(campaignsData || [])
       setHasMoreCampaigns((campaignsData || []).length === 5)
@@ -701,6 +717,46 @@ function DashboardContent() {
                       <div>
                         <p className="text-sm font-medium text-gray-900">{device.device}</p>
                         <p className="text-xs text-gray-500">{Number(device.pageviews).toLocaleString()} views</p>
+                      </div>
+                    </div>
+                    <p className="text-lg font-bold text-indigo-600">{percentage}%</p>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Browser Breakdown Card - Compact */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+            <span className="mr-2">🌐</span>
+            Browsers
+          </h3>
+          {browserBreakdown.length === 0 ? (
+            <p className="text-xs text-gray-500 text-center py-4">No data yet</p>
+          ) : (
+            <div className="space-y-2">
+              {browserBreakdown.map((browser) => {
+                const totalViews = browserBreakdown.reduce((sum, b) => sum + Number(b.pageviews), 0)
+                const percentage = totalViews > 0 ? ((Number(browser.pageviews) / totalViews) * 100).toFixed(1) : '0.0'
+
+                // Browser icon logic
+                let icon = '🌐'
+                const browserLower = browser.browser.toLowerCase()
+                if (browserLower.includes('chrome')) icon = '🟢'
+                else if (browserLower.includes('safari')) icon = '🔵'
+                else if (browserLower.includes('firefox')) icon = '🟠'
+                else if (browserLower.includes('edge')) icon = '🔷'
+                else if (browserLower.includes('opera')) icon = '🔴'
+
+                return (
+                  <div key={browser.browser} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">{icon}</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{browser.browser}</p>
+                        <p className="text-xs text-gray-500">{Number(browser.pageviews).toLocaleString()} views</p>
                       </div>
                     </div>
                     <p className="text-lg font-bold text-indigo-600">{percentage}%</p>

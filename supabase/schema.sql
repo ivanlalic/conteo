@@ -266,6 +266,29 @@ RETURNS TABLE (
   ORDER BY pageviews DESC;
 $$ LANGUAGE SQL STABLE;
 
+-- Function to get browser breakdown (Chrome, Safari, Firefox, etc)
+CREATE OR REPLACE FUNCTION get_browser_breakdown(
+  site_uuid UUID,
+  start_date TIMESTAMPTZ,
+  end_date TIMESTAMPTZ
+)
+RETURNS TABLE (
+  browser TEXT,
+  pageviews BIGINT,
+  unique_visitors BIGINT
+) AS $$
+  SELECT
+    COALESCE(browser, 'Unknown') as browser,
+    COUNT(*) as pageviews,
+    COUNT(DISTINCT visitor_id) as unique_visitors
+  FROM pageviews
+  WHERE site_id = site_uuid
+    AND timestamp >= start_date
+    AND timestamp <= end_date
+  GROUP BY browser
+  ORDER BY pageviews DESC;
+$$ LANGUAGE SQL STABLE;
+
 -- Function to get top pages with device breakdown
 CREATE OR REPLACE FUNCTION get_top_pages_with_devices(
   site_uuid UUID,
@@ -383,6 +406,22 @@ RETURNS TABLE (
   LIMIT campaign_limit
   OFFSET campaign_offset;
 $$ LANGUAGE SQL STABLE;
+
+-- ============================================
+-- GRANT EXECUTE PERMISSIONS FOR PUBLIC DASHBOARDS
+-- Allow anonymous users to call analytics functions
+-- ============================================
+GRANT EXECUTE ON FUNCTION get_live_users(UUID) TO anon;
+GRANT EXECUTE ON FUNCTION get_unique_visitors(UUID, TIMESTAMPTZ, TIMESTAMPTZ) TO anon;
+GRANT EXECUTE ON FUNCTION get_top_pages(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
+GRANT EXECUTE ON FUNCTION get_top_referrers(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
+GRANT EXECUTE ON FUNCTION get_pageviews_chart(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
+GRANT EXECUTE ON FUNCTION get_device_breakdown(UUID, TIMESTAMPTZ, TIMESTAMPTZ) TO anon;
+GRANT EXECUTE ON FUNCTION get_browser_breakdown(UUID, TIMESTAMPTZ, TIMESTAMPTZ) TO anon;
+GRANT EXECUTE ON FUNCTION get_top_pages_with_devices(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
+GRANT EXECUTE ON FUNCTION get_top_countries(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
+GRANT EXECUTE ON FUNCTION get_cities_by_country(UUID, TEXT, TIMESTAMPTZ, TIMESTAMPTZ, INT) TO anon;
+GRANT EXECUTE ON FUNCTION get_top_campaigns(UUID, TIMESTAMPTZ, TIMESTAMPTZ, INT, INT) TO anon;
 
 -- ============================================
 -- AUTO-UPDATE TIMESTAMP TRIGGER

@@ -248,14 +248,14 @@ function DashboardContent() {
           country_limit: 5
         })
 
-      // Chart data (last 7 days)
+      // Chart data (uses selected period like other sections)
       // Get user's timezone offset in minutes (inverted because getTimezoneOffset returns negative for positive offsets)
       const timezoneOffsetMinutes = -new Date().getTimezoneOffset()
 
       const { data: chartDataRaw, error: chartError } = await supabase
         .rpc('get_pageviews_chart', {
           site_uuid: selectedSite.id,
-          start_date: weekAgo.toISOString(),
+          start_date: periodStart.toISOString(),
           end_date: now.toISOString(),
           tz_offset_minutes: timezoneOffsetMinutes
         })
@@ -653,7 +653,7 @@ function DashboardContent() {
           {/* Chart */}
           <div className="bg-white rounded-lg shadow lg:col-span-2">
             <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200">
-              <h3 className="text-base md:text-lg font-semibold text-gray-900">Last 7 Days</h3>
+              <h3 className="text-base md:text-lg font-semibold text-gray-900">Pageviews Chart ({getPeriodLabel()})</h3>
             </div>
             <div className="p-4 md:p-6">
               <PageviewsChart data={chartData} />

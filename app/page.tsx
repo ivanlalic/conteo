@@ -1,6 +1,28 @@
 'use client'
 
+import { useEffect } from 'react'
+
 export default function Home() {
+  useEffect(() => {
+    // Load Conteo tracker to track our own landing page
+    // This allows us to see CTA clicks in our own dashboard
+    const script = document.createElement('script')
+    script.src = '/tracker.js'
+    // Use your own site's API key here (get it from dashboard)
+    script.setAttribute('data-api-key', process.env.NEXT_PUBLIC_CONTEO_LANDING_API_KEY || '')
+    script.defer = true
+
+    if (script.getAttribute('data-api-key')) {
+      document.head.appendChild(script)
+    }
+
+    return () => {
+      if (script.parentNode) {
+        document.head.removeChild(script)
+      }
+    }
+  }, [])
+
   const trackCTAClick = (location: string) => {
     // Track CTA clicks if Conteo is loaded (e.g., if we're self-tracking)
     if (typeof window !== 'undefined' && (window as any).conteo) {

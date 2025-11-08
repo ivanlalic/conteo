@@ -57,8 +57,11 @@ export async function POST(request: NextRequest) {
         const refererHostname = refererUrl.hostname.replace(/^www\./, '') // Remove www.
         const siteDomain = site.domain.replace(/^www\./, '') // Remove www.
 
-        // Check if referer matches site domain (allow subdomains)
-        if (!refererHostname.endsWith(siteDomain) && refererHostname !== siteDomain) {
+        // Allow localhost for development
+        const isLocalhost = refererHostname === 'localhost' || refererHostname === '127.0.0.1' || refererHostname.endsWith('.localhost')
+
+        // Check if referer matches site domain (allow subdomains) or is localhost
+        if (!isLocalhost && !refererHostname.endsWith(siteDomain) && refererHostname !== siteDomain) {
           return NextResponse.json(
             { error: 'Invalid domain' },
             { status: 403 }

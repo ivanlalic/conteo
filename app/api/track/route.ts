@@ -11,7 +11,25 @@ export const runtime = 'edge'
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    // Handle potential empty or malformed body
+    let body
+    try {
+      const text = await request.text()
+      if (!text || text.trim() === '') {
+        return NextResponse.json(
+          { error: 'Empty request body' },
+          { status: 400 }
+        )
+      }
+      body = JSON.parse(text)
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError)
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      )
+    }
+
     const {
       api_key,
       path,

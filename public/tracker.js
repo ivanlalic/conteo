@@ -59,22 +59,16 @@
       ...utmParams,
     };
 
-    // Send via fetch with keepalive (works even when navigating away)
-    if (navigator.sendBeacon) {
-      // Preferred: sendBeacon (doesn't block navigation)
-      const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-      navigator.sendBeacon(endpoint, blob);
-    } else {
-      // Fallback: fetch with keepalive
-      fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-        keepalive: true,
-      }).catch(() => {
-        // Fail silently - analytics shouldn't break the site
-      });
-    }
+    // Send via fetch with keepalive (more reliable than sendBeacon for JSON)
+    fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+      keepalive: true,
+    }).catch((err) => {
+      console.error('[Conteo] Failed to track pageview:', err);
+      // Fail silently - analytics shouldn't break the site
+    });
   }
 
   // Track initial pageview

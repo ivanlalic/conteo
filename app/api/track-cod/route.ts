@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const {
       api_key,
       visitor_id,
-      event_type, // 'product_view', 'initiate_checkout', 'purchase', 'update_product_info'
+      event_type, // Only 'purchase' events are tracked
       product_id,
       product_name,
       product_page,
@@ -26,6 +26,11 @@ export async function POST(request: NextRequest) {
         { error: 'Missing required fields' },
         { status: 400 }
       )
+    }
+
+    // Only track purchase events
+    if (event_type !== 'purchase') {
+      return NextResponse.json({ success: true, message: 'Event ignored - only purchases are tracked' })
     }
 
     // Verify API key and get site_id
@@ -76,143 +81,25 @@ export async function POST(request: NextRequest) {
 
     const site_id = site.id
 
-    // Handle different event types
-    if (event_type === 'product_view') {
-      // Create or update conversion record
-      const { error } = await supabase
-        .from('cod_conversions')
-        .upsert(
-          {
-            site_id,
-            visitor_id,
-            product_name: product_name || 'Unknown',
-            product_page: product_page || '',
-            viewed_product: true,
-            source: source || 'Direct',
-            product_view_at: new Date().toISOString()
-          },
-          {
-            onConflict: 'visitor_id,site_id',
-            ignoreDuplicates: false
-          }
-        )
+    // Insert conversion record (purchase only)
+    const { error } = await supabase
+      .from('cod_conversions')
+      .insert({
+        site_id,
+        visitor_id,
+        product_name: product_name || 'Unknown',
+        product_id: product_id || '',
+        product_page: product_page || '',
+        viewed_product: true,
+        opened_form: true,
+        purchased: true,
+        value: value || 0,
+        currency: currency || 'EUR',
+        source: source || 'Direct',
+        purchased_at: new Date().toISOString()
+      })
 
-      if (error) throw error
-    } else if (event_type === 'initiate_checkout') {
-      // Find existing record or create new one
-      const { data: existing } = await supabase
-        .from('cod_conversions')
-        .select('*')
-        .eq('site_id', site_id)
-        .eq('visitor_id', visitor_id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-
-      if (existing) {
-        // Update existing record
-        const { error } = await supabase
-          .from('cod_conversions')
-          .update({
-            product_name: product_name || existing.product_name || 'Unknown',
-            product_id: product_id || existing.product_id,
-            product_page: product_page || existing.product_page,
-            viewed_product: true, // If they opened form, they viewed the product
-            opened_form: true,
-            form_opened_at: new Date().toISOString()
-          })
-          .eq('id', existing.id)
-
-        if (error) throw error
-      } else {
-        // Create new record
-        const { error } = await supabase
-          .from('cod_conversions')
-          .insert({
-            site_id,
-            visitor_id,
-            product_name: product_name || 'Unknown',
-            product_id: product_id || '',
-            product_page: product_page || '',
-            viewed_product: true, // If they opened form, they viewed the product
-            opened_form: true,
-            source: source || 'Direct',
-            form_opened_at: new Date().toISOString()
-          })
-
-        if (error) throw error
-      }
-    } else if (event_type === 'purchase') {
-      // Find the most recent conversion for this visitor
-      const { data: existing } = await supabase
-        .from('cod_conversions')
-        .select('*')
-        .eq('site_id', site_id)
-        .eq('visitor_id', visitor_id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-
-      if (existing) {
-        // Update existing record with purchase
-        const { error } = await supabase
-          .from('cod_conversions')
-          .update({
-            viewed_product: true, // If they purchased, they viewed the product
-            opened_form: true, // If they purchased, they opened the form
-            purchased: true,
-            value: value || 0,
-            currency: currency || 'EUR',
-            purchased_at: new Date().toISOString()
-          })
-          .eq('id', existing.id)
-
-        if (error) throw error
-      } else {
-        // Create new record with purchase (fallback)
-        const { error } = await supabase
-          .from('cod_conversions')
-          .insert({
-            site_id,
-            visitor_id,
-            product_name: product_name || 'Unknown',
-            product_page: product_page || '',
-            viewed_product: true, // If they purchased, they viewed the product
-            opened_form: true, // If they purchased, they opened the form
-            purchased: true,
-            value: value || 0,
-            currency: currency || 'EUR',
-            source: source || 'Direct',
-            purchased_at: new Date().toISOString()
-          })
-
-        if (error) throw error
-      }
-    } else if (event_type === 'update_product_info') {
-      // Update existing record with product info (fired when AddToCart comes after InitiateCheckout)
-      const { data: existing } = await supabase
-        .from('cod_conversions')
-        .select('*')
-        .eq('site_id', site_id)
-        .eq('visitor_id', visitor_id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-
-      if (existing && product_name && product_name !== 'Unknown') {
-        // Update with real product info
-        const { error } = await supabase
-          .from('cod_conversions')
-          .update({
-            product_name: product_name,
-            product_id: product_id || existing.product_id,
-            product_page: product_page || existing.product_page
-          })
-          .eq('id', existing.id)
-
-        if (error) throw error
-      }
-    }
+    if (error) throw error
 
     return NextResponse.json({ success: true })
   } catch (error: any) {

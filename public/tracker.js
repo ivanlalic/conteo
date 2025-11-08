@@ -245,7 +245,7 @@
         data = arguments[2] || {}; // data is 3rd argument
       }
 
-      // Capture product name from AddToCart event (contains product details)
+      // Capture product name from AddToCart event (save for later Purchase tracking)
       if (action === 'track' && event === 'AddToCart') {
         if (data.content_name) {
           sessionStorage.setItem('conteo_last_product_name', data.content_name);
@@ -253,17 +253,9 @@
         if (data.content_ids && data.content_ids[0]) {
           sessionStorage.setItem('conteo_last_product_id', data.content_ids[0]);
         }
-
-        // Send update to API (in case AddToCart fires after InitiateCheckout)
-        const productPage = sessionStorage.getItem('conteo_last_product') || window.location.pathname;
-        sendCODEvent('update_product_info', {
-          product_name: data.content_name,
-          product_id: data.content_ids?.[0] || '',
-          product_page: productPage
-        });
       }
 
-      // Handle Shopify trackShopify AddToCart (fires after InitiateCheckout on Releasit)
+      // Handle Shopify trackShopify AddToCart
       if (action === 'trackShopify' && event === 'AddToCart') {
         if (data.content_name) {
           sessionStorage.setItem('conteo_last_product_name', data.content_name);
@@ -271,29 +263,6 @@
         if (data.content_ids && data.content_ids[0]) {
           sessionStorage.setItem('conteo_last_product_id', data.content_ids[0]);
         }
-
-        // Send update to API to update existing COD record with product info
-        const productPage = sessionStorage.getItem('conteo_last_product') || window.location.pathname;
-        sendCODEvent('update_product_info', {
-          product_name: data.content_name,
-          product_id: data.content_ids?.[0] || '',
-          product_page: productPage
-        });
-      }
-
-      // Track InitiateCheckout
-      if (action === 'track' && event === 'InitiateCheckout') {
-        const productPage = sessionStorage.getItem('conteo_last_product') || '';
-        const productName = data.content_name || sessionStorage.getItem('conteo_last_product_name') || 'Unknown';
-        const productId = data.content_ids?.[0] || sessionStorage.getItem('conteo_last_product_id') || '';
-
-        sendCODEvent('initiate_checkout', {
-          product_name: productName,
-          product_id: productId,
-          product_page: productPage,
-          value: data.value || 0,
-          currency: data.currency || 'EUR'
-        });
       }
 
       // Track Purchase
@@ -355,14 +324,6 @@
             if (data.content_ids && data.content_ids[0]) {
               sessionStorage.setItem('conteo_last_product_id', data.content_ids[0]);
             }
-
-            // Send update to API
-            const productPage = sessionStorage.getItem('conteo_last_product') || window.location.pathname;
-            sendCODEvent('update_product_info', {
-              product_name: data.content_name,
-              product_id: data.content_ids?.[0] || '',
-              product_page: productPage
-            });
           }
 
           // Handle Shopify trackShopify AddToCart
@@ -373,28 +334,6 @@
             if (data.content_ids && data.content_ids[0]) {
               sessionStorage.setItem('conteo_last_product_id', data.content_ids[0]);
             }
-
-            // Send update to API
-            const productPage = sessionStorage.getItem('conteo_last_product') || window.location.pathname;
-            sendCODEvent('update_product_info', {
-              product_name: data.content_name,
-              product_id: data.content_ids?.[0] || '',
-              product_page: productPage
-            });
-          }
-
-          if (action === 'track' && event === 'InitiateCheckout') {
-            const productPage = sessionStorage.getItem('conteo_last_product') || '';
-            const productName = data.content_name || sessionStorage.getItem('conteo_last_product_name') || 'Unknown';
-            const productId = data.content_ids?.[0] || sessionStorage.getItem('conteo_last_product_id') || '';
-
-            sendCODEvent('initiate_checkout', {
-              product_name: productName,
-              product_id: productId,
-              product_page: productPage,
-              value: data.value || 0,
-              currency: data.currency || 'EUR'
-            });
           }
 
           if (action === 'track' && event === 'Purchase') {
@@ -441,28 +380,13 @@
         }
       }
 
-      // Track CompletePayment
+      // Track CompletePayment (TikTok's purchase event)
       if (event === 'CompletePayment') {
         const productPage = sessionStorage.getItem('conteo_last_product') || '';
         const productName = data.content_name || sessionStorage.getItem('conteo_last_product_name') || 'Unknown';
         const productId = data.content_id || sessionStorage.getItem('conteo_last_product_id') || '';
 
         sendCODEvent('purchase', {
-          product_name: productName,
-          product_id: productId,
-          product_page: productPage,
-          value: data.value || 0,
-          currency: data.currency || 'EUR'
-        });
-      }
-
-      // Track InitiateCheckout
-      if (event === 'InitiateCheckout') {
-        const productPage = sessionStorage.getItem('conteo_last_product') || '';
-        const productName = data.content_name || sessionStorage.getItem('conteo_last_product_name') || 'Unknown';
-        const productId = data.content_id || sessionStorage.getItem('conteo_last_product_id') || '';
-
-        sendCODEvent('initiate_checkout', {
           product_name: productName,
           product_id: productId,
           product_page: productPage,

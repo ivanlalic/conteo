@@ -547,18 +547,15 @@ function DashboardContent() {
 
     // COD Conversions
     if (selectedSite.cod_tracking_enabled && codConversions.length > 0) {
-      csv += 'COD CONVERSIONS\n'
-      csv += 'Product,Source,Views,Forms Opened,Purchases,View→Purchase %,Form→Purchase %,Revenue\n'
-      codConversions.forEach(conversion => {
-        const viewToPurchaseRate = Number(conversion.views) > 0
-          ? ((Number(conversion.purchases) / Number(conversion.views)) * 100).toFixed(1)
-          : '0.0'
-        const formToPurchaseRate = Number(conversion.forms) > 0
-          ? ((Number(conversion.purchases) / Number(conversion.forms)) * 100).toFixed(1)
-          : '0.0'
-        csv += `${escapeCSV(conversion.product_name)},${escapeCSV(conversion.source)},${conversion.views},${conversion.forms},${conversion.purchases},${viewToPurchaseRate}%,${formToPurchaseRate}%,€${Number(conversion.revenue || 0).toFixed(2)}\n`
-      })
-      csv += '\n'
+      const conversionsWithPurchases = codConversions.filter(c => Number(c.purchases) > 0)
+      if (conversionsWithPurchases.length > 0) {
+        csv += 'COD CONVERSIONS\n'
+        csv += 'Product,Source,Conversions,Revenue\n'
+        conversionsWithPurchases.forEach(conversion => {
+          csv += `${escapeCSV(conversion.product_name)},${escapeCSV(conversion.source)},${conversion.purchases},€${Number(conversion.revenue || 0).toFixed(2)}\n`
+        })
+        csv += '\n'
+      }
     }
 
     // Create download
@@ -1207,7 +1204,7 @@ function DashboardContent() {
               </h3>
             </div>
             <div className="p-4">
-              {codConversions.length === 0 ? (
+              {codConversions.filter(c => Number(c.purchases) > 0).length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-8">
                   No COD conversions tracked yet. Make sure your pixel events are configured correctly.
                 </p>
@@ -1216,56 +1213,46 @@ function DashboardContent() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead>
                       <tr>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Views</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Forms</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Purchases</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase" title="View to Purchase">V→P %</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase" title="Form to Purchase">F→P %</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Revenue</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Conversions</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Revenue</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {codConversions.map((conversion, i) => {
-                        // View to Purchase conversion rate
-                        const viewToPurchaseRate = Number(conversion.views) > 0
-                          ? ((Number(conversion.purchases) / Number(conversion.views)) * 100).toFixed(1)
-                          : '0.0'
+                      {codConversions
+                        .filter(conversion => Number(conversion.purchases) > 0)
+                        .map((conversion, i) => {
+                          // Source icon logic
+                          let sourceIcon = '🔗'
+                          const sourceLower = conversion.source.toLowerCase()
+                          if (sourceLower === 'direct') sourceIcon = '⚡'
+                          else if (sourceLower === 'google') sourceIcon = '🔍'
+                          else if (sourceLower === 'facebook') sourceIcon = '📘'
+                          else if (sourceLower === 'twitter') sourceIcon = '🐦'
+                          else if (sourceLower === 'instagram') sourceIcon = '📷'
+                          else if (sourceLower === 'tiktok') sourceIcon = '🎵'
 
-                        // Form to Purchase conversion rate
-                        const formToPurchaseRate = Number(conversion.forms) > 0
-                          ? ((Number(conversion.purchases) / Number(conversion.forms)) * 100).toFixed(1)
-                          : '0.0'
-
-                        // Source icon logic
-                        let sourceIcon = '🔗'
-                        const sourceLower = conversion.source.toLowerCase()
-                        if (sourceLower === 'direct') sourceIcon = '⚡'
-                        else if (sourceLower === 'google') sourceIcon = '🔍'
-                        else if (sourceLower === 'facebook') sourceIcon = '📘'
-                        else if (sourceLower === 'twitter') sourceIcon = '🐦'
-                        else if (sourceLower === 'instagram') sourceIcon = '📷'
-                        else if (sourceLower === 'tiktok') sourceIcon = '🎵'
-
-                        return (
-                          <tr key={i} className="hover:bg-gray-50">
-                            <td className="px-3 py-2 text-sm font-medium text-gray-900">{conversion.product_name}</td>
-                            <td className="px-3 py-2 text-sm text-gray-700">
-                              <span className="mr-1">{sourceIcon}</span>
-                              {conversion.source}
-                            </td>
-                            <td className="px-3 py-2 text-sm text-right text-gray-600">{Number(conversion.views).toLocaleString()}</td>
-                            <td className="px-3 py-2 text-sm text-right text-gray-600">{Number(conversion.forms).toLocaleString()}</td>
-                            <td className="px-3 py-2 text-sm text-right font-semibold text-green-600">{Number(conversion.purchases).toLocaleString()}</td>
-                            <td className="px-3 py-2 text-sm text-right font-medium text-blue-600" title="View to Purchase">{viewToPurchaseRate}%</td>
-                            <td className="px-3 py-2 text-sm text-right font-medium text-indigo-600" title="Form to Purchase">{formToPurchaseRate}%</td>
-                            <td className="px-3 py-2 text-sm text-right font-bold text-gray-900">
-                              €{Number(conversion.revenue || 0).toFixed(2)}
-                            </td>
-                          </tr>
-                        )
-                      })}
+                          return (
+                            <tr key={i} className="hover:bg-gray-50">
+                              <td className="px-4 py-3 text-sm font-medium text-gray-900">{conversion.product_name}</td>
+                              <td className="px-4 py-3 text-sm text-gray-700">
+                                <span className="inline-flex items-center gap-2">
+                                  <span className="text-lg">{sourceIcon}</span>
+                                  <span>{conversion.source}</span>
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right">
+                                <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-green-100 text-green-800 font-semibold">
+                                  {Number(conversion.purchases).toLocaleString()}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right font-bold text-gray-900">
+                                €{Number(conversion.revenue || 0).toFixed(2)}
+                              </td>
+                            </tr>
+                          )
+                        })}
                     </tbody>
                   </table>
                 </div>

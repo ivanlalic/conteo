@@ -1,4 +1,13 @@
+'use client'
+
 export default function Home() {
+  const trackCTAClick = (location: string) => {
+    // Track CTA clicks if Conteo is loaded (e.g., if we're self-tracking)
+    if (typeof window !== 'undefined' && (window as any).conteo) {
+      (window as any).conteo.trackEvent('CTA Click', { props: { location } })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
@@ -41,6 +50,7 @@ export default function Home() {
             <div className="flex justify-center">
               <a
                 href="/signup"
+                onClick={() => trackCTAClick('hero')}
                 className="bg-indigo-600 text-white px-10 py-4 rounded-lg text-lg font-semibold hover:bg-indigo-700 transition shadow-lg"
               >
                 Start tracking for free →
@@ -182,9 +192,42 @@ export default function Home() {
               <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">📈</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">UTM Campaigns</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Campaign Tracking</h3>
               <p className="text-gray-600">
-                Track your marketing campaigns. Know what's working and what's not.
+                Track UTM campaigns. Know which ads and posts drive real traffic.
+              </p>
+            </div>
+
+            {/* Feature 7 */}
+            <div className="text-center">
+              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">🎯</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Custom Events</h3>
+              <p className="text-gray-600">
+                Track button clicks, form submissions, downloads. Any action you want.
+              </p>
+            </div>
+
+            {/* Feature 8 */}
+            <div className="text-center">
+              <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">🚀</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Real-time Data</h3>
+              <p className="text-gray-600">
+                See who's on your site right now. Live visitor counts and activity feed.
+              </p>
+            </div>
+
+            {/* Feature 9 */}
+            <div className="text-center">
+              <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">📤</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Easy Export</h3>
+              <p className="text-gray-600">
+                Export your data to CSV anytime. Your data, your control.
               </p>
             </div>
           </div>
@@ -204,6 +247,7 @@ export default function Home() {
           </p>
           <a
             href="/signup"
+            onClick={() => trackCTAClick('bottom')}
             className="inline-block bg-white text-indigo-600 px-10 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transition shadow-lg"
           >
             Start tracking for free →

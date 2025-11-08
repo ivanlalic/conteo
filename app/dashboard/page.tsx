@@ -135,6 +135,7 @@ function DashboardContent() {
   const [copiedShareLink, setCopiedShareLink] = useState(false)
   const [codConversions, setCodConversions] = useState<CODConversion[]>([])
   const [customEvents, setCustomEvents] = useState<CustomEvent[]>([])
+  const [showEventsGuide, setShowEventsGuide] = useState(false)
   const [activeTab, setActiveTab] = useState<'overview' | 'cod' | 'events' | 'campaigns' | 'activity'>('overview')
 
   useEffect(() => {
@@ -1513,45 +1514,171 @@ function DashboardContent() {
                   </div>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead>
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Event Name
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                          Total Events
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                          Unique Visitors
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                          Conversion Rate
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {customEvents.map((event, i) => (
-                        <tr key={i} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                            {event.event_name}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-right text-gray-600">
-                            {Number(event.total_events).toLocaleString()}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-right text-gray-600">
-                            {Number(event.unique_visitors).toLocaleString()}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-right">
-                            <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold">
-                              {Number(event.conversion_rate).toFixed(1)}%
-                            </span>
-                          </td>
+                <div className="space-y-4">
+                  {/* Collapsible Documentation Guide */}
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setShowEventsGuide(!showEventsGuide)}
+                      className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition text-left"
+                    >
+                      <span className="text-sm font-semibold text-gray-700 flex items-center">
+                        <span className="mr-2">📚</span>
+                        How to track custom events
+                      </span>
+                      <span className="text-gray-500">
+                        {showEventsGuide ? '▼' : '▶'}
+                      </span>
+                    </button>
+
+                    {showEventsGuide && (
+                      <div className="p-4 bg-white border-t border-gray-200 space-y-6">
+                        {/* What are Custom Events */}
+                        <div>
+                          <h4 className="text-base font-bold text-gray-900 mb-2">📊 What are Custom Events?</h4>
+                          <p className="text-sm text-gray-600 leading-relaxed">
+                            Custom events let you track specific user actions beyond pageviews.
+                            Instead of just knowing <em>which pages</em> users visit, you can track <em>what they do</em> on those pages.
+                          </p>
+                        </div>
+
+                        {/* Use Cases */}
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">Common use cases:</h4>
+                          <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                            <div>• Button clicks ("CTA Click", "Buy Now")</div>
+                            <div>• Form submissions ("Contact Form", "Newsletter")</div>
+                            <div>• Downloads ("PDF Download", "eBook")</div>
+                            <div>• Video plays ("Tutorial Video")</div>
+                            <div>• Feature usage ("Filter Applied", "Search")</div>
+                            <div>• Signups ("Account Created")</div>
+                          </div>
+                        </div>
+
+                        {/* Basic Syntax */}
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">📝 Basic syntax:</h4>
+                          <div className="bg-white border border-gray-200 rounded p-3 text-xs font-mono text-gray-700">
+                            conteo.trackEvent(<span className="text-green-600">'Event Name'</span>, &#123; props: &#123; key: value &#125; &#125;)
+                          </div>
+                          <p className="text-xs text-gray-500 mt-2">
+                            <strong>Event Name:</strong> Describe what happened (e.g., "Button Click")
+                            <br />
+                            <strong>Properties (optional):</strong> Add context like which button, file name, etc.
+                          </p>
+                        </div>
+
+                        {/* Examples */}
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">💡 Real examples:</h4>
+                          <pre className="bg-gray-900 text-gray-100 p-4 rounded text-xs overflow-x-auto leading-relaxed">
+{`<!-- Example 1: Track button clicks inline -->
+<button onclick="conteo.trackEvent('CTA Click')">
+  Get Started
+</button>
+
+<!-- Example 2: Track with context (which button was clicked) -->
+<button onclick="conteo.trackEvent('CTA Click', {
+  props: { location: 'hero', label: 'Get Started' }
+})">
+  Get Started
+</button>
+
+<script>
+  // Example 3: Track form submissions
+  document.getElementById('contact-form').addEventListener('submit', (e) => {
+    conteo.trackEvent('Form Submit', {
+      props: { form: 'contact' }
+    })
+  })
+
+  // Example 4: Track file downloads
+  document.querySelectorAll('a[download]').forEach(link => {
+    link.addEventListener('click', () => {
+      conteo.trackEvent('Download', {
+        props: {
+          file: link.getAttribute('download'),
+          format: link.href.split('.').pop()
+        }
+      })
+    })
+  })
+
+  // Example 5: Track video engagement
+  const video = document.getElementById('demo-video')
+  video.addEventListener('play', () => {
+    conteo.trackEvent('Video Play', {
+      props: { video: 'product-demo' }
+    })
+  })
+
+  // Example 6: Track ecommerce actions
+  function addToCart(productId, productName) {
+    conteo.trackEvent('Add to Cart', {
+      props: {
+        product_id: productId,
+        product_name: productName
+      }
+    })
+  }
+</script>`}
+                          </pre>
+                        </div>
+
+                        {/* Tips */}
+                        <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                          <h4 className="text-xs font-semibold text-blue-900 mb-2">💡 Pro Tips:</h4>
+                          <ul className="text-xs text-blue-800 space-y-1">
+                            <li>• Use clear, consistent event names ("Button Click" not "btn_clk")</li>
+                            <li>• Add properties to segment your data (which button, which form, etc.)</li>
+                            <li>• Properties appear as separate columns in your exports</li>
+                            <li>• Events are tracked along with source, device, and location automatically</li>
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Events Table */}
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead>
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Event Name
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                            Total Events
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                            Unique Visitors
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                            Conversion Rate
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {customEvents.map((event, i) => (
+                          <tr key={i} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                              {event.event_name}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right text-gray-600">
+                              {Number(event.total_events).toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right text-gray-600">
+                              {Number(event.unique_visitors).toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right">
+                              <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold">
+                                {Number(event.conversion_rate).toFixed(1)}%
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>

@@ -87,18 +87,31 @@
   history.pushState = function () {
     originalPushState.apply(this, arguments);
     trackPageview();
+    checkProductPage();
   };
 
   history.replaceState = function () {
     originalReplaceState.apply(this, arguments);
     trackPageview();
+    checkProductPage();
   };
 
   // Track popstate (back/forward buttons)
-  window.addEventListener('popstate', trackPageview);
+  window.addEventListener('popstate', () => {
+    trackPageview();
+    checkProductPage();
+  });
 
   // Track hash changes (for hash-based routing)
   window.addEventListener('hashchange', trackPageview);
+
+  // Helper: Check if we're on a product page after navigation
+  function checkProductPage() {
+    if (window.location.pathname.includes('/products/')) {
+      sessionStorage.setItem('conteo_last_product', window.location.pathname);
+      setTimeout(() => extractShopifyProductInfo(), 500);
+    }
+  }
 
   // ============================================
   // COD TRACKING - Pixel Interceptor
@@ -108,11 +121,71 @@
   // Get COD tracking endpoint
   const codEndpoint = endpoint.replace('/api/track', '/api/track-cod');
 
-  // Track product page views
+  // Track product page views and extract product info from Shopify page
   let lastProductPage = null;
   if (window.location.pathname.includes('/products/')) {
     lastProductPage = window.location.pathname;
     sessionStorage.setItem('conteo_last_product', lastProductPage);
+
+    // Try to extract product info from Shopify's meta tags or JSON
+    setTimeout(() => {
+      extractShopifyProductInfo();
+    }, 500); // Wait for page to load
+  }
+
+  // Helper: Extract product info from Shopify page
+  function extractShopifyProductInfo() {
+    try {
+      // Method 1: Try to get from Shopify's product JSON (most reliable)
+      if (typeof ShopifyAnalytics !== 'undefined' && ShopifyAnalytics.meta) {
+        const product = ShopifyAnalytics.meta.product;
+        if (product) {
+          sessionStorage.setItem('conteo_last_product_name', product.title || product.name);
+          sessionStorage.setItem('conteo_last_product_id', String(product.id || product.variants?.[0]?.id || ''));
+          return;
+        }
+      }
+
+      // Method 2: Try meta.product from meta object
+      if (typeof meta !== 'undefined' && meta.product) {
+        const product = meta.product;
+        sessionStorage.setItem('conteo_last_product_name', product.title || product.name);
+        sessionStorage.setItem('conteo_last_product_id', String(product.id || product.variants?.[0]?.id || ''));
+        return;
+      }
+
+      // Method 3: Look for product JSON in script tags
+      const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+      for (const script of scripts) {
+        try {
+          const data = JSON.parse(script.textContent);
+          if (data['@type'] === 'Product') {
+            sessionStorage.setItem('conteo_last_product_name', data.name);
+            if (data.sku) {
+              sessionStorage.setItem('conteo_last_product_id', data.sku);
+            }
+            return;
+          }
+        } catch (e) {}
+      }
+
+      // Method 4: Try to find product form with product ID
+      const productForm = document.querySelector('form[action*="/cart/add"]');
+      if (productForm) {
+        const productIdInput = productForm.querySelector('input[name="id"], select[name="id"]');
+        const productTitleEl = document.querySelector('h1.product-title, h1.product__title, .product-single__title, [itemProp="name"]');
+
+        if (productIdInput && productIdInput.value) {
+          sessionStorage.setItem('conteo_last_product_id', productIdInput.value);
+        }
+
+        if (productTitleEl && productTitleEl.textContent) {
+          sessionStorage.setItem('conteo_last_product_name', productTitleEl.textContent.trim());
+        }
+      }
+    } catch (e) {
+      // Fail silently
+    }
   }
 
   // Helper: Send COD event

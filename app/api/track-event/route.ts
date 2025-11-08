@@ -52,7 +52,10 @@ export async function POST(request: NextRequest) {
         const originHostname = originUrl.hostname.replace(/^www\./, '')
         const siteDomain = site.domain.replace(/^www\./, '')
 
-        if (!originHostname.endsWith(siteDomain) && originHostname !== siteDomain) {
+        // Allow localhost for development
+        const isLocalhost = originHostname === 'localhost' || originHostname === '127.0.0.1' || originHostname.endsWith('.localhost')
+
+        if (!isLocalhost && !originHostname.endsWith(siteDomain) && originHostname !== siteDomain) {
           return NextResponse.json(
             { error: 'Invalid domain' },
             { status: 403 }

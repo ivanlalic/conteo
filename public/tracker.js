@@ -400,5 +400,52 @@
     };
   }
 
+  // ============================================
+  // CUSTOM EVENTS API
+  // Expose trackEvent function globally
+  // ============================================
+
+  // Get custom events endpoint
+  const eventsEndpoint = endpoint.replace('/api/track', '/api/track-event');
+
+  // Expose global API
+  window.conteo = window.conteo || {};
+  window.conteo.trackEvent = function(eventName, options) {
+    if (!eventName || typeof eventName !== 'string') {
+      console.error('[Conteo] trackEvent requires an event name');
+      return;
+    }
+
+    const payload = {
+      api_key: apiKey,
+      visitor_id: getVisitorId(),
+      session_id: sessionStorage.getItem('conteo_session_id'),
+      event_name: eventName,
+      properties: (options && options.props) || {},
+      path: window.location.pathname,
+      referrer: document.referrer || null,
+      source: getTrafficSource(),
+      device: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
+      browser: (function() {
+        const ua = navigator.userAgent;
+        if (ua.includes('Chrome')) return 'Chrome';
+        if (ua.includes('Safari')) return 'Safari';
+        if (ua.includes('Firefox')) return 'Firefox';
+        if (ua.includes('Edge')) return 'Edge';
+        return 'Other';
+      })(),
+      country: null // Will be detected server-side if needed
+    };
+
+    fetch(eventsEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true
+    }).catch((err) => {
+      console.error('[Conteo] Failed to track event:', err);
+    });
+  };
+
   console.log('[Conteo] Analytics initialized');
 })();

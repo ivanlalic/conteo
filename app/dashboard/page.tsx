@@ -94,6 +94,13 @@ interface CODConversion {
   revenue: number
 }
 
+interface CustomEvent {
+  event_name: string
+  total_events: number
+  unique_visitors: number
+  conversion_rate: number
+}
+
 function DashboardContent() {
   const { user, signOut } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -127,7 +134,8 @@ function DashboardContent() {
   const [siteShare, setSiteShare] = useState<SiteShare | null>(null)
   const [copiedShareLink, setCopiedShareLink] = useState(false)
   const [codConversions, setCodConversions] = useState<CODConversion[]>([])
-  const [activeTab, setActiveTab] = useState<'overview' | 'cod' | 'campaigns' | 'activity'>('overview')
+  const [customEvents, setCustomEvents] = useState<CustomEvent[]>([])
+  const [activeTab, setActiveTab] = useState<'overview' | 'cod' | 'events' | 'campaigns' | 'activity'>('overview')
 
   useEffect(() => {
     loadSites()
@@ -403,6 +411,9 @@ function DashboardContent() {
         setCodConversions([])
       }
 
+      // Load custom events
+      loadCustomEvents(periodStart, periodEnd)
+
     } catch (error) {
       console.error('Error loading stats:', error)
     }
@@ -424,6 +435,25 @@ function DashboardContent() {
       setCodConversions(data || [])
     } catch (error) {
       console.error('Error loading COD conversions:', error)
+    }
+  }
+
+  async function loadCustomEvents(periodStart: Date, periodEnd: Date) {
+    if (!selectedSite) return
+
+    try {
+      const { data, error } = await supabase
+        .rpc('get_custom_events_summary', {
+          site_uuid: selectedSite.id,
+          start_date: periodStart.toISOString(),
+          end_date: periodEnd.toISOString()
+        })
+
+      if (error) throw error
+
+      setCustomEvents(data || [])
+    } catch (error) {
+      console.error('Error loading custom events:', error)
     }
   }
 
@@ -987,6 +1017,17 @@ function DashboardContent() {
             )}
 
             <button
+              onClick={() => setActiveTab('events')}
+              className={`flex-1 min-w-[100px] px-4 py-2 rounded-md text-sm font-medium transition ${
+                activeTab === 'events'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              🎯 Events
+            </button>
+
+            <button
               onClick={() => setActiveTab('campaigns')}
               className={`flex-1 min-w-[100px] px-4 py-2 rounded-md text-sm font-medium transition ${
                 activeTab === 'campaigns'
@@ -1345,6 +1386,95 @@ function DashboardContent() {
                       </table>
                     )
                   })()}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab Content: Custom Events */}
+        {activeTab === 'events' && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-4 py-3 border-b border-gray-200">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center">
+                <span className="mr-2">🎯</span>
+                Custom Events
+              </h3>
+            </div>
+            <div className="p-4">
+              {customEvents.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-sm text-gray-500 mb-4">
+                    No custom events tracked yet
+                  </p>
+                  <div className="bg-gray-50 rounded-lg p-6 max-w-2xl mx-auto text-left">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Track custom events like:</h4>
+                    <ul className="text-sm text-gray-600 space-y-2 mb-4">
+                      <li>• Button clicks</li>
+                      <li>• Form submissions</li>
+                      <li>• Downloads</li>
+                      <li>• Signups</li>
+                    </ul>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-2">Add this to your site:</h4>
+                    <pre className="bg-gray-900 text-gray-100 p-3 rounded text-xs overflow-x-auto">
+{`<button onclick="conteo.trackEvent('Button Click')">
+  Click me
+</button>
+
+<script>
+  // Track form submission
+  document.getElementById('form').addEventListener('submit', () => {
+    conteo.trackEvent('Form Submit')
+  })
+
+  // Track with properties
+  conteo.trackEvent('Download', {
+    props: { file: 'whitepaper.pdf' }
+  })
+</script>`}
+                    </pre>
+                  </div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead>
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Event Name
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                          Total Events
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                          Unique Visitors
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                          Conversion Rate
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {customEvents.map((event, i) => (
+                        <tr key={i} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                            {event.event_name}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right text-gray-600">
+                            {Number(event.total_events).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right text-gray-600">
+                            {Number(event.unique_visitors).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right">
+                            <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold">
+                              {Number(event.conversion_rate).toFixed(1)}%
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>

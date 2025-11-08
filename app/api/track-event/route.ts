@@ -52,10 +52,20 @@ export async function POST(request: NextRequest) {
         const originHostname = originUrl.hostname.replace(/^www\./, '')
         const siteDomain = site.domain.replace(/^www\./, '')
 
+        // Temporary debug logging
+        console.log('[Track Event API Debug]', {
+          origin,
+          originHostname,
+          siteDomain,
+          siteId: site.id,
+          apiKey: api_key.substring(0, 8) + '...'
+        })
+
         // Allow localhost for development
         const isLocalhost = originHostname === 'localhost' || originHostname === '127.0.0.1' || originHostname.endsWith('.localhost')
 
         if (!isLocalhost && !originHostname.endsWith(siteDomain) && originHostname !== siteDomain) {
+          console.error('[Track Event API] Domain validation failed', { originHostname, siteDomain })
           return NextResponse.json(
             { error: 'Invalid domain' },
             { status: 403 }

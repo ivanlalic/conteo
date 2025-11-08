@@ -57,11 +57,21 @@ export async function POST(request: NextRequest) {
         const refererHostname = refererUrl.hostname.replace(/^www\./, '') // Remove www.
         const siteDomain = site.domain.replace(/^www\./, '') // Remove www.
 
+        // Temporary debug logging
+        console.log('[Track API Debug]', {
+          referer,
+          refererHostname,
+          siteDomain,
+          siteId: site.id,
+          apiKey: api_key.substring(0, 8) + '...'
+        })
+
         // Allow localhost for development
         const isLocalhost = refererHostname === 'localhost' || refererHostname === '127.0.0.1' || refererHostname.endsWith('.localhost')
 
         // Check if referer matches site domain (allow subdomains) or is localhost
         if (!isLocalhost && !refererHostname.endsWith(siteDomain) && refererHostname !== siteDomain) {
+          console.error('[Track API] Domain validation failed', { refererHostname, siteDomain })
           return NextResponse.json(
             { error: 'Invalid domain' },
             { status: 403 }

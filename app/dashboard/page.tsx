@@ -545,14 +545,43 @@ function DashboardContent() {
       csv += '\n'
     }
 
-    // COD Conversions
+    // COD Conversions (pivoted by source)
     if (selectedSite.cod_tracking_enabled && codConversions.length > 0) {
       const conversionsWithPurchases = codConversions.filter(c => Number(c.purchases) > 0)
       if (conversionsWithPurchases.length > 0) {
-        csv += 'COD CONVERSIONS\n'
-        csv += 'Product,Source,Conversions,Revenue\n'
+        // Get all unique sources
+        const allSources = Array.from(new Set(conversionsWithPurchases.map(c => c.source))).sort()
+
+        // Group by product
+        const productMap = new Map()
         conversionsWithPurchases.forEach(conversion => {
-          csv += `${escapeCSV(conversion.product_name)},${escapeCSV(conversion.source)},${conversion.purchases},€${Number(conversion.revenue || 0).toFixed(2)}\n`
+          if (!productMap.has(conversion.product_name)) {
+            productMap.set(conversion.product_name, {
+              name: conversion.product_name,
+              sources: new Map(),
+              totalConversions: 0,
+              totalRevenue: 0
+            })
+          }
+          const product = productMap.get(conversion.product_name)
+          const conversions = Number(conversion.purchases)
+          const revenue = Number(conversion.revenue || 0)
+          product.sources.set(conversion.source, { conversions, revenue })
+          product.totalConversions += conversions
+          product.totalRevenue += revenue
+        })
+
+        csv += 'COD CONVERSIONS\n'
+        csv += 'Product,' + allSources.join(',') + ',Total Conversions,Total Revenue\n'
+
+        Array.from(productMap.values()).forEach(product => {
+          csv += escapeCSV(product.name)
+          allSources.forEach(source => {
+            const data = product.sources.get(source)
+            csv += ',' + (data ? data.conversions : '0')
+          })
+          csv += ',' + product.totalConversions
+          csv += ',€' + product.totalRevenue.toFixed(2) + '\n'
         })
         csv += '\n'
       }
@@ -1210,51 +1239,112 @@ function DashboardContent() {
                 </p>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead>
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Conversions</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Revenue</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {codConversions
-                        .filter(conversion => Number(conversion.purchases) > 0)
-                        .map((conversion, i) => {
-                          // Source icon logic
-                          let sourceIcon = '🔗'
-                          const sourceLower = conversion.source.toLowerCase()
-                          if (sourceLower === 'direct') sourceIcon = '⚡'
-                          else if (sourceLower === 'google') sourceIcon = '🔍'
-                          else if (sourceLower === 'facebook') sourceIcon = '📘'
-                          else if (sourceLower === 'twitter') sourceIcon = '🐦'
-                          else if (sourceLower === 'instagram') sourceIcon = '📷'
-                          else if (sourceLower === 'tiktok') sourceIcon = '🎵'
+                  {(() => {
+                    // Get all unique sources
+                    const allSources = Array.from(new Set(
+                      codConversions
+                        .filter(c => Number(c.purchases) > 0)
+                        .map(c => c.source)
+                    )).sort()
 
-                          return (
+                    // Source icon mapping
+                    const getSourceIcon = (source: string) => {
+                      const sourceLower = source.toLowerCase()
+                      if (sourceLower === 'direct') return '⚡'
+                      if (sourceLower === 'google') return '🔍'
+                      if (sourceLower === 'facebook') return '📘'
+                      if (sourceLower === 'twitter') return '🐦'
+                      if (sourceLower === 'instagram') return '📷'
+                      if (sourceLower === 'tiktok') return '🎵'
+                      return '🔗'
+                    }
+
+                    // Group by product
+                    const productMap = new Map<string, {
+                      name: string
+                      sources: Map<string, { conversions: number, revenue: number }>
+                      totalConversions: number
+                      totalRevenue: number
+                    }>()
+
+                    codConversions
+                      .filter(c => Number(c.purchases) > 0)
+                      .forEach(conversion => {
+                        if (!productMap.has(conversion.product_name)) {
+                          productMap.set(conversion.product_name, {
+                            name: conversion.product_name,
+                            sources: new Map(),
+                            totalConversions: 0,
+                            totalRevenue: 0
+                          })
+                        }
+
+                        const product = productMap.get(conversion.product_name)!
+                        const conversions = Number(conversion.purchases)
+                        const revenue = Number(conversion.revenue || 0)
+
+                        product.sources.set(conversion.source, { conversions, revenue })
+                        product.totalConversions += conversions
+                        product.totalRevenue += revenue
+                      })
+
+                    const products = Array.from(productMap.values())
+
+                    return (
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead>
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase sticky left-0 bg-white">
+                              Product
+                            </th>
+                            {allSources.map(source => (
+                              <th key={source} className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                                <span className="inline-flex flex-col items-center gap-1">
+                                  <span className="text-lg">{getSourceIcon(source)}</span>
+                                  <span>{source}</span>
+                                </span>
+                              </th>
+                            ))}
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase bg-gray-50">
+                              Total Conv.
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase bg-gray-50">
+                              Total Revenue
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {products.map((product, i) => (
                             <tr key={i} className="hover:bg-gray-50">
-                              <td className="px-4 py-3 text-sm font-medium text-gray-900">{conversion.product_name}</td>
-                              <td className="px-4 py-3 text-sm text-gray-700">
-                                <span className="inline-flex items-center gap-2">
-                                  <span className="text-lg">{sourceIcon}</span>
-                                  <span>{conversion.source}</span>
-                                </span>
+                              <td className="px-4 py-3 text-sm font-medium text-gray-900 sticky left-0 bg-white">
+                                {product.name}
                               </td>
-                              <td className="px-4 py-3 text-sm text-right">
-                                <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-green-100 text-green-800 font-semibold">
-                                  {Number(conversion.purchases).toLocaleString()}
-                                </span>
+                              {allSources.map(source => {
+                                const data = product.sources.get(source)
+                                return (
+                                  <td key={source} className="px-3 py-3 text-center text-sm">
+                                    {data ? (
+                                      <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-indigo-100 text-indigo-800 font-semibold min-w-[2rem]">
+                                        {data.conversions}
+                                      </span>
+                                    ) : (
+                                      <span className="text-gray-300">-</span>
+                                    )}
+                                  </td>
+                                )
+                              })}
+                              <td className="px-4 py-3 text-sm text-right font-bold text-gray-900 bg-gray-50">
+                                {product.totalConversions}
                               </td>
-                              <td className="px-4 py-3 text-sm text-right font-bold text-gray-900">
-                                €{Number(conversion.revenue || 0).toFixed(2)}
+                              <td className="px-4 py-3 text-sm text-right font-bold text-green-600 bg-gray-50">
+                                €{product.totalRevenue.toFixed(2)}
                               </td>
                             </tr>
-                          )
-                        })}
-                    </tbody>
-                  </table>
+                          ))}
+                        </tbody>
+                      </table>
+                    )
+                  })()}
                 </div>
               )}
             </div>

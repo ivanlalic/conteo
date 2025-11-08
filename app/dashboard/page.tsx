@@ -1404,35 +1404,112 @@ function DashboardContent() {
             <div className="p-4">
               {customEvents.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-sm text-gray-500 mb-6">
                     No custom events tracked yet
                   </p>
-                  <div className="bg-gray-50 rounded-lg p-6 max-w-2xl mx-auto text-left">
-                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Track custom events like:</h4>
-                    <ul className="text-sm text-gray-600 space-y-2 mb-4">
-                      <li>• Button clicks</li>
-                      <li>• Form submissions</li>
-                      <li>• Downloads</li>
-                      <li>• Signups</li>
-                    </ul>
-                    <h4 className="text-sm font-semibold text-gray-900 mb-2">Add this to your site:</h4>
-                    <pre className="bg-gray-900 text-gray-100 p-3 rounded text-xs overflow-x-auto">
-{`<button onclick="conteo.trackEvent('Button Click')">
-  Click me
+                  <div className="bg-gray-50 rounded-lg p-6 max-w-3xl mx-auto text-left space-y-6">
+                    {/* What are Custom Events */}
+                    <div>
+                      <h4 className="text-base font-bold text-gray-900 mb-2">📊 What are Custom Events?</h4>
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        Custom events let you track specific user actions beyond pageviews.
+                        Instead of just knowing <em>which pages</em> users visit, you can track <em>what they do</em> on those pages.
+                      </p>
+                    </div>
+
+                    {/* Use Cases */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-900 mb-2">Common use cases:</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                        <div>• Button clicks ("CTA Click", "Buy Now")</div>
+                        <div>• Form submissions ("Contact Form", "Newsletter")</div>
+                        <div>• Downloads ("PDF Download", "eBook")</div>
+                        <div>• Video plays ("Tutorial Video")</div>
+                        <div>• Feature usage ("Filter Applied", "Search")</div>
+                        <div>• Signups ("Account Created")</div>
+                      </div>
+                    </div>
+
+                    {/* Basic Syntax */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-900 mb-2">📝 Basic syntax:</h4>
+                      <div className="bg-white border border-gray-200 rounded p-3 text-xs font-mono text-gray-700">
+                        conteo.trackEvent(<span className="text-green-600">'Event Name'</span>, &#123; props: &#123; key: value &#125; &#125;)
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">
+                        <strong>Event Name:</strong> Describe what happened (e.g., "Button Click")
+                        <br />
+                        <strong>Properties (optional):</strong> Add context like which button, file name, etc.
+                      </p>
+                    </div>
+
+                    {/* Examples */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-900 mb-2">💡 Real examples:</h4>
+                      <pre className="bg-gray-900 text-gray-100 p-4 rounded text-xs overflow-x-auto leading-relaxed">
+{`<!-- Example 1: Track button clicks inline -->
+<button onclick="conteo.trackEvent('CTA Click')">
+  Get Started
+</button>
+
+<!-- Example 2: Track with context (which button was clicked) -->
+<button onclick="conteo.trackEvent('CTA Click', {
+  props: { location: 'hero', label: 'Get Started' }
+})">
+  Get Started
 </button>
 
 <script>
-  // Track form submission
-  document.getElementById('form').addEventListener('submit', () => {
-    conteo.trackEvent('Form Submit')
+  // Example 3: Track form submissions
+  document.getElementById('contact-form').addEventListener('submit', (e) => {
+    conteo.trackEvent('Form Submit', {
+      props: { form: 'contact' }
+    })
   })
 
-  // Track with properties
-  conteo.trackEvent('Download', {
-    props: { file: 'whitepaper.pdf' }
+  // Example 4: Track file downloads
+  document.querySelectorAll('a[download]').forEach(link => {
+    link.addEventListener('click', () => {
+      conteo.trackEvent('Download', {
+        props: {
+          file: link.getAttribute('download'),
+          format: link.href.split('.').pop()
+        }
+      })
+    })
   })
+
+  // Example 5: Track video engagement
+  const video = document.getElementById('demo-video')
+  video.addEventListener('play', () => {
+    conteo.trackEvent('Video Play', {
+      props: { video: 'product-demo' }
+    })
+  })
+
+  // Example 6: Track ecommerce actions
+  function addToCart(productId, productName) {
+    conteo.trackEvent('Add to Cart', {
+      props: {
+        product_id: productId,
+        product_name: productName
+      }
+    })
+  }
 </script>`}
-                    </pre>
+                      </pre>
+                    </div>
+
+                    {/* Tips */}
+                    <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                      <h4 className="text-xs font-semibold text-blue-900 mb-2">💡 Pro Tips:</h4>
+                      <ul className="text-xs text-blue-800 space-y-1">
+                        <li>• Use clear, consistent event names ("Button Click" not "btn_clk")</li>
+                        <li>• Add properties to segment your data (which button, which form, etc.)</li>
+                        <li>• Properties appear as separate columns in your exports</li>
+                        <li>• Events are tracked along with source, device, and location automatically</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               ) : (

@@ -1806,14 +1806,14 @@ function DashboardContent() {
                                           ) : (
                                             <div className="space-y-2">
                                               {details.sources.slice(0, 5).map((source, idx) => {
-                                                const percentage = ((Number(source.event_count) / totalEvents) * 100)
+                                                const percentage = Math.min(((Number(source.event_count) / totalEvents) * 100), 100)
                                                 return (
                                                   <div key={idx} className="space-y-1">
                                                     <div className="flex items-center justify-between text-xs">
                                                       <span className="font-medium text-gray-700">{source.source}</span>
                                                       <span className="text-gray-500">{Number(source.event_count).toLocaleString()} ({percentage.toFixed(0)}%)</span>
                                                     </div>
-                                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                    <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
                                                       <div className="bg-indigo-600 h-1.5 rounded-full transition-all" style={{ width: `${percentage}%` }} />
                                                     </div>
                                                   </div>
@@ -1824,22 +1824,22 @@ function DashboardContent() {
                                         </div>
 
                                         <div className="bg-white rounded-lg border border-gray-200 p-3">
-                                          <h4 className="text-xs font-semibold text-gray-700 mb-3 flex items-center">
-                                            <span className="mr-1">📄</span>Top Pages
+                                          <h4 className="text-xs font-semibold text-gray-700 mb-3">
+                                            Top Pages
                                           </h4>
                                           {details.pages.length === 0 ? (
                                             <p className="text-xs text-gray-500">No page data</p>
                                           ) : (
                                             <div className="space-y-2">
                                               {details.pages.slice(0, 5).map((page, idx) => {
-                                                const percentage = ((Number(page.event_count) / totalEvents) * 100)
+                                                const percentage = Math.min(((Number(page.event_count) / totalEvents) * 100), 100)
                                                 return (
                                                   <div key={idx} className="space-y-1">
                                                     <div className="flex items-center justify-between text-xs">
                                                       <span className="font-medium text-gray-700 truncate">{page.path || '/'}</span>
                                                       <span className="text-gray-500 ml-2 flex-shrink-0">{Number(page.event_count).toLocaleString()} ({percentage.toFixed(0)}%)</span>
                                                     </div>
-                                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                    <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
                                                       <div className="bg-indigo-600 h-1.5 rounded-full transition-all" style={{ width: `${percentage}%` }} />
                                                     </div>
                                                   </div>
@@ -1858,14 +1858,14 @@ function DashboardContent() {
                                           ) : (
                                             <div className="space-y-2">
                                               {details.devices.map((device, idx) => {
-                                                const percentage = ((Number(device.event_count) / totalEvents) * 100)
+                                                const percentage = Math.min(((Number(device.event_count) / totalEvents) * 100), 100)
                                                 return (
                                                   <div key={idx} className="space-y-1">
                                                     <div className="flex items-center justify-between text-xs">
                                                       <span className="font-medium text-gray-700">{device.device}</span>
                                                       <span className="text-gray-500">{Number(device.event_count).toLocaleString()} ({percentage.toFixed(0)}%)</span>
                                                     </div>
-                                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                    <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
                                                       <div className="bg-indigo-600 h-1.5 rounded-full transition-all" style={{ width: `${percentage}%` }} />
                                                     </div>
                                                   </div>
@@ -1882,14 +1882,14 @@ function DashboardContent() {
                                             </h4>
                                             <div className="space-y-2">
                                               {details.properties.slice(0, 5).map((prop, idx) => {
-                                                const percentage = ((Number(prop.event_count) / totalEvents) * 100)
+                                                const percentage = Math.min(((Number(prop.event_count) / totalEvents) * 100), 100)
                                                 return (
                                                   <div key={idx} className="space-y-1">
                                                     <div className="flex items-center justify-between text-xs">
                                                       <span className="font-medium text-gray-700">{prop.property_key}: {prop.property_value}</span>
                                                       <span className="text-gray-500 ml-2 flex-shrink-0">{Number(prop.event_count).toLocaleString()} ({percentage.toFixed(0)}%)</span>
                                                     </div>
-                                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                    <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
                                                       <div className="bg-indigo-600 h-1.5 rounded-full transition-all" style={{ width: `${percentage}%` }} />
                                                     </div>
                                                   </div>

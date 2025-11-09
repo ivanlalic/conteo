@@ -134,8 +134,10 @@
       if (typeof ShopifyAnalytics !== 'undefined' && ShopifyAnalytics.meta) {
         const product = ShopifyAnalytics.meta.product;
         if (product) {
-          sessionStorage.setItem('conteo_last_product_name', product.title || product.name);
-          sessionStorage.setItem('conteo_last_product_id', String(product.id || product.variants?.[0]?.id || ''));
+          const productName = product.title || product.name;
+          const productId = product.id || product.variants?.[0]?.id;
+          if (productName) sessionStorage.setItem('conteo_last_product_name', productName);
+          if (productId) sessionStorage.setItem('conteo_last_product_id', String(productId));
           return;
         }
       }
@@ -143,8 +145,10 @@
       // Method 2: Try meta.product from meta object
       if (typeof meta !== 'undefined' && meta.product) {
         const product = meta.product;
-        sessionStorage.setItem('conteo_last_product_name', product.title || product.name);
-        sessionStorage.setItem('conteo_last_product_id', String(product.id || product.variants?.[0]?.id || ''));
+        const productName = product.title || product.name;
+        const productId = product.id || product.variants?.[0]?.id;
+        if (productName) sessionStorage.setItem('conteo_last_product_name', productName);
+        if (productId) sessionStorage.setItem('conteo_last_product_id', String(productId));
         return;
       }
 
@@ -154,10 +158,8 @@
         try {
           const data = JSON.parse(script.textContent);
           if (data['@type'] === 'Product') {
-            sessionStorage.setItem('conteo_last_product_name', data.name);
-            if (data.sku) {
-              sessionStorage.setItem('conteo_last_product_id', data.sku);
-            }
+            if (data.name) sessionStorage.setItem('conteo_last_product_name', data.name);
+            if (data.sku) sessionStorage.setItem('conteo_last_product_id', data.sku);
             return;
           }
         } catch (e) {}
@@ -174,7 +176,8 @@
         }
 
         if (productTitleEl && productTitleEl.textContent) {
-          sessionStorage.setItem('conteo_last_product_name', productTitleEl.textContent.trim());
+          const title = productTitleEl.textContent.trim();
+          if (title) sessionStorage.setItem('conteo_last_product_name', title);
         }
       }
     } catch (e) {
@@ -241,33 +244,41 @@
 
       // Capture product name from AddToCart event (save for later Purchase tracking)
       if (action === 'track' && event === 'AddToCart') {
-        if (data.content_name) {
+        if (data.content_name && data.content_name !== 'undefined') {
           sessionStorage.setItem('conteo_last_product_name', data.content_name);
         }
-        if (data.content_ids && data.content_ids[0]) {
-          sessionStorage.setItem('conteo_last_product_id', data.content_ids[0]);
+        if (data.content_ids && data.content_ids[0] && data.content_ids[0] !== 'undefined') {
+          sessionStorage.setItem('conteo_last_product_id', String(data.content_ids[0]));
         }
       }
 
       // Handle Shopify trackShopify AddToCart
       if (action === 'trackShopify' && event === 'AddToCart') {
-        if (data.content_name) {
+        if (data.content_name && data.content_name !== 'undefined') {
           sessionStorage.setItem('conteo_last_product_name', data.content_name);
         }
-        if (data.content_ids && data.content_ids[0]) {
-          sessionStorage.setItem('conteo_last_product_id', data.content_ids[0]);
+        if (data.content_ids && data.content_ids[0] && data.content_ids[0] !== 'undefined') {
+          sessionStorage.setItem('conteo_last_product_id', String(data.content_ids[0]));
         }
       }
 
       // Track Purchase
       if (action === 'track' && event === 'Purchase') {
         const productPage = sessionStorage.getItem('conteo_last_product') || '';
-        const productName = data.content_name || sessionStorage.getItem('conteo_last_product_name') || 'Unknown';
-        const productId = data.content_ids?.[0] || sessionStorage.getItem('conteo_last_product_id') || '';
+        let productName = data.content_name || sessionStorage.getItem('conteo_last_product_name');
+        let productId = data.content_ids?.[0] || sessionStorage.getItem('conteo_last_product_id');
+
+        // Don't send if productName is still undefined or the string "undefined"
+        if (!productName || productName === 'undefined') {
+          productName = 'Unknown Product';
+        }
+        if (!productId || productId === 'undefined') {
+          productId = '';
+        }
 
         sendCODEvent('purchase', {
           product_name: productName,
-          product_id: productId,
+          product_id: String(productId),
           product_page: productPage,
           value: data.value || 0,
           currency: data.currency || 'EUR'
@@ -312,32 +323,40 @@
 
           // Capture product name from AddToCart
           if (action === 'track' && event === 'AddToCart') {
-            if (data.content_name) {
+            if (data.content_name && data.content_name !== 'undefined') {
               sessionStorage.setItem('conteo_last_product_name', data.content_name);
             }
-            if (data.content_ids && data.content_ids[0]) {
-              sessionStorage.setItem('conteo_last_product_id', data.content_ids[0]);
+            if (data.content_ids && data.content_ids[0] && data.content_ids[0] !== 'undefined') {
+              sessionStorage.setItem('conteo_last_product_id', String(data.content_ids[0]));
             }
           }
 
           // Handle Shopify trackShopify AddToCart
           if (action === 'trackShopify' && event === 'AddToCart') {
-            if (data.content_name) {
+            if (data.content_name && data.content_name !== 'undefined') {
               sessionStorage.setItem('conteo_last_product_name', data.content_name);
             }
-            if (data.content_ids && data.content_ids[0]) {
-              sessionStorage.setItem('conteo_last_product_id', data.content_ids[0]);
+            if (data.content_ids && data.content_ids[0] && data.content_ids[0] !== 'undefined') {
+              sessionStorage.setItem('conteo_last_product_id', String(data.content_ids[0]));
             }
           }
 
           if (action === 'track' && event === 'Purchase') {
             const productPage = sessionStorage.getItem('conteo_last_product') || '';
-            const productName = data.content_name || sessionStorage.getItem('conteo_last_product_name') || 'Unknown';
-            const productId = data.content_ids?.[0] || sessionStorage.getItem('conteo_last_product_id') || '';
+            let productName = data.content_name || sessionStorage.getItem('conteo_last_product_name');
+            let productId = data.content_ids?.[0] || sessionStorage.getItem('conteo_last_product_id');
+
+            // Don't send if productName is still undefined or the string "undefined"
+            if (!productName || productName === 'undefined') {
+              productName = 'Unknown Product';
+            }
+            if (!productId || productId === 'undefined') {
+              productId = '';
+            }
 
             sendCODEvent('purchase', {
               product_name: productName,
-              product_id: productId,
+              product_id: String(productId),
               product_page: productPage,
               value: data.value || 0,
               currency: data.currency || 'EUR'
@@ -366,23 +385,31 @@
 
       // Capture product name from AddToCart
       if (event === 'AddToCart') {
-        if (data.content_name) {
+        if (data.content_name && data.content_name !== 'undefined') {
           sessionStorage.setItem('conteo_last_product_name', data.content_name);
         }
-        if (data.content_id) {
-          sessionStorage.setItem('conteo_last_product_id', data.content_id);
+        if (data.content_id && data.content_id !== 'undefined') {
+          sessionStorage.setItem('conteo_last_product_id', String(data.content_id));
         }
       }
 
       // Track CompletePayment (TikTok's purchase event)
       if (event === 'CompletePayment') {
         const productPage = sessionStorage.getItem('conteo_last_product') || '';
-        const productName = data.content_name || sessionStorage.getItem('conteo_last_product_name') || 'Unknown';
-        const productId = data.content_id || sessionStorage.getItem('conteo_last_product_id') || '';
+        let productName = data.content_name || sessionStorage.getItem('conteo_last_product_name');
+        let productId = data.content_id || sessionStorage.getItem('conteo_last_product_id');
+
+        // Don't send if productName is still undefined or the string "undefined"
+        if (!productName || productName === 'undefined') {
+          productName = 'Unknown Product';
+        }
+        if (!productId || productId === 'undefined') {
+          productId = '';
+        }
 
         sendCODEvent('purchase', {
           product_name: productName,
-          product_id: productId,
+          product_id: String(productId),
           product_page: productPage,
           value: data.value || 0,
           currency: data.currency || 'EUR'

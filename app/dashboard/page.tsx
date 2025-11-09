@@ -1420,7 +1420,15 @@ function DashboardContent() {
                         const conversions = Number(conversion.purchases)
                         const revenue = Number(conversion.revenue || 0)
 
-                        product.sources.set(conversion.source, { conversions, revenue })
+                        // Accumulate conversions and revenue per source (don't overwrite)
+                        const existingSource = product.sources.get(conversion.source)
+                        if (existingSource) {
+                          existingSource.conversions += conversions
+                          existingSource.revenue += revenue
+                        } else {
+                          product.sources.set(conversion.source, { conversions, revenue })
+                        }
+
                         product.totalConversions += conversions
                         product.totalRevenue += revenue
                       })

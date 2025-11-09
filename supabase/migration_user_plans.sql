@@ -21,13 +21,18 @@ CREATE TABLE IF NOT EXISTS user_plans (
 );
 
 -- Index for fast user queries
-CREATE INDEX idx_user_plans_user_id ON user_plans(user_id);
-CREATE INDEX idx_user_plans_tier ON user_plans(plan_tier);
+CREATE INDEX IF NOT EXISTS idx_user_plans_user_id ON user_plans(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_plans_tier ON user_plans(plan_tier);
 
 -- ============================================
 -- ROW LEVEL SECURITY
 -- ============================================
 ALTER TABLE user_plans ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view their own plan" ON user_plans;
+DROP POLICY IF EXISTS "Users can insert their own plan" ON user_plans;
+DROP POLICY IF EXISTS "Users can update their own plan" ON user_plans;
 
 -- Users can view their own plan
 CREATE POLICY "Users can view their own plan"
@@ -47,6 +52,7 @@ CREATE POLICY "Users can update their own plan"
 -- ============================================
 -- AUTO-UPDATE TIMESTAMP TRIGGER
 -- ============================================
+DROP TRIGGER IF EXISTS update_user_plans_updated_at ON user_plans;
 CREATE TRIGGER update_user_plans_updated_at
   BEFORE UPDATE ON user_plans
   FOR EACH ROW
@@ -108,7 +114,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Trigger on auth.users insert
+-- Drop and recreate trigger on auth.users insert
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW

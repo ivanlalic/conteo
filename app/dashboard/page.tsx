@@ -101,6 +101,38 @@ interface CustomEvent {
   conversion_rate: number
 }
 
+interface EventBreakdownSource {
+  source: string
+  event_count: number
+  unique_visitors: number
+}
+
+interface EventBreakdownPage {
+  path: string
+  event_count: number
+  unique_visitors: number
+}
+
+interface EventBreakdownDevice {
+  device: string
+  event_count: number
+  unique_visitors: number
+}
+
+interface EventBreakdownProperty {
+  property_key: string
+  property_value: string
+  event_count: number
+  unique_visitors: number
+}
+
+interface EventDetails {
+  sources: EventBreakdownSource[]
+  pages: EventBreakdownPage[]
+  devices: EventBreakdownDevice[]
+  properties: EventBreakdownProperty[]
+}
+
 function DashboardContent() {
   const { user, signOut } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -136,6 +168,9 @@ function DashboardContent() {
   const [codConversions, setCodConversions] = useState<CODConversion[]>([])
   const [customEvents, setCustomEvents] = useState<CustomEvent[]>([])
   const [showEventsGuide, setShowEventsGuide] = useState(false)
+  const [expandedEvent, setExpandedEvent] = useState<string | null>(null)
+  const [eventDetails, setEventDetails] = useState<{ [eventName: string]: EventDetails }>({})
+  const [loadingEventDetails, setLoadingEventDetails] = useState(false)
   const [activeTab, setActiveTab] = useState<'overview' | 'cod' | 'events' | 'campaigns' | 'activity'>('overview')
 
   useEffect(() => {
@@ -443,7 +478,7 @@ function DashboardContent() {
     if (!selectedSite) return
 
     try {
-      const { data, error } = await supabase
+      const { data, error} = await supabase
         .rpc('get_custom_events_summary', {
           site_uuid: selectedSite.id,
           start_date: periodStart.toISOString(),
@@ -455,6 +490,92 @@ function DashboardContent() {
       setCustomEvents(data || [])
     } catch (error) {
       console.error('Error loading custom events:', error)
+    }
+  }
+
+  async function toggleEventDetails(eventName: string) {
+    if (expandedEvent === eventName) {
+      setExpandedEvent(null)
+      return
+    }
+
+    setExpandedEvent(eventName)
+
+    if (eventDetails[eventName]) {
+      return
+    }
+
+    if (!selectedSite) return
+
+    try {
+      setLoadingEventDetails(true)
+
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+      const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+      let periodStart: Date
+      let periodEnd: Date = now
+
+      if (timePeriod === 'custom') {
+        if (customStartDate && customEndDate) {
+          periodStart = new Date(customStartDate + 'T00:00:00')
+          periodEnd = new Date(customEndDate + 'T23:59:59')
+        } else {
+          periodStart = weekAgo
+        }
+      } else if (timePeriod === 'today') {
+        periodStart = today
+      } else if (timePeriod === '7days') {
+        periodStart = weekAgo
+      } else {
+        periodStart = monthAgo
+      }
+
+      const [sourcesResult, pagesResult, devicesResult, propertiesResult] = await Promise.all([
+        supabase.rpc('get_event_breakdown_by_source', {
+          site_uuid: selectedSite.id,
+          event_name_filter: eventName,
+          start_date: periodStart.toISOString(),
+          end_date: periodEnd.toISOString()
+        }),
+        supabase.rpc('get_event_breakdown_by_page', {
+          site_uuid: selectedSite.id,
+          event_name_filter: eventName,
+          start_date: periodStart.toISOString(),
+          end_date: periodEnd.toISOString(),
+          page_limit: 5
+        }),
+        supabase.rpc('get_event_breakdown_by_device', {
+          site_uuid: selectedSite.id,
+          event_name_filter: eventName,
+          start_date: periodStart.toISOString(),
+          end_date: periodEnd.toISOString()
+        }),
+        supabase.rpc('get_event_breakdown_by_properties', {
+          site_uuid: selectedSite.id,
+          event_name_filter: eventName,
+          start_date: periodStart.toISOString(),
+          end_date: periodEnd.toISOString()
+        })
+      ])
+
+      const details: EventDetails = {
+        sources: sourcesResult.data || [],
+        pages: pagesResult.data || [],
+        devices: devicesResult.data || [],
+        properties: propertiesResult.data || []
+      }
+
+      setEventDetails(prev => ({
+        ...prev,
+        [eventName]: details
+      }))
+    } catch (error) {
+      console.error('Error loading event details:', error)
+    } finally {
+      setLoadingEventDetails(false)
     }
   }
 

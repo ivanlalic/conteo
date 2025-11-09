@@ -8,36 +8,36 @@ export default function PricingSection({ onPlanClick }: PricingSectionProps) {
   const plans = [
     {
       name: 'Free',
-      price: 'Gratis',
+      price: 'Free',
       pricePerMonth: null,
       sites: 1,
       eventsPerMonth: '10k',
       features: [
-        'Dashboard en tiempo real',
-        'Métricas básicas',
-        'Tracking de eventos',
-        'Exportar a CSV',
+        'Real-time dashboard',
+        'Basic metrics',
+        'Event tracking',
+        'CSV export',
         'GDPR compliant',
       ],
-      cta: 'Comenzar Gratis',
+      cta: 'Start Free',
       highlighted: true,
-      badge: 'Ideal para empezar',
+      badge: 'Perfect to start',
       tier: 'free' as const,
     },
     {
       name: 'Pro',
       price: '$4.90',
-      pricePerMonth: '/mes',
+      pricePerMonth: '/mo',
       sites: 3,
       eventsPerMonth: '50k',
       features: [
-        'Todo de Free',
-        '3 sitios web',
-        '50k eventos/mes',
-        'Soporte prioritario',
-        'Dashboard avanzado',
+        'Everything in Free',
+        '3 websites',
+        '50k events/month',
+        'Priority support',
+        'Advanced dashboard',
       ],
-      cta: 'Comenzar con Pro',
+      cta: 'Start with Pro',
       highlighted: false,
       badge: null,
       tier: 'pro' as const,
@@ -45,17 +45,17 @@ export default function PricingSection({ onPlanClick }: PricingSectionProps) {
     {
       name: 'Business',
       price: '$9.90',
-      pricePerMonth: '/mes',
+      pricePerMonth: '/mo',
       sites: 10,
       eventsPerMonth: '100k',
       features: [
-        'Todo de Pro',
-        '10 sitios web',
-        '100k eventos/mes',
-        'Analíticas avanzadas',
+        'Everything in Pro',
+        '10 websites',
+        '100k events/month',
+        'Advanced analytics',
         'API access',
       ],
-      cta: 'Comenzar con Business',
+      cta: 'Start with Business',
       highlighted: false,
       badge: null,
       tier: 'business' as const,
@@ -68,10 +68,10 @@ export default function PricingSection({ onPlanClick }: PricingSectionProps) {
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Planes simples y transparentes
+            Simple, transparent pricing
           </h2>
           <p className="text-xl text-gray-600">
-            Elige el plan que mejor se adapte a tu proyecto
+            Choose the plan that fits your needs
           </p>
         </div>
 
@@ -117,13 +117,13 @@ export default function PricingSection({ onPlanClick }: PricingSectionProps) {
               {/* Limits */}
               <div className="mb-6 pb-6 border-b border-gray-200">
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-gray-600">Sitios web</span>
+                  <span className="text-gray-600">Websites</span>
                   <span className="font-semibold text-gray-900">
-                    {plan.sites} {plan.sites === 1 ? 'sitio' : 'sitios'}
+                    {plan.sites} {plan.sites === 1 ? 'site' : 'sites'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Eventos/mes</span>
+                  <span className="text-gray-600">Events/month</span>
                   <span className="font-semibold text-gray-900">
                     {plan.eventsPerMonth}
                   </span>
@@ -172,7 +172,7 @@ export default function PricingSection({ onPlanClick }: PricingSectionProps) {
         {/* Bottom note */}
         <div className="text-center mt-12">
           <p className="text-gray-500 text-sm">
-            ✓ No se requiere tarjeta de crédito · ✓ Cancela cuando quieras · ✓ Soporte en español
+            ✓ No credit card required · ✓ Cancel anytime · ✓ Free forever for small sites
           </p>
         </div>
       </div>

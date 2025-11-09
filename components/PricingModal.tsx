@@ -45,7 +45,7 @@ export default function PricingModal({ isOpen, onClose, planName }: PricingModal
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
-          aria-label="Cerrar"
+          aria-label="Close"
         >
           <svg
             className="w-6 h-6"
@@ -72,31 +72,31 @@ export default function PricingModal({ isOpen, onClose, planName }: PricingModal
         {/* Content */}
         <div className="text-center">
           <h3 className="text-2xl font-bold text-gray-900 mb-4">
-            ¡Gracias por tu interés en {planName}!
+            Thanks for your interest in {planName}!
           </h3>
           <p className="text-gray-600 mb-6">
-            Estamos trabajando en este plan para lanzarlo pronto. Mientras tanto,
-            puedes comenzar <span className="font-semibold text-indigo-600">gratis</span> con
-            nuestro plan Free y te notificaremos cuando {planName} esté disponible.
+            We're working hard to launch this plan soon. In the meantime,
+            you can start <span className="font-semibold text-indigo-600">free</span> with
+            our Free plan and we'll notify you when {planName} is available.
           </p>
 
           {/* Features preview */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
             <p className="text-sm font-semibold text-gray-900 mb-2">
-              El plan {planName} incluirá:
+              {planName} plan will include:
             </p>
             <ul className="text-sm text-gray-600 space-y-1">
               {planName === 'Pro' && (
                 <>
-                  <li>✓ 3 sitios web</li>
-                  <li>✓ 50k eventos/mes</li>
-                  <li>✓ Soporte prioritario</li>
+                  <li>✓ 3 websites</li>
+                  <li>✓ 50k events/month</li>
+                  <li>✓ Priority support</li>
                 </>
               )}
               {planName === 'Business' && (
                 <>
-                  <li>✓ 10 sitios web</li>
-                  <li>✓ 100k eventos/mes</li>
+                  <li>✓ 10 websites</li>
+                  <li>✓ 100k events/month</li>
                   <li>✓ API access</li>
                 </>
               )}
@@ -108,11 +108,11 @@ export default function PricingModal({ isOpen, onClose, planName }: PricingModal
             href="/signup"
             className="block w-full bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-indigo-700 transition text-center"
           >
-            Comenzar con Free
+            Start with Free
           </a>
 
           <p className="text-xs text-gray-500 mt-4">
-            Sin tarjeta de crédito · Gratis para siempre
+            No credit card required · Free forever
           </p>
         </div>
       </div>

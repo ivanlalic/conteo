@@ -1779,24 +1779,154 @@ function DashboardContent() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
-                        {customEvents.map((event, i) => (
-                          <tr key={i} className="hover:bg-gray-50">
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                              {event.event_name}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-right text-gray-600">
-                              {Number(event.total_events).toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-right text-gray-600">
-                              {Number(event.unique_visitors).toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-right">
-                              <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold">
-                                {Number(event.conversion_rate).toFixed(1)}%
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
+                        {customEvents.map((event, i) => {
+                          const isExpanded = expandedEvent === event.event_name
+                          const details = eventDetails[event.event_name]
+                          const totalEvents = Number(event.total_events)
+
+                          return (
+                            <React.Fragment key={i}>
+                              <tr
+                                onClick={() => toggleEventDetails(event.event_name)}
+                                className="hover:bg-gray-50 cursor-pointer transition"
+                              >
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                  <div className="flex items-center">
+                                    <span className="mr-2 text-gray-400">
+                                      {isExpanded ? '▼' : '▶'}
+                                    </span>
+                                    {event.event_name}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-right text-gray-600">
+                                  {totalEvents.toLocaleString()}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-right text-gray-600">
+                                  {Number(event.unique_visitors).toLocaleString()}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-right">
+                                  <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold">
+                                    {Number(event.conversion_rate).toFixed(1)}%
+                                  </span>
+                                </td>
+                              </tr>
+
+                              {isExpanded && (
+                                <tr>
+                                  <td colSpan={4} className="px-4 py-4 bg-gray-50">
+                                    {loadingEventDetails ? (
+                                      <div className="text-center py-4 text-sm text-gray-500">Loading details...</div>
+                                    ) : details ? (
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-white rounded-lg border border-gray-200 p-3">
+                                          <h4 className="text-xs font-semibold text-gray-700 mb-3 flex items-center">
+                                            <span className="mr-1">📊</span>Top Sources
+                                          </h4>
+                                          {details.sources.length === 0 ? (
+                                            <p className="text-xs text-gray-500">No source data</p>
+                                          ) : (
+                                            <div className="space-y-2">
+                                              {details.sources.slice(0, 5).map((source, idx) => {
+                                                const percentage = ((Number(source.event_count) / totalEvents) * 100)
+                                                return (
+                                                  <div key={idx} className="space-y-1">
+                                                    <div className="flex items-center justify-between text-xs">
+                                                      <span className="font-medium text-gray-700">{source.source}</span>
+                                                      <span className="text-gray-500">{Number(source.event_count).toLocaleString()} ({percentage.toFixed(0)}%)</span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                      <div className="bg-indigo-600 h-1.5 rounded-full transition-all" style={{ width: `${percentage}%` }} />
+                                                    </div>
+                                                  </div>
+                                                )
+                                              })}
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        <div className="bg-white rounded-lg border border-gray-200 p-3">
+                                          <h4 className="text-xs font-semibold text-gray-700 mb-3 flex items-center">
+                                            <span className="mr-1">📄</span>Top Pages
+                                          </h4>
+                                          {details.pages.length === 0 ? (
+                                            <p className="text-xs text-gray-500">No page data</p>
+                                          ) : (
+                                            <div className="space-y-2">
+                                              {details.pages.slice(0, 5).map((page, idx) => {
+                                                const percentage = ((Number(page.event_count) / totalEvents) * 100)
+                                                return (
+                                                  <div key={idx} className="space-y-1">
+                                                    <div className="flex items-center justify-between text-xs">
+                                                      <span className="font-medium text-gray-700 truncate">{page.path || '/'}</span>
+                                                      <span className="text-gray-500 ml-2 flex-shrink-0">{Number(page.event_count).toLocaleString()} ({percentage.toFixed(0)}%)</span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                      <div className="bg-green-600 h-1.5 rounded-full transition-all" style={{ width: `${percentage}%` }} />
+                                                    </div>
+                                                  </div>
+                                                )
+                                              })}
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        <div className="bg-white rounded-lg border border-gray-200 p-3">
+                                          <h4 className="text-xs font-semibold text-gray-700 mb-3 flex items-center">
+                                            <span className="mr-1">📱</span>Devices
+                                          </h4>
+                                          {details.devices.length === 0 ? (
+                                            <p className="text-xs text-gray-500">No device data</p>
+                                          ) : (
+                                            <div className="space-y-2">
+                                              {details.devices.map((device, idx) => {
+                                                const percentage = ((Number(device.event_count) / totalEvents) * 100)
+                                                return (
+                                                  <div key={idx} className="space-y-1">
+                                                    <div className="flex items-center justify-between text-xs">
+                                                      <span className="font-medium text-gray-700">{device.device}</span>
+                                                      <span className="text-gray-500">{Number(device.event_count).toLocaleString()} ({percentage.toFixed(0)}%)</span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                      <div className="bg-blue-600 h-1.5 rounded-full transition-all" style={{ width: `${percentage}%` }} />
+                                                    </div>
+                                                  </div>
+                                                )
+                                              })}
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        {details.properties.length > 0 && (
+                                          <div className="bg-white rounded-lg border border-gray-200 p-3">
+                                            <h4 className="text-xs font-semibold text-gray-700 mb-3 flex items-center">
+                                              <span className="mr-1">🏷️</span>Properties
+                                            </h4>
+                                            <div className="space-y-2">
+                                              {details.properties.slice(0, 5).map((prop, idx) => {
+                                                const percentage = ((Number(prop.event_count) / totalEvents) * 100)
+                                                return (
+                                                  <div key={idx} className="space-y-1">
+                                                    <div className="flex items-center justify-between text-xs">
+                                                      <span className="font-medium text-gray-700">{prop.property_key}: {prop.property_value}</span>
+                                                      <span className="text-gray-500 ml-2 flex-shrink-0">{Number(prop.event_count).toLocaleString()} ({percentage.toFixed(0)}%)</span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                      <div className="bg-purple-600 h-1.5 rounded-full transition-all" style={{ width: `${percentage}%` }} />
+                                                    </div>
+                                                  </div>
+                                                )
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : null}
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          )
+                        })}
                       </tbody>
                     </table>
                   </div>

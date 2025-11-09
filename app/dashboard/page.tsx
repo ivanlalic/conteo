@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Fragment } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -1785,7 +1785,7 @@ function DashboardContent() {
                           const totalEvents = Number(event.total_events)
 
                           return (
-                            <React.Fragment key={i}>
+                            <Fragment key={`evt-${i}`}>
                               <tr
                                 onClick={() => toggleEventDetails(event.event_name)}
                                 className="hover:bg-gray-50 cursor-pointer transition"
@@ -1924,7 +1924,7 @@ function DashboardContent() {
                                   </td>
                                 </tr>
                               )}
-                            </React.Fragment>
+                            </Fragment>
                           )
                         })}
                       </tbody>

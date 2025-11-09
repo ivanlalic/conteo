@@ -1,8 +1,13 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import PricingSection from '@/components/PricingSection'
+import PricingModal from '@/components/PricingModal'
 
 export default function Home() {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState<'Pro' | 'Business'>('Pro')
+
   useEffect(() => {
     // Load Conteo tracker to track our own landing page
     const script = document.createElement('script')
@@ -23,6 +28,23 @@ export default function Home() {
     // Track CTA clicks if Conteo is loaded (e.g., if we're self-tracking)
     if (typeof window !== 'undefined' && (window as any).conteo) {
       (window as any).conteo.trackEvent('CTA Click', { props: { location } })
+    }
+  }
+
+  const handlePlanClick = (plan: 'free' | 'pro' | 'business') => {
+    // Track plan click
+    if (typeof window !== 'undefined' && (window as any).conteo) {
+      (window as any).conteo.trackEvent('Pricing Plan Click', { props: { plan } })
+    }
+
+    // Handle different plan actions
+    if (plan === 'free') {
+      // Redirect to signup
+      window.location.href = '/signup'
+    } else {
+      // Open modal for Pro/Business
+      setSelectedPlan(plan === 'pro' ? 'Pro' : 'Business')
+      setIsModalOpen(true)
     }
   }
 
@@ -252,6 +274,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <PricingSection onPlanClick={handlePlanClick} />
+
       {/* CTA Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-indigo-600">
         <div className="max-w-4xl mx-auto text-center">
@@ -298,6 +323,13 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Pricing Modal */}
+      <PricingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        planName={selectedPlan}
+      />
     </div>
   );
 }

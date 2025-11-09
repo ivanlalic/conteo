@@ -7,6 +7,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import Link from 'next/link'
 import PageviewsChart from '@/components/PageviewsChart'
 import { getCountryFlag, getCountryName } from '@/lib/utils'
+import InfoTooltip from '@/components/InfoTooltip'
 
 interface Site {
   id: string
@@ -964,70 +965,42 @@ function DashboardContent() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-        {/* Stats Grid - Compact */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-5">
+        {/* Stats Grid - Clean (4 main metrics) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {/* Live Users */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Live</span>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Live Users</span>
+                <InfoTooltip text="Visitors currently active on your site (in the last 5 minutes)" />
+              </div>
               <span className="flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
             </div>
-            <p className="text-2xl md:text-3xl font-bold text-gray-900">{stats.liveUsers}</p>
+            <p className="text-3xl md:text-4xl font-bold text-gray-900">{stats.liveUsers}</p>
           </div>
 
           {/* Today */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Today</span>
-            <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">{stats.todayViews.toLocaleString()}</p>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block">Today</span>
+            <p className="text-3xl md:text-4xl font-bold text-gray-900">{stats.todayViews.toLocaleString()}</p>
+            <p className="text-xs text-gray-400 mt-1">pageviews</p>
           </div>
 
           {/* This Week */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">This Week</span>
-            <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">{stats.weekViews.toLocaleString()}</p>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block">This Week</span>
+            <p className="text-3xl md:text-4xl font-bold text-gray-900">{stats.weekViews.toLocaleString()}</p>
+            <p className="text-xs text-gray-400 mt-1">pageviews</p>
           </div>
 
           {/* This Month */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">This Month</span>
-            <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">{stats.monthViews.toLocaleString()}</p>
-          </div>
-
-          {/* Avg Session Duration (All) */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Avg Time (All)</span>
-            <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">
-              {(() => {
-                const seconds = Math.floor(stats.avgSessionDurationAll)
-                if (seconds < 60) return `${seconds}s`
-                const minutes = Math.floor(seconds / 60)
-                const remainingSeconds = seconds % 60
-                if (minutes < 60) return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
-                const hours = Math.floor(minutes / 60)
-                const remainingMinutes = minutes % 60
-                return `${hours}:${remainingMinutes.toString().padStart(2, '0')}h`
-              })()}
-            </p>
-          </div>
-
-          {/* Avg Session Duration (Multi-page) */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Avg Time (Multi)</span>
-            <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">
-              {(() => {
-                const seconds = Math.floor(stats.avgSessionDurationMulti)
-                if (seconds < 60) return `${seconds}s`
-                const minutes = Math.floor(seconds / 60)
-                const remainingSeconds = seconds % 60
-                if (minutes < 60) return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
-                const hours = Math.floor(minutes / 60)
-                const remainingMinutes = minutes % 60
-                return `${hours}:${remainingMinutes.toString().padStart(2, '0')}h`
-              })()}
-            </p>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block">This Month</span>
+            <p className="text-3xl md:text-4xl font-bold text-gray-900">{stats.monthViews.toLocaleString()}</p>
+            <p className="text-xs text-gray-400 mt-1">pageviews</p>
           </div>
         </div>
 
@@ -1205,10 +1178,15 @@ function DashboardContent() {
                         <tr>
                           <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Page</th>
                           <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Views</th>
-                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">💻</th>
-                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">📱</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Desktop</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Mobile</th>
                           <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Unique</th>
-                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Bounce %</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">
+                            <div className="inline-flex items-center">
+                              Bounce %
+                              <InfoTooltip text="Percentage of visitors who left without viewing another page. Lower is better." />
+                            </div>
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -1236,8 +1214,7 @@ function DashboardContent() {
 
         {/* Device Breakdown Card - Compact */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-            <span className="mr-2">📱</span>
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">
             Devices
           </h3>
           {deviceBreakdown.length === 0 ? (
@@ -1269,8 +1246,7 @@ function DashboardContent() {
 
         {/* Browser Breakdown Card - Compact */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-            <span className="mr-2">🌐</span>
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">
             Browsers
           </h3>
           {browserBreakdown.length === 0 ? (
@@ -1309,8 +1285,7 @@ function DashboardContent() {
 
         {/* Referrer Sources Card - Compact */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-            <span className="mr-2">🔗</span>
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">
             Traffic Sources
           </h3>
           {referrerSources.length === 0 ? (
@@ -1390,8 +1365,7 @@ function DashboardContent() {
         {activeTab === 'cod' && selectedSite?.cod_tracking_enabled && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="px-4 py-3 border-b border-gray-200">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center">
-                <span className="mr-2">💰</span>
+              <h3 className="text-base font-semibold text-gray-900">
                 COD Conversions
               </h3>
             </div>
@@ -1518,8 +1492,7 @@ function DashboardContent() {
         {activeTab === 'events' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="px-4 py-3 border-b border-gray-200">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center">
-                <span className="mr-2">🎯</span>
+              <h3 className="text-base font-semibold text-gray-900">
                 Custom Events
               </h3>
             </div>
@@ -1532,7 +1505,7 @@ function DashboardContent() {
                   <div className="bg-gray-50 rounded-lg p-6 max-w-3xl mx-auto text-left space-y-6">
                     {/* What are Custom Events */}
                     <div>
-                      <h4 className="text-base font-bold text-gray-900 mb-2">📊 What are Custom Events?</h4>
+                      <h4 className="text-base font-bold text-gray-900 mb-2">What are Custom Events?</h4>
                       <p className="text-sm text-gray-600 leading-relaxed">
                         Custom events let you track specific user actions beyond pageviews.
                         Instead of just knowing <em>which pages</em> users visit, you can track <em>what they do</em> on those pages.
@@ -1655,7 +1628,7 @@ function DashboardContent() {
                       <div className="p-4 bg-white border-t border-gray-200 space-y-6">
                         {/* What are Custom Events */}
                         <div>
-                          <h4 className="text-base font-bold text-gray-900 mb-2">📊 What are Custom Events?</h4>
+                          <h4 className="text-base font-bold text-gray-900 mb-2">What are Custom Events?</h4>
                           <p className="text-sm text-gray-600 leading-relaxed">
                             Custom events let you track specific user actions beyond pageviews.
                             Instead of just knowing <em>which pages</em> users visit, you can track <em>what they do</em> on those pages.
@@ -1765,7 +1738,10 @@ function DashboardContent() {
                       <thead>
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                            Event Name
+                            <div className="inline-flex items-center">
+                              Event Name
+                              <span className="ml-2 text-[10px] text-gray-400 normal-case">(click to expand)</span>
+                            </div>
                           </th>
                           <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                             Total Events
@@ -1774,7 +1750,10 @@ function DashboardContent() {
                             Unique Visitors
                           </th>
                           <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                            Conversion Rate
+                            <div className="inline-flex items-center justify-end">
+                              Conversion Rate
+                              <InfoTooltip text="Percentage of unique visitors who triggered this event. Shows how engaging this action is." />
+                            </div>
                           </th>
                         </tr>
                       </thead>
@@ -1819,8 +1798,8 @@ function DashboardContent() {
                                     ) : details ? (
                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="bg-white rounded-lg border border-gray-200 p-3">
-                                          <h4 className="text-xs font-semibold text-gray-700 mb-3 flex items-center">
-                                            <span className="mr-1">📊</span>Top Sources
+                                          <h4 className="text-xs font-semibold text-gray-700 mb-3">
+                                            Top Sources
                                           </h4>
                                           {details.sources.length === 0 ? (
                                             <p className="text-xs text-gray-500">No source data</p>
@@ -1861,7 +1840,7 @@ function DashboardContent() {
                                                       <span className="text-gray-500 ml-2 flex-shrink-0">{Number(page.event_count).toLocaleString()} ({percentage.toFixed(0)}%)</span>
                                                     </div>
                                                     <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                                      <div className="bg-green-600 h-1.5 rounded-full transition-all" style={{ width: `${percentage}%` }} />
+                                                      <div className="bg-indigo-600 h-1.5 rounded-full transition-all" style={{ width: `${percentage}%` }} />
                                                     </div>
                                                   </div>
                                                 )
@@ -1871,8 +1850,8 @@ function DashboardContent() {
                                         </div>
 
                                         <div className="bg-white rounded-lg border border-gray-200 p-3">
-                                          <h4 className="text-xs font-semibold text-gray-700 mb-3 flex items-center">
-                                            <span className="mr-1">📱</span>Devices
+                                          <h4 className="text-xs font-semibold text-gray-700 mb-3">
+                                            Devices
                                           </h4>
                                           {details.devices.length === 0 ? (
                                             <p className="text-xs text-gray-500">No device data</p>
@@ -1887,7 +1866,7 @@ function DashboardContent() {
                                                       <span className="text-gray-500">{Number(device.event_count).toLocaleString()} ({percentage.toFixed(0)}%)</span>
                                                     </div>
                                                     <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                                      <div className="bg-blue-600 h-1.5 rounded-full transition-all" style={{ width: `${percentage}%` }} />
+                                                      <div className="bg-indigo-600 h-1.5 rounded-full transition-all" style={{ width: `${percentage}%` }} />
                                                     </div>
                                                   </div>
                                                 )
@@ -1898,8 +1877,8 @@ function DashboardContent() {
 
                                         {details.properties.length > 0 && (
                                           <div className="bg-white rounded-lg border border-gray-200 p-3">
-                                            <h4 className="text-xs font-semibold text-gray-700 mb-3 flex items-center">
-                                              <span className="mr-1">🏷️</span>Properties
+                                            <h4 className="text-xs font-semibold text-gray-700 mb-3">
+                                              Properties
                                             </h4>
                                             <div className="space-y-2">
                                               {details.properties.slice(0, 5).map((prop, idx) => {
@@ -1911,7 +1890,7 @@ function DashboardContent() {
                                                       <span className="text-gray-500 ml-2 flex-shrink-0">{Number(prop.event_count).toLocaleString()} ({percentage.toFixed(0)}%)</span>
                                                     </div>
                                                     <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                                      <div className="bg-purple-600 h-1.5 rounded-full transition-all" style={{ width: `${percentage}%` }} />
+                                                      <div className="bg-indigo-600 h-1.5 rounded-full transition-all" style={{ width: `${percentage}%` }} />
                                                     </div>
                                                   </div>
                                                 )
@@ -1940,8 +1919,7 @@ function DashboardContent() {
         {activeTab === 'campaigns' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="px-4 py-3 border-b border-gray-200">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center">
-                <span className="mr-2">📢</span>
+              <h3 className="text-base font-semibold text-gray-900">
                 UTM Campaigns
               </h3>
             </div>
@@ -2002,8 +1980,7 @@ function DashboardContent() {
         {activeTab === 'activity' && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="text-base font-semibold text-gray-900 flex items-center">
-              <span className="mr-2">⚡</span>
+            <h3 className="text-base font-semibold text-gray-900">
               Recent Activity
             </h3>
             <span className="text-xs text-gray-500">Last 15 visits</span>

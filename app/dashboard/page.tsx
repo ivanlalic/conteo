@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -14,7 +15,7 @@ import DateRangePicker, { type TimePeriod } from '@/components/dashboard/DateRan
 import VisitorChart from '@/components/dashboard/VisitorChart'
 import DataTable from '@/components/dashboard/DataTable'
 
-// --- Types ---
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface Site {
   id: string
@@ -54,25 +55,52 @@ interface BrowserBreakdown {
   unique_visitors: number
 }
 
+interface OSBreakdown {
+  os: string
+  pageviews: number
+  unique_visitors: number
+}
+
 interface TopCountry {
   country: string
   pageviews: number
   unique_visitors: number
 }
 
-// --- Helpers ---
+interface City {
+  city: string
+  pageviews: number
+  unique_visitors: number
+}
+
+interface ActiveFilters {
+  page?: string
+  source?: string
+  country?: string
+  device?: string
+  browser?: string
+  os?: string
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatNumber(n: number): string {
-  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M'
-  if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'k'
   return n.toLocaleString()
 }
 
 function formatDuration(seconds: number): string {
-  if (!seconds || seconds <= 0) return '0:00'
-  const m = Math.floor(seconds / 60)
-  const s = Math.floor(seconds % 60)
-  return `${m}:${s.toString().padStart(2, '0')}`
+  if (!seconds || seconds <= 0) return '--'
+  if (seconds < 60) return `${Math.round(seconds)}s`
+  if (seconds < 3600) {
+    const m = Math.floor(seconds / 60)
+    const s = Math.round(seconds % 60)
+    return s > 0 ? `${m}m ${s}s` : `${m}m`
+  }
+  const h = Math.floor(seconds / 3600)
+  const m = Math.round((seconds % 3600) / 60)
+  return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 
 function calcDelta(current: number, previous: number): number | null {
@@ -115,7 +143,6 @@ function getPeriodDates(period: TimePeriod, customStart?: string, customEnd?: st
       start = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
   }
 
-  // Previous period (same duration, immediately before)
   const duration = end.getTime() - start.getTime()
   const prevEnd = new Date(start.getTime() - 1)
   const prevStart = new Date(prevEnd.getTime() - duration)
@@ -125,24 +152,40 @@ function getPeriodDates(period: TimePeriod, customStart?: string, customEnd?: st
 
 function getSourceIcon(source: string): string {
   const s = source.toLowerCase()
+  if (s === 'direct') return '⚡'
   if (s.includes('google')) return '🔍'
-  if (s.includes('facebook') || s.includes('fb.')) return '📘'
-  if (s.includes('twitter') || s.includes('t.co') || s.includes('x.com')) return '𝕏'
+  if (s.includes('facebook')) return '📘'
+  if (s.includes('twitter') || s.includes('x.com') || s === 'twitter / x') return '𝕏'
   if (s.includes('instagram')) return '📷'
   if (s.includes('linkedin')) return '💼'
   if (s.includes('youtube')) return '📺'
   if (s.includes('reddit')) return '🤖'
   if (s.includes('tiktok')) return '🎵'
   if (s.includes('duckduckgo')) return '🦆'
-  if (s === 'direct' || s === 'direct / none') return '⚡'
+  if (s.includes('hacker news') || s.includes('ycombinator')) return '🟠'
+  if (s.includes('github')) return '🐙'
+  if (s.includes('producthunt')) return '🐱'
+  if (s.includes('bing')) return '🔵'
   return '🔗'
 }
 
-// --- Dashboard Content ---
+function getOSIcon(os: string): string {
+  const s = os.toLowerCase()
+  if (s.includes('windows')) return '🪟'
+  if (s.includes('mac') || s.includes('osx') || s.includes('os x')) return '🍎'
+  if (s.includes('ios') || s.includes('iphone') || s.includes('ipad')) return '📱'
+  if (s.includes('android')) return '🤖'
+  if (s.includes('linux') || s.includes('ubuntu')) return '🐧'
+  return '💻'
+}
+
+// ─── Dashboard Content ────────────────────────────────────────────────────────
 
 function DashboardContent() {
-  const { user, signOut } = useAuth()
+  const { signOut } = useAuth()
   const { theme, setTheme, resolvedTheme } = useTheme()
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Site state
   const [sites, setSites] = useState<Site[]>([])
@@ -154,10 +197,11 @@ function DashboardContent() {
   const [customStartDate, setCustomStartDate] = useState('')
   const [customEndDate, setCustomEndDate] = useState('')
 
-  // Data
+  // Active filters
+  const [activeFilters, setActiveFilters] = useState<ActiveFilters>({})
+
+  // Aggregate stats
   const [liveUsers, setLiveUsers] = useState(0)
-  const [chartData, setChartData] = useState<ChartData[]>([])
-  const [comparisonChartData, setComparisonChartData] = useState<ChartData[]>([])
   const [currentVisitors, setCurrentVisitors] = useState(0)
   const [currentPageviews, setCurrentPageviews] = useState(0)
   const [prevVisitors, setPrevVisitors] = useState(0)
@@ -165,7 +209,10 @@ function DashboardContent() {
   const [avgDuration, setAvgDuration] = useState(0)
   const [prevAvgDuration, setPrevAvgDuration] = useState(0)
   const [bounceRate, setBounceRate] = useState(0)
-  const [prevBounceRate, setPrevBounceRate] = useState(0)
+
+  // Chart
+  const [chartData, setChartData] = useState<ChartData[]>([])
+  const [comparisonChartData, setComparisonChartData] = useState<ChartData[]>([])
 
   // Tables
   const [topPages, setTopPages] = useState<TopPage[]>([])
@@ -173,29 +220,50 @@ function DashboardContent() {
   const [topCountries, setTopCountries] = useState<TopCountry[]>([])
   const [deviceBreakdown, setDeviceBreakdown] = useState<DeviceBreakdown[]>([])
   const [browserBreakdown, setBrowserBreakdown] = useState<BrowserBreakdown[]>([])
+  const [osBreakdown, setOsBreakdown] = useState<OSBreakdown[]>([])
 
-  // Load sites on mount
+  // Country city drill-down
+  const [expandedCountry, setExpandedCountry] = useState<string | null>(null)
+  const [countryCities, setCountryCities] = useState<Record<string, City[]>>({})
+  const [loadingCities, setLoadingCities] = useState<string | null>(null)
+
+  // Init: load sites + read URL filters
   useEffect(() => {
     loadSites()
+    // Restore filters from URL
+    const filters: ActiveFilters = {}
+    if (searchParams.get('page')) filters.page = searchParams.get('page')!
+    if (searchParams.get('source')) filters.source = searchParams.get('source')!
+    if (searchParams.get('country')) filters.country = searchParams.get('country')!
+    if (searchParams.get('device')) filters.device = searchParams.get('device')!
+    if (searchParams.get('browser')) filters.browser = searchParams.get('browser')!
+    if (searchParams.get('os')) filters.os = searchParams.get('os')!
+    if (Object.keys(filters).length > 0) setActiveFilters(filters)
   }, [])
 
-  // Load stats when site or period changes
+  // Reload data when site / period changes
   useEffect(() => {
-    if (selectedSite) {
-      loadAllData()
-    }
+    if (selectedSite) loadAllData()
   }, [selectedSite, timePeriod, customStartDate, customEndDate])
 
-  // Refresh live users every 30 seconds
+  // Live users refresh every 30s
   useEffect(() => {
     if (!selectedSite) return
-    const interval = setInterval(() => {
+    const iv = setInterval(() => {
       supabase.rpc('get_live_users', { site_uuid: selectedSite.id }).then(({ data }) => {
         if (data !== null) setLiveUsers(data)
       })
-    }, 30000)
-    return () => clearInterval(interval)
+    }, 30_000)
+    return () => clearInterval(iv)
   }, [selectedSite])
+
+  // Sync filters to URL
+  useEffect(() => {
+    const params = new URLSearchParams()
+    Object.entries(activeFilters).forEach(([k, v]) => { if (v) params.set(k, v) })
+    const qs = params.toString()
+    router.replace(qs ? `?${qs}` : window.location.pathname, { scroll: false })
+  }, [activeFilters])
 
   async function loadSites() {
     try {
@@ -203,13 +271,11 @@ function DashboardContent() {
         .from('sites')
         .select('id, domain, api_key, cod_tracking_enabled')
         .order('created_at', { ascending: false })
-
       if (error) throw error
       setSites(data || [])
       if (data && data.length > 0) setSelectedSite(data[0])
       setLoading(false)
-    } catch (error) {
-      console.error('Error loading sites:', error)
+    } catch {
       setLoading(false)
     }
   }
@@ -224,178 +290,191 @@ function DashboardContent() {
     )
     const tzOffset = -new Date().getTimezoneOffset()
 
-    try {
-      // All queries in parallel
-      const [
-        liveRes,
-        chartRes,
-        compChartRes,
-        visitorsRes,
-        prevVisitorsRes,
-        pageviewsRes,
-        prevPageviewsRes,
-        durationRes,
-        prevDurationRes,
-        pagesRes,
-        referrersRes,
-        countriesRes,
-        devicesRes,
-        browsersRes,
-      ] = await Promise.all([
-        // Live users
-        supabase.rpc('get_live_users', { site_uuid: selectedSite.id }),
-        // Chart data (current)
-        supabase.rpc('get_pageviews_chart', {
-          site_uuid: selectedSite.id,
-          start_date: start.toISOString(),
-          end_date: end.toISOString(),
-          tz_offset_minutes: tzOffset,
-        }),
-        // Chart data (comparison period)
-        supabase.rpc('get_pageviews_chart', {
-          site_uuid: selectedSite.id,
-          start_date: prevStart.toISOString(),
-          end_date: prevEnd.toISOString(),
-          tz_offset_minutes: tzOffset,
-        }),
-        // Unique visitors (current)
-        supabase.rpc('get_unique_visitors', {
-          site_uuid: selectedSite.id,
-          start_date: start.toISOString(),
-          end_date: end.toISOString(),
-        }),
-        // Unique visitors (previous)
-        supabase.rpc('get_unique_visitors', {
-          site_uuid: selectedSite.id,
-          start_date: prevStart.toISOString(),
-          end_date: prevEnd.toISOString(),
-        }),
-        // Total pageviews (current)
-        supabase
-          .from('pageviews')
-          .select('*', { count: 'exact', head: true })
-          .eq('site_id', selectedSite.id)
-          .gte('timestamp', start.toISOString())
-          .lte('timestamp', end.toISOString()),
-        // Total pageviews (previous)
-        supabase
-          .from('pageviews')
-          .select('*', { count: 'exact', head: true })
-          .eq('site_id', selectedSite.id)
-          .gte('timestamp', prevStart.toISOString())
-          .lte('timestamp', prevEnd.toISOString()),
-        // Avg session duration (current)
-        supabase.rpc('get_avg_session_duration', {
-          site_uuid: selectedSite.id,
-          start_date: start.toISOString(),
-          end_date: end.toISOString(),
-        }),
-        // Avg session duration (previous)
-        supabase.rpc('get_avg_session_duration', {
-          site_uuid: selectedSite.id,
-          start_date: prevStart.toISOString(),
-          end_date: prevEnd.toISOString(),
-        }),
-        // Top pages
-        supabase.rpc('get_top_pages_with_devices', {
-          site_uuid: selectedSite.id,
-          start_date: start.toISOString(),
-          end_date: end.toISOString(),
-          page_limit: 20,
-        }),
-        // Referrer sources
-        supabase.rpc('get_referrer_sources', {
-          site_uuid: selectedSite.id,
-          start_date: start.toISOString(),
-          end_date: end.toISOString(),
-          source_limit: 20,
-        }),
-        // Top countries
-        supabase.rpc('get_top_countries', {
-          site_uuid: selectedSite.id,
-          start_date: start.toISOString(),
-          end_date: end.toISOString(),
-          country_limit: 20,
-        }),
-        // Device breakdown
-        supabase.rpc('get_device_breakdown', {
-          site_uuid: selectedSite.id,
-          start_date: start.toISOString(),
-          end_date: end.toISOString(),
-        }),
-        // Browser breakdown
-        supabase.rpc('get_browser_breakdown', {
-          site_uuid: selectedSite.id,
-          start_date: start.toISOString(),
-          end_date: end.toISOString(),
-        }),
-      ])
+    const [
+      liveRes,
+      chartRes,
+      compChartRes,
+      visitorsRes,
+      prevVisitorsRes,
+      pageviewsRes,
+      prevPageviewsRes,
+      durationRes,
+      prevDurationRes,
+      pagesRes,
+      referrersRes,
+      countriesRes,
+      devicesRes,
+      browsersRes,
+      osRes,
+    ] = await Promise.all([
+      supabase.rpc('get_live_users', { site_uuid: selectedSite.id }),
+      supabase.rpc('get_pageviews_chart', {
+        site_uuid: selectedSite.id,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+        tz_offset_minutes: tzOffset,
+      }),
+      supabase.rpc('get_pageviews_chart', {
+        site_uuid: selectedSite.id,
+        start_date: prevStart.toISOString(),
+        end_date: prevEnd.toISOString(),
+        tz_offset_minutes: tzOffset,
+      }),
+      supabase.rpc('get_unique_visitors', {
+        site_uuid: selectedSite.id,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+      }),
+      supabase.rpc('get_unique_visitors', {
+        site_uuid: selectedSite.id,
+        start_date: prevStart.toISOString(),
+        end_date: prevEnd.toISOString(),
+      }),
+      supabase
+        .from('pageviews')
+        .select('*', { count: 'exact', head: true })
+        .eq('site_id', selectedSite.id)
+        .gte('timestamp', start.toISOString())
+        .lte('timestamp', end.toISOString()),
+      supabase
+        .from('pageviews')
+        .select('*', { count: 'exact', head: true })
+        .eq('site_id', selectedSite.id)
+        .gte('timestamp', prevStart.toISOString())
+        .lte('timestamp', prevEnd.toISOString()),
+      supabase.rpc('get_avg_session_duration', {
+        site_uuid: selectedSite.id,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+      }),
+      supabase.rpc('get_avg_session_duration', {
+        site_uuid: selectedSite.id,
+        start_date: prevStart.toISOString(),
+        end_date: prevEnd.toISOString(),
+      }),
+      supabase.rpc('get_top_pages_with_devices', {
+        site_uuid: selectedSite.id,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+        page_limit: 20,
+      }),
+      supabase.rpc('get_referrer_sources', {
+        site_uuid: selectedSite.id,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+        source_limit: 20,
+      }),
+      supabase.rpc('get_top_countries', {
+        site_uuid: selectedSite.id,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+        country_limit: 20,
+      }),
+      supabase.rpc('get_device_breakdown', {
+        site_uuid: selectedSite.id,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+      }),
+      supabase.rpc('get_browser_breakdown', {
+        site_uuid: selectedSite.id,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+      }),
+      supabase.rpc('get_os_breakdown', {
+        site_uuid: selectedSite.id,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+      }),
+    ])
 
-      // Set live users
-      setLiveUsers(liveRes.data || 0)
+    setLiveUsers(liveRes.data || 0)
+    setChartData(chartRes.data || [])
+    setComparisonChartData(compChartRes.data || [])
+    setCurrentVisitors(visitorsRes.data || 0)
+    setPrevVisitors(prevVisitorsRes.data || 0)
+    setCurrentPageviews(pageviewsRes.count || 0)
+    setPrevPageviews(prevPageviewsRes.count || 0)
 
-      // Set chart data
-      setChartData(chartRes.data || [])
-      setComparisonChartData(compChartRes.data || [])
+    const dur = durationRes.data?.[0] || { avg_duration_all: 0 }
+    const prevDur = prevDurationRes.data?.[0] || { avg_duration_all: 0 }
+    setAvgDuration(dur.avg_duration_all || 0)
+    setPrevAvgDuration(prevDur.avg_duration_all || 0)
 
-      // Set aggregate stats
-      setCurrentVisitors(visitorsRes.data || 0)
-      setPrevVisitors(prevVisitorsRes.data || 0)
-      setCurrentPageviews(pageviewsRes.count || 0)
-      setPrevPageviews(prevPageviewsRes.count || 0)
-
-      const durData = durationRes.data?.[0] || { avg_duration_all: 0 }
-      const prevDurData = prevDurationRes.data?.[0] || { avg_duration_all: 0 }
-      setAvgDuration(durData.avg_duration_all || 0)
-      setPrevAvgDuration(prevDurData.avg_duration_all || 0)
-
-      // Calculate bounce rate from top pages data
-      const pages = pagesRes.data || []
-      if (pages.length > 0) {
-        const totalViews = pages.reduce((sum: number, p: TopPage) => sum + p.pageviews, 0)
-        const weightedBounce = pages.reduce(
-          (sum: number, p: TopPage) => sum + (p.bounce_rate || 0) * p.pageviews,
-          0
-        )
-        setBounceRate(totalViews > 0 ? weightedBounce / totalViews : 0)
-      } else {
-        setBounceRate(0)
-      }
-      setPrevBounceRate(0) // We don't query previous bounce rate for simplicity
-
-      // Set table data
-      setTopPages(pages)
-      setReferrerSources(referrersRes.data || [])
-      setTopCountries(countriesRes.data || [])
-      setDeviceBreakdown(devicesRes.data || [])
-      setBrowserBreakdown(browsersRes.data || [])
-    } catch (error) {
-      console.error('Error loading dashboard data:', error)
+    const pages: TopPage[] = pagesRes.data || []
+    if (pages.length > 0) {
+      const totalViews = pages.reduce((s, p) => s + p.pageviews, 0)
+      const weighted = pages.reduce((s, p) => s + (p.bounce_rate || 0) * p.pageviews, 0)
+      setBounceRate(totalViews > 0 ? weighted / totalViews : 0)
+    } else {
+      setBounceRate(0)
     }
+
+    setTopPages(pages)
+    setReferrerSources(referrersRes.data || [])
+    setTopCountries(countriesRes.data || [])
+    setDeviceBreakdown(devicesRes.data || [])
+    setBrowserBreakdown(browsersRes.data || [])
+    setOsBreakdown(osRes.data || [])
+  }
+
+  async function toggleCountry(countryCode: string) {
+    if (expandedCountry === countryCode) {
+      setExpandedCountry(null)
+      return
+    }
+    setExpandedCountry(countryCode)
+    if (countryCities[countryCode] || !selectedSite) return
+
+    setLoadingCities(countryCode)
+    const { start, end } = getPeriodDates(timePeriod, customStartDate, customEndDate)
+    const { data } = await supabase.rpc('get_cities_by_country', {
+      site_uuid: selectedSite.id,
+      country_code: countryCode,
+      start_date: start.toISOString(),
+      end_date: end.toISOString(),
+      city_limit: 8,
+    })
+    if (data) setCountryCities((prev) => ({ ...prev, [countryCode]: data }))
+    setLoadingCities(null)
+  }
+
+  function applyFilter(dimension: keyof ActiveFilters, value: string) {
+    setActiveFilters((prev) =>
+      prev[dimension] === value
+        ? { ...prev, [dimension]: undefined }
+        : { ...prev, [dimension]: value }
+    )
+  }
+
+  function removeFilter(dimension: keyof ActiveFilters) {
+    setActiveFilters((prev) => {
+      const next = { ...prev }
+      delete next[dimension]
+      return next
+    })
   }
 
   // Computed
-  const viewsPerVisit = useMemo(() => {
-    if (currentVisitors === 0) return 0
-    return currentPageviews / currentVisitors
-  }, [currentPageviews, currentVisitors])
+  const totalVisitors = Math.max(currentVisitors, 1)
+  const viewsPerVisit = currentVisitors > 0 ? currentPageviews / currentVisitors : 0
+  const prevViewsPerVisit = prevVisitors > 0 ? prevPageviews / prevVisitors : 0
+  const hasFilters = Object.values(activeFilters).some(Boolean)
 
-  const prevViewsPerVisit = useMemo(() => {
-    if (prevVisitors === 0) return 0
-    return prevPageviews / prevVisitors
-  }, [prevPageviews, prevVisitors])
+  const filterDimensions: { key: keyof ActiveFilters; label: string }[] = [
+    { key: 'page', label: 'Page' },
+    { key: 'source', label: 'Source' },
+    { key: 'country', label: 'Country' },
+    { key: 'device', label: 'Device' },
+    { key: 'browser', label: 'Browser' },
+    { key: 'os', label: 'OS' },
+  ]
 
-  // Total visitors for tables
-  const totalVisitors = useMemo(() => {
-    return Math.max(currentVisitors, 1)
-  }, [currentVisitors])
-
-  // --- Render ---
+  // ─── Render ──────────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg-page">
-        <div className="text-text-tertiary text-sm">Loading...</div>
+        <p className="text-text-tertiary text-sm">Loading…</p>
       </div>
     )
   }
@@ -421,10 +500,10 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-bg-page">
-      {/* Sticky header */}
+      {/* ── Sticky header ── */}
       <header className="sticky top-0 z-30 h-14 border-b border-border bg-bg-card/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-          {/* Left: site selector + realtime */}
+          {/* Left */}
           <div className="flex items-center gap-4 min-w-0">
             {sites.length === 1 ? (
               <span className="text-sm font-semibold text-text-primary truncate">
@@ -434,10 +513,10 @@ function DashboardContent() {
               <select
                 value={selectedSite?.id || ''}
                 onChange={(e) => {
-                  const site = sites.find((s) => s.id === e.target.value)
-                  if (site) setSelectedSite(site)
+                  const s = sites.find((s) => s.id === e.target.value)
+                  if (s) setSelectedSite(s)
                 }}
-                className="text-sm font-semibold text-text-primary bg-transparent border-none outline-none cursor-pointer pr-6 truncate"
+                className="text-sm font-semibold text-text-primary bg-transparent border-none outline-none cursor-pointer"
               >
                 {sites.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -449,7 +528,7 @@ function DashboardContent() {
             <RealtimeBadge count={liveUsers} />
           </div>
 
-          {/* Right: date picker + actions */}
+          {/* Right */}
           <div className="flex items-center gap-3">
             <DateRangePicker
               value={timePeriod}
@@ -467,94 +546,120 @@ function DashboardContent() {
               title="Toggle theme"
             >
               {resolvedTheme === 'dark' ? (
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1A.5.5 0 018 1zm3.354 2.354a.5.5 0 010 .707l-.708.708a.5.5 0 11-.707-.708l.708-.707a.5.5 0 01.707 0zM14 7.5a.5.5 0 010 1h-1a.5.5 0 010-1h1zm-1.646 3.854a.5.5 0 010-.707l.708-.708a.5.5 0 01.707.708l-.708.707a.5.5 0 01-.707 0zM8 13a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1A.5.5 0 018 13zm-3.354-2.354a.5.5 0 010-.707l.708-.708a.5.5 0 11.707.708l-.708.707a.5.5 0 01-.707 0zM3 7.5a.5.5 0 010 1H2a.5.5 0 010-1h1zm.646-3.146a.5.5 0 01.707 0l.708.707a.5.5 0 11-.708.708L3.646 5.06a.5.5 0 010-.707zM8 5a3 3 0 100 6 3 3 0 000-6z"/></svg>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 1a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1A.5.5 0 018 1zm3.354 2.354a.5.5 0 010 .707l-.708.708a.5.5 0 11-.707-.708l.708-.707a.5.5 0 01.707 0zM14 7.5a.5.5 0 010 1h-1a.5.5 0 010-1h1zm-1.646 3.854a.5.5 0 010-.707l.708-.708a.5.5 0 01.707.708l-.708.707a.5.5 0 01-.707 0zM8 13a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1A.5.5 0 018 13zm-3.354-2.354a.5.5 0 010-.707l.708-.708a.5.5 0 11.707.708l-.708.707a.5.5 0 01-.707 0zM3 7.5a.5.5 0 010 1H2a.5.5 0 010-1h1zm.646-3.146a.5.5 0 01.707 0l.708.707a.5.5 0 11-.708.708L3.646 5.06a.5.5 0 010-.707zM8 5a3 3 0 100 6 3 3 0 000-6z" />
+                </svg>
               ) : (
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M6 .278a.768.768 0 01.08.858 7.208 7.208 0 00-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 01.81.316.733.733 0 01-.031.893A8.349 8.349 0 018.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 016 .278z"/></svg>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M6 .278a.768.768 0 01.08.858 7.208 7.208 0 00-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 01.81.316.733.733 0 01-.031.893A8.349 8.349 0 018.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 016 .278z" />
+                </svg>
               )}
             </button>
 
-            {/* Settings link */}
-            <Link
-              href="/sites"
-              className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-            >
+            <Link href="/sites" className="text-sm text-text-secondary hover:text-text-primary transition-colors">
               Sites
             </Link>
-
-            <button
-              onClick={signOut}
-              className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-            >
+            <button onClick={signOut} className="text-sm text-text-secondary hover:text-text-primary transition-colors">
               Sign out
             </button>
           </div>
         </div>
       </header>
 
-      {/* Main content */}
+      {/* ── Main ── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Stat cards row */}
-        <section className="flex flex-wrap gap-0 -mx-4 sm:mx-0">
+
+        {/* Active filter chips */}
+        {hasFilters && (
+          <div className="flex flex-wrap gap-2">
+            {filterDimensions.map(({ key, label }) =>
+              activeFilters[key] ? (
+                <span
+                  key={key}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border border-primary text-primary bg-primary-light"
+                >
+                  {label}: {activeFilters[key]}
+                  <button
+                    onClick={() => removeFilter(key)}
+                    className="hover:opacity-70 transition-opacity font-bold"
+                  >
+                    ✕
+                  </button>
+                </span>
+              ) : null
+            )}
+            <button
+              onClick={() => setActiveFilters({})}
+              className="text-xs text-text-tertiary hover:text-text-secondary transition-colors px-1"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
+
+        {/* Stat cards */}
+        <section className="flex flex-wrap gap-0 -mx-2 sm:mx-0">
           <StatCard
             label="Unique visitors"
             value={formatNumber(currentVisitors)}
             delta={calcDelta(currentVisitors, prevVisitors)}
+            tooltip="Personas únicas que visitaron tu sitio en este período. Se identifica por una combinación anónima de IP + user agent, sin cookies."
           />
           <StatCard
             label="Total pageviews"
             value={formatNumber(currentPageviews)}
             delta={calcDelta(currentPageviews, prevPageviews)}
+            tooltip="Número total de páginas vistas. Un mismo visitante puede generar múltiples pageviews."
           />
           <StatCard
             label="Bounce rate"
             value={bounceRate > 0 ? `${Math.round(bounceRate)}%` : '--'}
-            delta={prevBounceRate > 0 ? calcDelta(bounceRate, prevBounceRate) : null}
+            tooltip="Porcentaje de visitantes que vieron solo una página y se fueron. Menor es mejor."
           />
           <StatCard
             label="Visit duration"
             value={formatDuration(avgDuration)}
             delta={calcDelta(avgDuration, prevAvgDuration)}
+            tooltip="Tiempo promedio que los visitantes pasan en tu sitio por sesión. Se calcula como diferencia entre el primer y último pageview de cada sesión, con ventana de 30 minutos de inactividad."
           />
           <StatCard
             label="Views / visit"
             value={viewsPerVisit > 0 ? viewsPerVisit.toFixed(1) : '--'}
             delta={calcDelta(viewsPerVisit, prevViewsPerVisit)}
+            tooltip="Promedio de páginas vistas por cada sesión. Más alto = mayor engagement con tu contenido."
           />
         </section>
 
-        {/* Area chart */}
+        {/* Chart */}
         <section className="border border-border rounded-lg bg-bg-card p-4">
-          <VisitorChart
-            data={chartData}
-            comparisonData={comparisonChartData}
-          />
+          <VisitorChart data={chartData} comparisonData={comparisonChartData} />
         </section>
 
-        {/* Top pages + Top sources (2 cols) */}
+        {/* Top pages + Top sources */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="border border-border rounded-lg bg-bg-card p-4">
             <DataTable
               title="Top pages"
+              tooltip="Las páginas más visitadas de tu sitio, ordenadas por cantidad de visitantes únicos."
               columns={[
                 {
                   key: 'path',
                   label: 'Page',
                   render: (val: string) => (
-                    <span className="truncate block max-w-[250px]" title={val}>
+                    <span
+                      className={`truncate block max-w-[220px] ${activeFilters.page === val ? 'text-primary font-medium' : ''}`}
+                      title={val}
+                    >
                       {val}
                     </span>
                   ),
                 },
                 { key: 'unique_visitors', label: 'Visitors', align: 'right' },
-                {
-                  key: 'pageviews',
-                  label: 'Views',
-                  align: 'right',
-                  render: (val: number) => formatNumber(val),
-                },
+                { key: 'pageviews', label: 'Views', align: 'right', render: (v: number) => formatNumber(v) },
               ]}
               data={topPages}
               maxKey="unique_visitors"
+              onRowClick={(row: TopPage) => applyFilter('page', row.path)}
               emptyMessage="No pageviews yet"
             />
           </div>
@@ -562,72 +667,142 @@ function DashboardContent() {
           <div className="border border-border rounded-lg bg-bg-card p-4">
             <DataTable
               title="Top sources"
+              tooltip="De dónde vienen tus visitantes. 'Direct' = escribieron la URL o usaron un bookmark."
               columns={[
                 {
                   key: 'source',
                   label: 'Source',
                   render: (val: string) => (
-                    <span className="flex items-center gap-1.5">
+                    <span className={`flex items-center gap-1.5 ${activeFilters.source === val ? 'text-primary font-medium' : ''}`}>
                       <span>{getSourceIcon(val)}</span>
-                      <span className="truncate">{val}</span>
+                      <span className="truncate max-w-[160px]">{val}</span>
                     </span>
                   ),
                 },
                 { key: 'unique_visitors', label: 'Visitors', align: 'right' },
                 {
-                  key: '_percent',
+                  key: '_pct',
                   label: '%',
                   align: 'right',
                   render: (_: any, row: ReferrerSource) =>
-                    `${totalVisitors > 0 ? Math.round((row.unique_visitors / totalVisitors) * 100) : 0}%`,
+                    `${Math.round((row.unique_visitors / totalVisitors) * 100)}%`,
                 },
               ]}
               data={referrerSources}
               maxKey="unique_visitors"
+              onRowClick={(row: ReferrerSource) => applyFilter('source', row.source)}
               emptyMessage="No referrers yet"
             />
           </div>
         </section>
 
-        {/* Countries + Devices (2 cols) */}
+        {/* Countries + Devices */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Countries with city drill-down */}
           <div className="border border-border rounded-lg bg-bg-card p-4">
-            <DataTable
-              title="Countries"
-              columns={[
-                {
-                  key: 'country',
-                  label: 'Country',
-                  render: (val: string) => (
-                    <span className="flex items-center gap-1.5">
-                      <span>{getCountryFlag(val)}</span>
-                      <span>{getCountryName(val) || val}</span>
-                    </span>
-                  ),
-                },
-                { key: 'unique_visitors', label: 'Visitors', align: 'right' },
-                {
-                  key: '_percent',
-                  label: '%',
-                  align: 'right',
-                  render: (_: any, row: TopCountry) =>
-                    `${totalVisitors > 0 ? Math.round((row.unique_visitors / totalVisitors) * 100) : 0}%`,
-                },
-              ]}
-              data={topCountries}
-              maxKey="unique_visitors"
-              emptyMessage="No country data yet"
-            />
+            <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center">
+              Countries
+            </h3>
+            {topCountries.length === 0 ? (
+              <p className="text-sm text-text-tertiary py-4">No country data yet</p>
+            ) : (
+              <div className="data-table">
+                <table className="w-full">
+                  <thead>
+                    <tr>
+                      <th className="pb-2 text-left pr-2">Country</th>
+                      <th className="pb-2 text-right pr-2">Visitors</th>
+                      <th className="pb-2 text-right">%</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topCountries.map((row, i) => {
+                      const isExpanded = expandedCountry === row.country
+                      const cities = countryCities[row.country] || []
+                      const maxVisitors = Math.max(...topCountries.map(r => r.unique_visitors), 1)
+                      return (
+                        <>
+                          <tr
+                            key={row.country}
+                            className={`group relative cursor-pointer ${activeFilters.country === row.country ? 'text-primary' : ''}`}
+                            onClick={() => {
+                              toggleCountry(row.country)
+                              applyFilter('country', row.country)
+                            }}
+                          >
+                            <td className="py-2 pr-2 relative">
+                              <div
+                                className="absolute inset-y-0 left-0 rounded-sm transition-all duration-[400ms] ease-out group-hover:opacity-[0.18]"
+                                style={{
+                                  width: `${(row.unique_visitors / maxVisitors) * 100}%`,
+                                  background: 'var(--color-primary)',
+                                  opacity: 0.08,
+                                }}
+                              />
+                              <span className="relative z-10 flex items-center gap-1.5">
+                                <span>{getCountryFlag(row.country)}</span>
+                                <span>{getCountryName(row.country) || row.country}</span>
+                                <span className="text-text-tertiary text-xs ml-0.5">
+                                  {isExpanded ? '▲' : '▼'}
+                                </span>
+                              </span>
+                            </td>
+                            <td className="py-2 pr-2 text-right relative z-10">
+                              {row.unique_visitors.toLocaleString()}
+                            </td>
+                            <td className="py-2 text-right relative z-10">
+                              {Math.round((row.unique_visitors / totalVisitors) * 100)}%
+                            </td>
+                          </tr>
+                          {isExpanded && (
+                            <tr key={`cities-${row.country}`}>
+                              <td colSpan={3} className="pb-3 pt-0">
+                                {loadingCities === row.country ? (
+                                  <p className="text-xs text-text-tertiary pl-4 py-1">Loading cities…</p>
+                                ) : cities.length === 0 ? (
+                                  <p className="text-xs text-text-tertiary pl-4 py-1">No city data available</p>
+                                ) : (
+                                  <div className="pl-4 space-y-0.5 border-l border-border ml-2">
+                                    {cities.map((city) => (
+                                      <div
+                                        key={city.city}
+                                        className="flex items-center justify-between text-xs py-0.5"
+                                      >
+                                        <span className="text-text-secondary">{city.city}</span>
+                                        <span className="text-text-tertiary">{city.unique_visitors.toLocaleString()}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           <div className="border border-border rounded-lg bg-bg-card p-4">
             <DataTable
               title="Devices"
+              tooltip="Tipo de dispositivo usado para acceder a tu sitio, detectado por el user agent del navegador."
               columns={[
-                { key: 'device', label: 'Device' },
+                {
+                  key: 'device',
+                  label: 'Device',
+                  render: (val: string) => (
+                    <span className={`flex items-center gap-1.5 ${activeFilters.device === val ? 'text-primary font-medium' : ''}`}>
+                      {val}
+                    </span>
+                  ),
+                },
                 { key: 'unique_visitors', label: 'Visitors', align: 'right' },
                 {
-                  key: '_percent',
+                  key: '_pct',
                   label: '%',
                   align: 'right',
                   render: (_: any, row: DeviceBreakdown) => {
@@ -638,21 +813,31 @@ function DashboardContent() {
               ]}
               data={deviceBreakdown}
               maxKey="unique_visitors"
+              onRowClick={(row: DeviceBreakdown) => applyFilter('device', row.device)}
               emptyMessage="No device data yet"
             />
           </div>
         </section>
 
-        {/* Browsers + OS (2 cols) */}
+        {/* Browsers + OS */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="border border-border rounded-lg bg-bg-card p-4">
             <DataTable
               title="Browsers"
+              tooltip="Navegador web utilizado por tus visitantes."
               columns={[
-                { key: 'browser', label: 'Browser' },
+                {
+                  key: 'browser',
+                  label: 'Browser',
+                  render: (val: string) => (
+                    <span className={activeFilters.browser === val ? 'text-primary font-medium' : ''}>
+                      {val}
+                    </span>
+                  ),
+                },
                 { key: 'unique_visitors', label: 'Visitors', align: 'right' },
                 {
-                  key: '_percent',
+                  key: '_pct',
                   label: '%',
                   align: 'right',
                   render: (_: any, row: BrowserBreakdown) => {
@@ -663,41 +848,51 @@ function DashboardContent() {
               ]}
               data={browserBreakdown}
               maxKey="unique_visitors"
+              onRowClick={(row: BrowserBreakdown) => applyFilter('browser', row.browser)}
               emptyMessage="No browser data yet"
             />
           </div>
 
-          {/* OS - derived from browser breakdown since we don't have a separate RPC,
-              or we show the device breakdown again. For now, show a placeholder
-              that explains OS data isn't separately tracked */}
           <div className="border border-border rounded-lg bg-bg-card p-4">
             <DataTable
               title="Operating systems"
+              tooltip="Sistema operativo del dispositivo de tus visitantes."
               columns={[
-                { key: 'device', label: 'OS' },
+                {
+                  key: 'os',
+                  label: 'OS',
+                  render: (val: string) => (
+                    <span className={`flex items-center gap-1.5 ${activeFilters.os === val ? 'text-primary font-medium' : ''}`}>
+                      <span>{getOSIcon(val)}</span>
+                      <span>{val}</span>
+                    </span>
+                  ),
+                },
                 { key: 'unique_visitors', label: 'Visitors', align: 'right' },
                 {
-                  key: '_percent',
+                  key: '_pct',
                   label: '%',
                   align: 'right',
-                  render: (_: any, row: DeviceBreakdown) => {
-                    const total = deviceBreakdown.reduce((s, d) => s + d.unique_visitors, 0)
+                  render: (_: any, row: OSBreakdown) => {
+                    const total = osBreakdown.reduce((s, o) => s + o.unique_visitors, 0)
                     return `${total > 0 ? Math.round((row.unique_visitors / total) * 100) : 0}%`
                   },
                 },
               ]}
-              data={deviceBreakdown}
+              data={osBreakdown}
               maxKey="unique_visitors"
+              onRowClick={(row: OSBreakdown) => applyFilter('os', row.os)}
               emptyMessage="No OS data yet"
             />
           </div>
         </section>
+
       </main>
     </div>
   )
 }
 
-// --- Page export ---
+// ─── Page export ──────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   return (

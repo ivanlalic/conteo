@@ -73,6 +73,16 @@ interface City {
   unique_visitors: number
 }
 
+interface Campaign {
+  utm_source: string
+  utm_medium: string
+  utm_campaign: string
+  utm_content: string
+  utm_term: string
+  pageviews: number
+  unique_visitors: number
+}
+
 interface ActiveFilters {
   page?: string
   source?: string
@@ -222,6 +232,12 @@ function DashboardContent() {
   const [browserBreakdown, setBrowserBreakdown] = useState<BrowserBreakdown[]>([])
   const [osBreakdown, setOsBreakdown] = useState<OSBreakdown[]>([])
 
+  // Campaigns
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [loadingMoreCampaigns, setLoadingMoreCampaigns] = useState(false)
+  const [campaignsOffset, setCampaignsOffset] = useState(0)
+  const [hasMoreCampaigns, setHasMoreCampaigns] = useState(false)
+
   // Country city drill-down
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null)
   const [countryCities, setCountryCities] = useState<Record<string, City[]>>({})
@@ -306,6 +322,7 @@ function DashboardContent() {
       devicesRes,
       browsersRes,
       osRes,
+      campaignsRes,
     ] = await Promise.all([
       supabase.rpc('get_live_users', { site_uuid: selectedSite.id }),
       supabase.rpc('get_pageviews_chart', {
@@ -385,6 +402,13 @@ function DashboardContent() {
         start_date: start.toISOString(),
         end_date: end.toISOString(),
       }),
+      supabase.rpc('get_top_campaigns', {
+        site_uuid: selectedSite.id,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+        campaign_limit: 10,
+        campaign_offset: 0,
+      }),
     ])
 
     setLiveUsers(liveRes.data || 0)
@@ -415,6 +439,11 @@ function DashboardContent() {
     setDeviceBreakdown(devicesRes.data || [])
     setBrowserBreakdown(browsersRes.data || [])
     setOsBreakdown(osRes.data || [])
+
+    const campaignsData: Campaign[] = campaignsRes.data || []
+    setCampaigns(campaignsData)
+    setCampaignsOffset(10)
+    setHasMoreCampaigns(campaignsData.length === 10)
   }
 
   async function toggleCountry(countryCode: string) {
@@ -452,6 +481,24 @@ function DashboardContent() {
       delete next[dimension]
       return next
     })
+  }
+
+  async function loadMoreCampaigns() {
+    if (!selectedSite) return
+    setLoadingMoreCampaigns(true)
+    const { start, end } = getPeriodDates(timePeriod, customStartDate, customEndDate)
+    const { data } = await supabase.rpc('get_top_campaigns', {
+      site_uuid: selectedSite.id,
+      start_date: start.toISOString(),
+      end_date: end.toISOString(),
+      campaign_limit: 10,
+      campaign_offset: campaignsOffset,
+    })
+    const newData: Campaign[] = data || []
+    setCampaigns((prev) => [...prev, ...newData])
+    setCampaignsOffset((prev) => prev + 10)
+    setHasMoreCampaigns(newData.length === 10)
+    setLoadingMoreCampaigns(false)
   }
 
   // Computed
@@ -885,6 +932,71 @@ function DashboardContent() {
               emptyMessage="No OS data yet"
             />
           </div>
+        </section>
+
+        {/* UTM Campaigns — full width */}
+        <section className="border border-border rounded-lg bg-bg-card p-4">
+          <h3 className="text-sm font-semibold text-text-primary mb-3">UTM Campaigns</h3>
+          {campaigns.length === 0 ? (
+            <p className="text-sm text-text-tertiary py-4">
+              No UTM campaigns tracked yet.{' '}
+              <span className="text-text-secondary">
+                Add <code className="bg-border-light px-1 rounded text-xs">utm_*</code> params to your URLs to track campaigns.
+              </span>
+            </p>
+          ) : (
+            <>
+              <div className="data-table overflow-x-auto">
+                <table className="w-full min-w-[480px]">
+                  <thead>
+                    <tr>
+                      <th className="pb-2 text-left pr-2">Campaign</th>
+                      <th className="pb-2 text-left pr-2">Source</th>
+                      <th className="pb-2 text-left pr-2">Medium</th>
+                      <th className="pb-2 text-right pr-2">Views</th>
+                      <th className="pb-2 text-right">Visitors</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {campaigns.map((row, i) => {
+                      const maxViews = Math.max(...campaigns.map(c => c.pageviews), 1)
+                      return (
+                        <tr key={i} className="group relative">
+                          <td className="py-2 pr-2 relative">
+                            <div
+                              className="absolute inset-y-0 left-0 rounded-sm transition-all duration-[400ms] ease-out group-hover:opacity-[0.18]"
+                              style={{ width: `${(row.pageviews / maxViews) * 100}%`, background: 'var(--color-primary)', opacity: 0.08 }}
+                            />
+                            <span className="relative z-10 font-medium text-text-primary">
+                              {row.utm_campaign || '—'}
+                            </span>
+                          </td>
+                          <td className="py-2 pr-2 text-text-secondary relative z-10">
+                            <span className="flex items-center gap-1">
+                              <span>{getSourceIcon(row.utm_source || '')}</span>
+                              {row.utm_source || '—'}
+                            </span>
+                          </td>
+                          <td className="py-2 pr-2 text-text-secondary relative z-10">{row.utm_medium || '—'}</td>
+                          <td className="py-2 pr-2 text-right relative z-10">{formatNumber(row.pageviews)}</td>
+                          <td className="py-2 text-right relative z-10">{formatNumber(row.unique_visitors)}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {hasMoreCampaigns && (
+                <button
+                  onClick={loadMoreCampaigns}
+                  disabled={loadingMoreCampaigns}
+                  className="mt-3 text-sm text-primary hover:underline disabled:opacity-50"
+                >
+                  {loadingMoreCampaigns ? 'Loading…' : 'Load more'}
+                </button>
+              )}
+            </>
+          )}
         </section>
 
       </main>

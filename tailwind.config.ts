@@ -22,6 +22,7 @@ const config: Config = {
         border: "var(--color-border)",
         "border-light": "var(--color-border-light)",
         positive: "var(--color-positive)",
+        warning: "var(--color-warning)",
         negative: "var(--color-negative)",
       },
     },

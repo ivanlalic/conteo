@@ -14,6 +14,7 @@ import RealtimeBadge from '@/components/dashboard/RealtimeBadge'
 import DateRangePicker, { type TimePeriod } from '@/components/dashboard/DateRangePicker'
 import VisitorChart from '@/components/dashboard/VisitorChart'
 import DataTable from '@/components/dashboard/DataTable'
+import UxInsightCard from '@/components/dashboard/UxInsightCard'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -81,6 +82,20 @@ interface Campaign {
   utm_term: string
   pageviews: number
   unique_visitors: number
+}
+
+interface BehaviorMetric {
+  event_type: string
+  rate: number
+  affected_sessions: number
+}
+
+interface BehaviorDetail {
+  page_url: string
+  element_info: string
+  element_tag: string
+  occurrences: number
+  unique_sessions: number
 }
 
 interface ActiveFilters {
@@ -238,6 +253,12 @@ function DashboardContent() {
   const [campaignsOffset, setCampaignsOffset] = useState(0)
   const [hasMoreCampaigns, setHasMoreCampaigns] = useState(false)
 
+  // UX Behavior
+  const [behaviorSummary, setBehaviorSummary] = useState<BehaviorMetric[]>([])
+  const [expandedMetric, setExpandedMetric] = useState<string | null>(null)
+  const [behaviorDetails, setBehaviorDetails] = useState<BehaviorDetail[]>([])
+  const [loadingDetails, setLoadingDetails] = useState(false)
+
   // Country city drill-down
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null)
   const [countryCities, setCountryCities] = useState<Record<string, City[]>>({})
@@ -323,6 +344,7 @@ function DashboardContent() {
       browsersRes,
       osRes,
       campaignsRes,
+      behaviorRes,
     ] = await Promise.all([
       supabase.rpc('get_live_users', { site_uuid: selectedSite.id }),
       supabase.rpc('get_pageviews_chart', {
@@ -409,6 +431,11 @@ function DashboardContent() {
         campaign_limit: 10,
         campaign_offset: 0,
       }),
+      supabase.rpc('get_behavior_summary', {
+        site_uuid: selectedSite.id,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+      }),
     ])
 
     setLiveUsers(liveRes.data || 0)
@@ -444,6 +471,10 @@ function DashboardContent() {
     setCampaigns(campaignsData)
     setCampaignsOffset(10)
     setHasMoreCampaigns(campaignsData.length === 10)
+
+    setBehaviorSummary(behaviorRes.data || [])
+    setExpandedMetric(null)
+    setBehaviorDetails([])
   }
 
   async function toggleCountry(countryCode: string) {
@@ -499,6 +530,31 @@ function DashboardContent() {
     setCampaignsOffset((prev) => prev + 10)
     setHasMoreCampaigns(newData.length === 10)
     setLoadingMoreCampaigns(false)
+  }
+
+  async function toggleBehaviorMetric(eventType: string) {
+    if (expandedMetric === eventType) {
+      setExpandedMetric(null)
+      setBehaviorDetails([])
+      return
+    }
+    setExpandedMetric(eventType)
+    if (!selectedSite) return
+    setLoadingDetails(true)
+    const { start, end } = getPeriodDates(timePeriod, customStartDate, customEndDate)
+    const { data } = await supabase.rpc('get_behavior_details', {
+      site_uuid: selectedSite.id,
+      p_event_type: eventType,
+      start_date: start.toISOString(),
+      end_date: end.toISOString(),
+      detail_limit: 10,
+    })
+    setBehaviorDetails(data || [])
+    setLoadingDetails(false)
+  }
+
+  function getBehaviorMetric(type: string): BehaviorMetric {
+    return behaviorSummary.find((m) => m.event_type === type) || { event_type: type, rate: 0, affected_sessions: 0 }
   }
 
   // Computed
@@ -932,6 +988,93 @@ function DashboardContent() {
               emptyMessage="No OS data yet"
             />
           </div>
+        </section>
+
+        {/* UX Insights */}
+        <section className="border border-border rounded-lg bg-bg-card p-4">
+          <h3 className="text-sm font-semibold text-text-primary mb-3">UX Insights</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
+            <UxInsightCard
+              label="Rage clicks"
+              rate={getBehaviorMetric('rage_click').rate}
+              sessions={getBehaviorMetric('rage_click').affected_sessions}
+              tooltip="Percentage of sessions where a visitor clicked 3+ times rapidly in the same area without getting a response. Indicates frustration: broken buttons, elements that look clickable but aren't, or high latency."
+              thresholds={[2, 5]}
+              isExpanded={expandedMetric === 'rage_click'}
+              onClick={() => toggleBehaviorMetric('rage_click')}
+            />
+            <UxInsightCard
+              label="Dead clicks"
+              rate={getBehaviorMetric('dead_click').rate}
+              sessions={getBehaviorMetric('dead_click').affected_sessions}
+              tooltip="Percentage of sessions where a visitor clicked on an element that produced no response. Indicates elements that look interactive but aren't, broken links, or JavaScript errors."
+              thresholds={[10, 25]}
+              isExpanded={expandedMetric === 'dead_click'}
+              onClick={() => toggleBehaviorMetric('dead_click')}
+            />
+            <UxInsightCard
+              label="Excessive scrolling"
+              rate={getBehaviorMetric('excessive_scroll').rate}
+              sessions={getBehaviorMetric('excessive_scroll').affected_sessions}
+              tooltip="Percentage of sessions where a visitor scrolled much more than normal, going up and down repeatedly or reaching the bottom of very long pages. Indicates that the visitor can't find what they're looking for or that the content is poorly organized."
+              thresholds={[3, 10]}
+              isExpanded={expandedMetric === 'excessive_scroll'}
+              onClick={() => toggleBehaviorMetric('excessive_scroll')}
+            />
+            <UxInsightCard
+              label="Quick backs"
+              rate={getBehaviorMetric('quick_back').rate}
+              sessions={getBehaviorMetric('quick_back').affected_sessions}
+              tooltip="Percentage of sessions where a visitor navigated to a page and returned to the previous one in less than 5 seconds. Indicates that the content or navigation wasn't what the visitor expected — like opening a door, looking inside, and leaving immediately."
+              thresholds={[5, 15]}
+              isExpanded={expandedMetric === 'quick_back'}
+              onClick={() => toggleBehaviorMetric('quick_back')}
+            />
+          </div>
+          {expandedMetric && (
+            <div className="mt-4 pt-4 border-t border-border">
+              {loadingDetails ? (
+                <p className="text-sm text-text-tertiary py-2">Loading details…</p>
+              ) : behaviorDetails.length === 0 ? (
+                <p className="text-sm text-text-tertiary py-2">No data yet for this metric.</p>
+              ) : (
+                <DataTable
+                  title={
+                    expandedMetric === 'rage_click' ? 'Top rage click elements' :
+                    expandedMetric === 'dead_click' ? 'Top dead click elements' :
+                    expandedMetric === 'excessive_scroll' ? 'Pages with excessive scrolling' :
+                    'Top quick back page pairs'
+                  }
+                  columns={
+                    expandedMetric === 'quick_back'
+                      ? [
+                          { key: 'page_url', label: 'From page', render: (val: string) => <span className="truncate block max-w-[200px]" title={val}>{val}</span> },
+                          { key: 'element_info', label: 'To page', render: (val: string) => <span className="truncate block max-w-[200px]" title={val}>{val}</span> },
+                          { key: 'occurrences', label: 'Count', align: 'right' as const },
+                          { key: 'unique_sessions', label: 'Sessions', align: 'right' as const },
+                        ]
+                      : expandedMetric === 'excessive_scroll'
+                      ? [
+                          { key: 'page_url', label: 'Page', render: (val: string) => <span className="truncate block max-w-[300px]" title={val}>{val}</span> },
+                          { key: 'occurrences', label: 'Count', align: 'right' as const },
+                          { key: 'unique_sessions', label: 'Sessions', align: 'right' as const },
+                        ]
+                      : [
+                          { key: 'page_url', label: 'Page', render: (val: string) => <span className="truncate block max-w-[160px]" title={val}>{val}</span> },
+                          { key: 'element_info', label: 'Element', render: (val: string) => <span className="truncate block max-w-[160px] text-text-secondary" title={val}>{val || '—'}</span> },
+                          { key: 'element_tag', label: 'Tag', render: (val: string) => val ? <code className="bg-border-light px-1 rounded text-xs">{val}</code> : '—' },
+                          { key: 'occurrences', label: 'Count', align: 'right' as const },
+                          { key: 'unique_sessions', label: 'Sessions', align: 'right' as const },
+                        ]
+                  }
+                  data={behaviorDetails}
+                  maxKey="occurrences"
+                  onRowClick={expandedMetric !== 'excessive_scroll' && expandedMetric !== 'quick_back' ? (row: BehaviorDetail) => applyFilter('page', row.page_url) : undefined}
+                  emptyMessage="No data yet"
+                />
+              )}
+            </div>
+          )}
         </section>
 
         {/* UTM Campaigns — full width */}

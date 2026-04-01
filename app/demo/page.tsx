@@ -71,8 +71,10 @@ export default function DemoDashboard() {
   const [timePeriod, setTimePeriod] = useState<'today' | '7days' | '30days'>('7days')
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null)
   const [countryCities, setCountryCities] = useState<{ [key: string]: City[] }>({})
+  const [isEmbedded, setIsEmbedded] = useState(false)
 
   useEffect(() => {
+    setIsEmbedded(window.self !== window.top)
     loadDemoSite()
   }, [])
 
@@ -271,31 +273,35 @@ export default function DemoDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Demo Banner */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-center py-2.5 px-4">
-        <span className="text-sm">Esto es una demo en vivo de conteo.online &mdash; </span>
-        <Link href="/signup" className="text-sm font-semibold underline underline-offset-2 hover:text-indigo-100 transition">
-          Crear cuenta gratis &rarr;
-        </Link>
-      </div>
-
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 md:py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-lg md:text-2xl font-bold text-gray-900">conteo.online</h1>
-              <p className="text-xs md:text-sm text-gray-500">Live Demo Dashboard</p>
-            </div>
-            <Link
-              href="/"
-              className="flex items-center space-x-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold hover:from-indigo-600 hover:to-purple-700 transition shadow-md"
-            >
-              <span>conteo</span>
-            </Link>
-          </div>
+      {/* Demo Banner — hidden when embedded in iframe */}
+      {!isEmbedded && (
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-center py-2.5 px-4">
+          <span className="text-sm">Esto es una demo en vivo de conteo.online &mdash; </span>
+          <Link href="/signup" className="text-sm font-semibold underline underline-offset-2 hover:text-indigo-100 transition">
+            Crear cuenta gratis &rarr;
+          </Link>
         </div>
-      </header>
+      )}
+
+      {/* Header — hidden when embedded in iframe */}
+      {!isEmbedded && (
+        <header className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 md:py-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-lg md:text-2xl font-bold text-gray-900">conteo.online</h1>
+                <p className="text-xs md:text-sm text-gray-500">Live Demo Dashboard</p>
+              </div>
+              <Link
+                href="/"
+                className="flex items-center space-x-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold hover:from-indigo-600 hover:to-purple-700 transition shadow-md"
+              >
+                <span>conteo</span>
+              </Link>
+            </div>
+          </div>
+        </header>
+      )}
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -602,19 +608,21 @@ export default function DemoDashboard() {
           </div>
         </div>
 
-        {/* Footer CTA */}
-        <div className="mt-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-xl p-6 md:p-8 text-center text-white">
-          <h3 className="text-xl md:text-2xl font-bold mb-2">Want analytics like this for your site?</h3>
-          <p className="text-indigo-100 mb-4 text-sm md:text-base">
-            Simple, privacy-focused analytics for indie hackers. No cookies, no tracking scripts, just clean data.
-          </p>
-          <Link
-            href="/signup"
-            className="inline-block bg-white text-indigo-600 px-6 md:px-8 py-2.5 md:py-3 rounded-lg text-sm md:text-base font-bold hover:bg-indigo-50 transition shadow-lg"
-          >
-            Get Started Free &rarr;
-          </Link>
-        </div>
+        {/* Footer CTA — hidden when embedded in iframe */}
+        {!isEmbedded && (
+          <div className="mt-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-xl p-6 md:p-8 text-center text-white">
+            <h3 className="text-xl md:text-2xl font-bold mb-2">Want analytics like this for your site?</h3>
+            <p className="text-indigo-100 mb-4 text-sm md:text-base">
+              Simple, privacy-focused analytics for indie hackers. No cookies, no tracking scripts, just clean data.
+            </p>
+            <Link
+              href="/signup"
+              className="inline-block bg-white text-indigo-600 px-6 md:px-8 py-2.5 md:py-3 rounded-lg text-sm md:text-base font-bold hover:bg-indigo-50 transition shadow-lg"
+            >
+              Get Started Free &rarr;
+            </Link>
+          </div>
+        )}
 
       </main>
     </div>

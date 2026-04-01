@@ -243,7 +243,7 @@ export default function Home() {
     }
   }
 
-  const DEMO_URL = process.env.NEXT_PUBLIC_DEMO_SHARE_URL || ''
+  const DEMO_URL = '/demo'
 
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 transition-colors">
@@ -300,29 +300,14 @@ export default function Home() {
           <p className="text-center text-neutral-500 dark:text-neutral-400 mb-10 max-w-xl mx-auto">
             These are the stats for this very page you're viewing. That's how simple Conteo is.
           </p>
-          {DEMO_URL ? (
-            <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 overflow-hidden shadow-lg bg-white dark:bg-neutral-900">
-              <iframe
-                src={DEMO_URL}
-                className="w-full h-[600px] sm:h-[700px]"
-                title="Conteo live demo dashboard"
-                loading="lazy"
-              />
-            </div>
-          ) : (
-            <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 overflow-hidden bg-white dark:bg-neutral-900 p-12 sm:p-16 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#4F46E5]/10 text-[#4F46E5] mb-6">
-                <IconBarChart />
-              </div>
-              <h3 className="font-display font-bold text-xl mb-3">Live demo coming soon</h3>
-              <p className="text-neutral-500 dark:text-neutral-400 max-w-md mx-auto mb-6">
-                We're gathering real traffic data from conteo.online to show you the dashboard working with actual numbers.
-              </p>
-              <a href="/signup" className="inline-block bg-[#4F46E5] text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition">
-                Create your account and see your own dashboard
-              </a>
-            </div>
-          )}
+          <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 overflow-hidden shadow-lg bg-white dark:bg-neutral-900">
+            <iframe
+              src={DEMO_URL}
+              className="w-full h-[600px] sm:h-[700px]"
+              title="Conteo live demo dashboard"
+              loading="lazy"
+            />
+          </div>
         </div>
       </section>
 

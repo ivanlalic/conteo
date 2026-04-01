@@ -15,6 +15,7 @@ import DateRangePicker, { type TimePeriod } from '@/components/dashboard/DateRan
 import VisitorChart from '@/components/dashboard/VisitorChart'
 import DataTable from '@/components/dashboard/DataTable'
 import UxInsightCard from '@/components/dashboard/UxInsightCard'
+import ShareModal from '@/components/ShareModal'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -263,6 +264,10 @@ function DashboardContent() {
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null)
   const [countryCities, setCountryCities] = useState<Record<string, City[]>>({})
   const [loadingCities, setLoadingCities] = useState<string | null>(null)
+  const [countriesLimit, setCountriesLimit] = useState(5)
+
+  // Share modal
+  const [shareModalOpen, setShareModalOpen] = useState(false)
 
   // Init: load sites + read URL filters
   useEffect(() => {
@@ -629,6 +634,16 @@ function DashboardContent() {
               </select>
             )}
             <RealtimeBadge count={liveUsers} />
+            <button
+              onClick={() => setShareModalOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-bg-secondary rounded-md transition-colors"
+              title="Share public dashboard"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M7.775 3.275a.75.75 0 001.06 1.06l1.25-1.25a2 2 0 112.83 2.83l-2.5 2.5a2 2 0 01-2.83 0 .75.75 0 00-1.06 1.06 3.5 3.5 0 004.95 0l2.5-2.5a3.5 3.5 0 00-4.95-4.95l-1.25 1.25zm-4.69 9.64a2 2 0 010-2.83l2.5-2.5a2 2 0 012.83 0 .75.75 0 001.06-1.06 3.5 3.5 0 00-4.95 0l-2.5 2.5a3.5 3.5 0 004.95 4.95l1.25-1.25a.75.75 0 00-1.06-1.06l-1.25 1.25a2 2 0 01-2.83 0z" />
+              </svg>
+              Share
+            </button>
           </div>
 
           {/* Right */}
@@ -770,7 +785,7 @@ function DashboardContent() {
           <div className="border border-border rounded-lg bg-bg-card p-4">
             <DataTable
               title="Top sources"
-              tooltip="De dónde vienen tus visitantes. 'Direct' = escribieron la URL o usaron un bookmark."
+              tooltip="De dónde vienen tus visitantes."
               columns={[
                 {
                   key: 'source',
@@ -779,6 +794,16 @@ function DashboardContent() {
                     <span className={`flex items-center gap-1.5 ${activeFilters.source === val ? 'text-primary font-medium' : ''}`}>
                       <span>{getSourceIcon(val)}</span>
                       <span className="truncate max-w-[160px]">{val}</span>
+                      {(val === 'Direct' || val.includes('Direct')) && (
+                        <span className="group relative inline-flex items-center">
+                          <svg className="w-3.5 h-3.5 text-text-tertiary cursor-help" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                          </svg>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 text-xs font-normal text-text-primary bg-bg-card border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                            Tráfico sin referrer: URL directa, bookmarks, WhatsApp, email, etc.
+                          </span>
+                        </span>
+                      )}
                     </span>
                   ),
                 },
@@ -809,17 +834,18 @@ function DashboardContent() {
             {topCountries.length === 0 ? (
               <p className="text-sm text-text-tertiary py-4">No country data yet</p>
             ) : (
-              <div className="data-table">
-                <table className="w-full">
-                  <thead>
-                    <tr>
-                      <th className="pb-2 text-left pr-2">Country</th>
-                      <th className="pb-2 text-right pr-2">Visitors</th>
-                      <th className="pb-2 text-right">%</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {topCountries.map((row, i) => {
+              <>
+                <div className="data-table">
+                  <table className="w-full">
+                    <thead>
+                      <tr>
+                        <th className="pb-2 text-left pr-2">Country</th>
+                        <th className="pb-2 text-right pr-2">Visitors</th>
+                        <th className="pb-2 text-right">%</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topCountries.slice(0, countriesLimit).map((row, i) => {
                       const isExpanded = expandedCountry === row.country
                       const cities = countryCities[row.country] || []
                       const maxVisitors = Math.max(...topCountries.map(r => r.unique_visitors), 1)
@@ -885,7 +911,16 @@ function DashboardContent() {
                     })}
                   </tbody>
                 </table>
+                {topCountries.length > 5 && (
+                  <button
+                    onClick={() => setCountriesLimit(countriesLimit === 5 ? topCountries.length : 5)}
+                    className="w-full mt-2 py-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-bg-secondary rounded-md transition-colors"
+                  >
+                    {countriesLimit === 5 ? `Show all countries (${topCountries.length})` : 'Show less'}
+                  </button>
+                )}
               </div>
+              </>
             )}
           </div>
 
@@ -1143,6 +1178,16 @@ function DashboardContent() {
         </section>
 
       </main>
+
+      {/* Share Modal */}
+      {selectedSite && (
+        <ShareModal
+          isOpen={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+          siteId={selectedSite.id}
+          siteDomain={selectedSite.domain}
+        />
+      )}
     </div>
   )
 }

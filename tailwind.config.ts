@@ -9,27 +9,21 @@ const config: Config = {
   darkMode: "class",
   theme: {
     extend: {
-      fontFamily: {
-        display: ["var(--font-syne)", "system-ui", "sans-serif"],
-        body: ["var(--font-dm-sans)", "system-ui", "sans-serif"],
-        mono: ["var(--font-jetbrains-mono)", "ui-monospace", "monospace"],
-      },
       colors: {
-        primary: "#4F46E5",
-      },
-      keyframes: {
-        fadeUp: {
-          "0%": { opacity: "0", transform: "translateY(16px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        fadeIn: {
-          "0%": { opacity: "0" },
-          "100%": { opacity: "1" },
-        },
-      },
-      animation: {
-        "fade-up": "fadeUp 0.5s ease forwards",
-        "fade-in": "fadeIn 0.4s ease forwards",
+        primary: "var(--color-primary)",
+        "primary-light": "var(--color-primary-light)",
+        "primary-medium": "var(--color-primary-medium)",
+        "bg-page": "var(--color-bg-page)",
+        "bg-card": "var(--color-bg-card)",
+        "bg-hover": "var(--color-bg-hover)",
+        "text-primary": "var(--color-text-primary)",
+        "text-secondary": "var(--color-text-secondary)",
+        "text-tertiary": "var(--color-text-tertiary)",
+        border: "var(--color-border)",
+        "border-light": "var(--color-border-light)",
+        positive: "var(--color-positive)",
+        warning: "var(--color-warning)",
+        negative: "var(--color-negative)",
       },
     },
   },

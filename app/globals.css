@@ -2,10 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── CSS Variables (Dashboard redesign) ──────────────────────────────────── */
+
+:root {
+  --color-primary: #4F46E5;
+  --color-primary-light: rgba(79, 70, 229, 0.1);
+  --color-primary-medium: rgba(79, 70, 229, 0.12);
+
+  --color-bg-page: #F9FAFB;
+  --color-bg-card: #FFFFFF;
+  --color-bg-hover: rgba(0, 0, 0, 0.02);
+
+  --color-text-primary: #111827;
+  --color-text-secondary: #6B7280;
+  --color-text-tertiary: #9CA3AF;
+
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+
+  --color-positive: #059669;
+  --color-warning: #D97706;
+  --color-negative: #DC2626;
+
+  --color-chart-stroke: #4F46E5;
+  --color-chart-fill-start: rgba(79, 70, 229, 0.15);
+  --color-chart-fill-end: rgba(79, 70, 229, 0);
+  --color-chart-comparison: #9CA3AF;
+}
+
+.dark {
+  --color-primary: #6366F1;
+  --color-primary-light: rgba(99, 102, 241, 0.1);
+  --color-primary-medium: rgba(99, 102, 241, 0.12);
+
+  --color-bg-page: #0F0F0F;
+  --color-bg-card: #1A1A1A;
+  --color-bg-hover: rgba(255, 255, 255, 0.03);
+
+  --color-text-primary: #F3F4F6;
+  --color-text-secondary: #9CA3AF;
+  --color-text-tertiary: #6B7280;
+
+  --color-border: #2D2D2D;
+  --color-border-light: #222222;
+
+  --color-positive: #34D399;
+  --color-warning: #FBBF24;
+  --color-negative: #F87171;
+
+  --color-chart-stroke: #6366F1;
+  --color-chart-fill-start: rgba(99, 102, 241, 0.15);
+  --color-chart-fill-end: rgba(99, 102, 241, 0);
+  --color-chart-comparison: #6B7280;
+}
+
 /* ── Base ──────────────────────────────────────────────────────────────────── */
 
 body {
-  font-family: var(--font-dm-sans), system-ui, -apple-system, sans-serif;
+  color: var(--color-text-primary);
+  background: var(--color-bg-page);
+  font-family: var(--font-dm-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -16,6 +72,75 @@ h1, h2, h3, h4 {
 
 code, pre, kbd {
   font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+/* ── Dashboard styles ──────────────────────────────────────────────────────── */
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--color-text-primary);
+}
+
+.stat-label {
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}
+
+.stat-delta {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.percent-bar {
+  transition: width 300ms ease-out;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.realtime-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.data-table th {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}
+
+.data-table td {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text-primary);
+}
+
+.data-table tr {
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.data-table tr:last-child {
+  border-bottom: none;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
 }
 
 /* ── Animations ────────────────────────────────────────────────────────────── */

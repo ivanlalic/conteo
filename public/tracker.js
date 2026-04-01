@@ -422,6 +422,293 @@
   }
 
   // ============================================
+  // UX BEHAVIOR DETECTION
+  // Detects rage clicks, dead clicks, excessive
+  // scrolling, and quick backs
+  // ============================================
+
+  // Skip behavior tracking if Do Not Track is enabled
+  if (navigator.doNotTrack !== '1') {
+    (function initBehaviorTracking() {
+      var behaviorEndpoint = endpoint.replace('/api/track', '/api/track-behavior');
+      var behaviorQueue = [];
+      var sessionId = (function() {
+        var sid = sessionStorage.getItem('conteo_session_id');
+        if (!sid) {
+          sid = 's_' + Math.random().toString(36).substr(2, 9) + Date.now();
+          sessionStorage.setItem('conteo_session_id', sid);
+        }
+        return sid;
+      })();
+
+      function getDeviceType() {
+        var ua = navigator.userAgent;
+        if (/Tablet|iPad/i.test(ua)) return 'tablet';
+        if (/Mobile|Android|iPhone/i.test(ua)) return 'mobile';
+        return 'desktop';
+      }
+
+      function getSelector(el) {
+        if (!el || el === document.body || el === document.documentElement) return 'body';
+        var parts = [];
+        var current = el;
+        var depth = 0;
+        while (current && current !== document.body && depth < 5) {
+          var tag = current.tagName.toLowerCase();
+          if (current.id) {
+            parts.unshift('#' + current.id);
+            break;
+          }
+          var parent = current.parentElement;
+          if (parent) {
+            var siblings = parent.children;
+            var index = 0;
+            for (var i = 0; i < siblings.length; i++) {
+              if (siblings[i] === current) { index = i + 1; break; }
+            }
+            parts.unshift(tag + ':nth-child(' + index + ')');
+          } else {
+            parts.unshift(tag);
+          }
+          current = parent;
+          depth++;
+        }
+        return parts.join(' > ');
+      }
+
+      function getElementText(el) {
+        var text = (el.textContent || el.innerText || '').trim();
+        return text.substring(0, 50);
+      }
+
+      function queueEvent(eventType, pageUrl, eventData) {
+        behaviorQueue.push({
+          event_type: eventType,
+          visitor_id: getVisitorId(),
+          session_id: sessionId,
+          page_url: pageUrl,
+          event_data: eventData,
+          device_type: getDeviceType()
+        });
+      }
+
+      function flushQueue() {
+        if (behaviorQueue.length === 0) return;
+        var payload = {
+          api_key: apiKey,
+          events: behaviorQueue.splice(0)
+        };
+        // Prefer sendBeacon for reliability on page unload
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(behaviorEndpoint, JSON.stringify(payload));
+        } else {
+          fetch(behaviorEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive: true
+          }).catch(function() {});
+        }
+      }
+
+      // Flush every 30 seconds if there are events
+      setInterval(flushQueue, 30000);
+
+      // Flush on page hide and unload
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') flushQueue();
+      });
+      window.addEventListener('beforeunload', flushQueue);
+
+      // ---- CLICK TRACKING (dead clicks + rage clicks) ----
+
+      var recentClicks = []; // { x, y, time }
+      var INTERACTIVE_TAGS = { INPUT: 1, TEXTAREA: 1, SELECT: 1, OPTION: 1, VIDEO: 1, AUDIO: 1 };
+
+      document.addEventListener('click', function(e) {
+        var el = e.target;
+        if (!el || !el.tagName) return;
+
+        // Skip interactive elements that don't produce visible DOM changes
+        if (INTERACTIVE_TAGS[el.tagName] || el.isContentEditable) return;
+
+        var now = Date.now();
+        var x = e.clientX;
+        var y = e.clientY;
+        var url = window.location.pathname;
+        var selector = getSelector(el);
+        var tag = el.tagName.toLowerCase();
+        var text = getElementText(el);
+
+        // --- Rage click detection ---
+        recentClicks.push({ x: x, y: y, time: now });
+        // Remove clicks older than 2 seconds
+        recentClicks = recentClicks.filter(function(c) { return now - c.time <= 2000; });
+        // Check if 3+ clicks in 30x30 px area
+        var nearbyCount = 0;
+        for (var i = 0; i < recentClicks.length; i++) {
+          var c = recentClicks[i];
+          if (Math.abs(c.x - x) <= 30 && Math.abs(c.y - y) <= 30) {
+            nearbyCount++;
+          }
+        }
+        if (nearbyCount >= 3) {
+          queueEvent('rage_click', url, {
+            element_selector: selector,
+            element_text: text,
+            element_tag: tag,
+            click_count: nearbyCount,
+            x: x, y: y,
+            viewport_width: window.innerWidth,
+            viewport_height: window.innerHeight
+          });
+          recentClicks = []; // Reset after detecting rage click
+          return; // Don't also detect as dead click
+        }
+
+        // --- Dead click detection ---
+        var clickUrl = window.location.href;
+        var mutationDetected = false;
+        var observer = new MutationObserver(function() {
+          mutationDetected = true;
+        });
+        observer.observe(document.body, {
+          childList: true, attributes: true, characterData: true, subtree: true
+        });
+
+        setTimeout(function() {
+          observer.disconnect();
+          // Check if URL changed (navigation occurred)
+          var urlChanged = window.location.href !== clickUrl;
+          if (!mutationDetected && !urlChanged) {
+            queueEvent('dead_click', url, {
+              element_selector: selector,
+              element_text: text,
+              element_tag: tag,
+              x: x, y: y,
+              viewport_width: window.innerWidth,
+              viewport_height: window.innerHeight
+            });
+          }
+        }, 1000);
+      }, true); // Use capture phase
+
+      // ---- SCROLL TRACKING (excessive scrolling) ----
+
+      var scrollState = {
+        lastScrollY: 0,
+        directionChanges: 0,
+        lastDirection: 0, // 1 = down, -1 = up
+        maxDepth: 0,
+        startTime: Date.now()
+      };
+      var scrollThrottleTimer = null;
+
+      window.addEventListener('scroll', function() {
+        if (scrollThrottleTimer) return;
+        scrollThrottleTimer = setTimeout(function() {
+          scrollThrottleTimer = null;
+          var scrollY = window.scrollY || window.pageYOffset;
+          var docHeight = Math.max(
+            document.body.scrollHeight, document.documentElement.scrollHeight
+          );
+          var viewportHeight = window.innerHeight;
+          var contentHeight = docHeight - viewportHeight;
+
+          if (contentHeight > 0) {
+            var depth = (scrollY / contentHeight) * 100;
+            if (depth > scrollState.maxDepth) scrollState.maxDepth = depth;
+          }
+
+          // Track direction changes
+          var direction = scrollY > scrollState.lastScrollY ? 1 : -1;
+          if (scrollState.lastDirection !== 0 && direction !== scrollState.lastDirection) {
+            scrollState.directionChanges++;
+          }
+          scrollState.lastDirection = direction;
+          scrollState.lastScrollY = scrollY;
+        }, 200);
+      });
+
+      // Check for excessive scrolling on page hide
+      function checkExcessiveScroll() {
+        var docHeight = Math.max(
+          document.body.scrollHeight, document.documentElement.scrollHeight
+        );
+        var viewportHeight = window.innerHeight;
+        var isLongPage = docHeight > viewportHeight * 3;
+        var deepScroll = scrollState.maxDepth > 90 && isLongPage;
+        var manyDirectionChanges = scrollState.directionChanges > 5;
+
+        if (deepScroll || manyDirectionChanges) {
+          var elapsed = Math.round((Date.now() - scrollState.startTime) / 1000);
+          queueEvent('excessive_scroll', window.location.pathname, {
+            page_height: docHeight,
+            viewport_height: viewportHeight,
+            max_scroll_depth_percent: Math.round(scrollState.maxDepth),
+            scroll_direction_changes: scrollState.directionChanges,
+            time_on_page_seconds: elapsed
+          });
+        }
+      }
+
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') checkExcessiveScroll();
+      });
+
+      // ---- QUICK BACK DETECTION ----
+
+      var navHistory = []; // { url, time }
+      navHistory.push({ url: window.location.pathname, time: Date.now() });
+
+      function checkQuickBack(newUrl) {
+        var now = Date.now();
+        if (navHistory.length >= 2) {
+          var prev = navHistory[navHistory.length - 2];
+          var current = navHistory[navHistory.length - 1];
+          // User went from prev -> current, now going to newUrl
+          // Quick back = newUrl === prev.url and dwell_time < 5s
+          if (newUrl === prev.url && (now - current.time) < 5000) {
+            queueEvent('quick_back', current.url, {
+              page_from: prev.url,
+              page_to: current.url,
+              dwell_time_ms: now - current.time,
+              navigation_method: 'unknown'
+            });
+          }
+        }
+        navHistory.push({ url: newUrl, time: now });
+        // Keep history small
+        if (navHistory.length > 10) navHistory.shift();
+
+        // Reset scroll state for new page
+        scrollState = {
+          lastScrollY: 0,
+          directionChanges: 0,
+          lastDirection: 0,
+          maxDepth: 0,
+          startTime: Date.now()
+        };
+      }
+
+      // Hook into existing navigation overrides
+      var _origPush = history.pushState;
+      history.pushState = function() {
+        _origPush.apply(this, arguments);
+        checkQuickBack(window.location.pathname);
+      };
+      var _origReplace = history.replaceState;
+      history.replaceState = function() {
+        _origReplace.apply(this, arguments);
+        checkQuickBack(window.location.pathname);
+      };
+      window.addEventListener('popstate', function() {
+        checkQuickBack(window.location.pathname);
+      });
+    })();
+  }
+
+  // ============================================
   // CUSTOM EVENTS API
   // Expose trackEvent function globally
   // ============================================

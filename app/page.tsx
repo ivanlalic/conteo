@@ -109,79 +109,79 @@ function IconMoon() {
 // ── Data ─────────────────────────────────────────────────────────────────────
 
 const FEATURES = [
-  { icon: <IconActivity />, title: 'Dashboard en tiempo real', desc: 'Visitantes en vivo, pageviews por hora, todo actualizado al momento.' },
-  { icon: <IconShield />, title: 'Sin cookies', desc: 'Cero cookies, cero banners de consentimiento, cero dolor de cabeza legal.' },
-  { icon: <IconShieldCheck />, title: 'GDPR compliant', desc: 'Privacy-first por diseno. No recopilamos datos personales.' },
-  { icon: <IconBarChart />, title: 'Top pages y fuentes', desc: 'Sabe que paginas funcionan y de donde viene tu trafico.' },
-  { icon: <IconGlobe />, title: 'Paises y dispositivos', desc: 'Banderas, ciudades, desktop vs mobile, browsers y mas.' },
-  { icon: <IconDownload />, title: 'Exportar CSV', desc: 'Descarga tus datos cuando quieras. Son tuyos, siempre.' },
+  { icon: <IconActivity />, title: 'Real-time dashboard', desc: 'Live visitors, pageviews by the hour, everything updated to the second.' },
+  { icon: <IconShield />, title: 'No cookies', desc: 'Zero cookies, zero consent banners, zero legal headaches.' },
+  { icon: <IconShieldCheck />, title: 'GDPR compliant', desc: 'Privacy-first by design. We don\'t collect personal data.' },
+  { icon: <IconBarChart />, title: 'Top pages & sources', desc: 'Know which pages work and where your traffic comes from.' },
+  { icon: <IconGlobe />, title: 'Countries & devices', desc: 'Flags, cities, desktop vs mobile, browsers and more.' },
+  { icon: <IconDownload />, title: 'Export CSV', desc: 'Download your data anytime. It\'s yours, always.' },
 ]
 
 const SNIPPETS: Record<string, { label: string; code: string }> = {
   html: {
     label: 'HTML',
-    code: '<script defer\n  src="https://conteo.online/tracker.js"\n  data-api-key="TU_API_KEY">\n</script>',
+    code: '<script defer\n  src="https://conteo.online/tracker.js"\n  data-api-key="YOUR_API_KEY">\n</script>',
   },
   wordpress: {
     label: 'WordPress',
-    code: '<!-- Appearance > Theme Editor >\n   header.php, antes de </head> -->\n<script defer\n  src="https://conteo.online/tracker.js"\n  data-api-key="TU_API_KEY">\n</script>',
+    code: '<!-- Appearance > Theme Editor >\n   header.php, before </head> -->\n<script defer\n  src="https://conteo.online/tracker.js"\n  data-api-key="YOUR_API_KEY">\n</script>',
   },
   shopify: {
     label: 'Shopify',
-    code: '<!-- Online Store > Themes > Edit code\n   > theme.liquid, antes de </head> -->\n<script defer\n  src="https://conteo.online/tracker.js"\n  data-api-key="TU_API_KEY">\n</script>',
+    code: '<!-- Online Store > Themes > Edit code\n   > theme.liquid, before </head> -->\n<script defer\n  src="https://conteo.online/tracker.js"\n  data-api-key="YOUR_API_KEY">\n</script>',
   },
   nextjs: {
     label: 'Next.js',
-    code: "// app/layout.tsx\nimport Script from 'next/script'\n\nexport default function Layout({ children }) {\n  return (\n    <html>\n      <body>\n        {children}\n        <Script\n          src=\"https://conteo.online/tracker.js\"\n          data-api-key=\"TU_API_KEY\"\n          strategy=\"afterInteractive\"\n        />\n      </body>\n    </html>\n  )\n}",
+    code: "// app/layout.tsx\nimport Script from 'next/script'\n\nexport default function Layout({ children }) {\n  return (\n    <html>\n      <body>\n        {children}\n        <Script\n          src=\"https://conteo.online/tracker.js\"\n          data-api-key=\"YOUR_API_KEY\"\n          strategy=\"afterInteractive\"\n        />\n      </body>\n    </html>\n  )\n}",
   },
 }
 
 const GA_POINTS = [
-  'Script de 45KB que frena tu sitio',
-  'Requiere banner de cookies para cumplir GDPR',
-  'Los datos de tus visitantes se usan para publicidad de Google',
-  'Dashboard con 200+ reportes que nadie entiende',
-  'Necesitas un curso para configurar GA4',
-  'Datos procesados, no en tiempo real',
+  '45KB script that slows down your site',
+  'Requires a cookie banner to comply with GDPR',
+  'Your visitors\' data is used for Google ads',
+  'Dashboard with 200+ reports nobody understands',
+  'You need a course to set up GA4',
+  'Processed data, not real-time',
 ]
 
 const CONTEO_POINTS = [
-  'Script de <1KB. Tu sitio ni lo nota',
-  'Sin cookies. GDPR compliant de fabrica',
-  'Tus datos son tuyos. No se venden ni se comparten',
-  'Un dashboard, una pagina, todo lo que necesitas',
-  'Setup en 2 minutos, sin configuracion',
-  'Datos en tiempo real',
+  '<1KB script. Your site won\'t even notice',
+  'No cookies. GDPR compliant out of the box',
+  'Your data is yours. Never sold or shared',
+  'One dashboard, one page, everything you need',
+  'Setup in 2 minutes, zero configuration',
+  'Real-time data',
 ]
 
 const PLANS = [
   {
     name: 'Free',
     price: '$0',
-    period: '/mes',
+    period: '/mo',
     badge: null,
-    features: ['1 sitio', '10.000 visitas/mes', 'Dashboard en tiempo real', 'Todas las metricas basicas', 'Export CSV', 'Retencion: 30 dias'],
-    cta: 'Empezar gratis',
+    features: ['1 site', '10,000 visits/mo', 'Real-time dashboard', 'All basic metrics', 'CSV export', 'Data retention: 30 days'],
+    cta: 'Start for free',
     highlighted: false,
     plan: 'free' as const,
   },
   {
     name: 'Pro',
     price: '$4.90',
-    period: '/mes',
+    period: '/mo',
     badge: 'Popular',
-    features: ['3 sitios', '50.000 visitas/mes', 'Todo lo del plan Free', 'Dashboard publico compartible', 'Soporte prioritario', 'Retencion: 90 dias'],
-    cta: 'Empezar con Pro',
+    features: ['3 sites', '50,000 visits/mo', 'Everything in Free', 'Public shareable dashboard', 'Priority support', 'Data retention: 90 days'],
+    cta: 'Start with Pro',
     highlighted: true,
     plan: 'pro' as const,
   },
   {
     name: 'Business',
     price: '$9.90',
-    period: '/mes',
+    period: '/mo',
     badge: null,
-    features: ['10 sitios', '100.000 visitas/mes', 'Todo lo del plan Pro', 'API access', 'Retencion: ilimitada'],
-    cta: 'Empezar con Business',
+    features: ['10 sites', '100,000 visits/mo', 'Everything in Pro', 'API access', 'Unlimited data retention'],
+    cta: 'Start with Business',
     highlighted: false,
     plan: 'business' as const,
   },
@@ -255,12 +255,12 @@ export default function Home() {
           <div className="flex items-center gap-5">
             <a href="#features" className="hidden sm:inline text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition">Features</a>
             <a href="#pricing" className="hidden sm:inline text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition">Pricing</a>
-            <a href="/login" className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition">Login</a>
+            <a href="/login" className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition">Log in</a>
             <button onClick={toggleDark} className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition text-neutral-500 dark:text-neutral-400" aria-label="Toggle theme">
               {dark ? <IconSun /> : <IconMoon />}
             </button>
             <a href="/signup" onClick={() => trackCTA('nav')} className="bg-[#4F46E5] text-white px-4 py-1.5 rounded-md text-sm font-semibold hover:opacity-90 transition">
-              Empezar gratis
+              Start free
             </a>
           </div>
         </div>
@@ -270,23 +270,23 @@ export default function Home() {
       <section className="relative bg-dot-grid pt-24 pb-20 sm:pt-32 sm:pb-28 px-6 overflow-hidden">
         <div className="max-w-[1100px] mx-auto text-center">
           <h1 className="animate-fade-up font-display font-extrabold text-[2rem] leading-[1.1] sm:text-5xl lg:text-[3.4rem] tracking-tight mb-6">
-            Sabe quien visita tu sitio.
+            Know who visits your site.
             <br />
-            <span className="text-[#4F46E5]">Sin cookies, sin complicaciones.</span>
+            <span className="text-[#4F46E5]">No cookies, no hassle.</span>
           </h1>
           <p className="animate-fade-up animate-delay-100 text-lg sm:text-xl text-neutral-500 dark:text-neutral-400 max-w-2xl mx-auto mb-8 leading-relaxed">
-            Una linea de codigo. Dashboard en tiempo real. Sin cookies, GDPR compliant, y gratis para sitios chicos.
+            One line of code. Real-time dashboard. No cookies, GDPR compliant, and free for small sites.
           </p>
           <div className="animate-fade-up animate-delay-200 flex flex-col sm:flex-row items-center justify-center gap-3">
             <a href="#demo" onClick={() => trackCTA('hero-demo')} className="bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 px-7 py-3 rounded-lg text-sm font-semibold hover:opacity-90 transition">
-              Ver demo en vivo &darr;
+              See live demo &darr;
             </a>
             <a href="/signup" onClick={() => trackCTA('hero-signup')} className="border border-neutral-300 dark:border-neutral-700 px-7 py-3 rounded-lg text-sm font-semibold hover:bg-neutral-50 dark:hover:bg-neutral-900 transition">
-              Empezar gratis
+              Start free
             </a>
           </div>
           <p className="animate-fade-up animate-delay-300 text-xs text-neutral-400 dark:text-neutral-500 mt-6 tracking-wide">
-            Setup en 2 minutos &middot; Sin tarjeta de credito &middot; Gratis hasta 10k visitas/mes
+            Setup in 2 minutes &middot; No credit card &middot; Free up to 10k visits/mo
           </p>
         </div>
       </section>
@@ -295,10 +295,10 @@ export default function Home() {
       <section id="demo" className="py-20 sm:py-28 px-6 bg-neutral-50 dark:bg-neutral-900/50">
         <div className="max-w-[1100px] mx-auto">
           <h2 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-center mb-3">
-            Este es nuestro dashboard. Con datos reales. Ahora mismo.
+            This is our dashboard. With real data. Right now.
           </h2>
           <p className="text-center text-neutral-500 dark:text-neutral-400 mb-10 max-w-xl mx-auto">
-            Estas son las estadisticas de esta misma pagina que estas viendo. Asi de simple es conteo.
+            These are the stats for this very page you're viewing. That's how simple Conteo is.
           </p>
           {DEMO_URL ? (
             <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 overflow-hidden shadow-lg bg-white dark:bg-neutral-900">
@@ -314,12 +314,12 @@ export default function Home() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#4F46E5]/10 text-[#4F46E5] mb-6">
                 <IconBarChart />
               </div>
-              <h3 className="font-display font-bold text-xl mb-3">Demo en vivo disponible pronto</h3>
+              <h3 className="font-display font-bold text-xl mb-3">Live demo coming soon</h3>
               <p className="text-neutral-500 dark:text-neutral-400 max-w-md mx-auto mb-6">
-                Estamos acumulando datos reales del trafico de conteo.online para mostrarte el dashboard funcionando con numeros de verdad.
+                We're gathering real traffic data from conteo.online to show you the dashboard working with actual numbers.
               </p>
               <a href="/signup" className="inline-block bg-[#4F46E5] text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition">
-                Crea tu cuenta y ve tu propio dashboard
+                Create your account and see your own dashboard
               </a>
             </div>
           )}
@@ -330,10 +330,10 @@ export default function Home() {
       <section className="py-20 sm:py-28 px-6">
         <div className="max-w-[700px] mx-auto">
           <h2 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-center mb-3">
-            Una linea. Dos minutos. Listo.
+            One line. Two minutes. Done.
           </h2>
           <p className="text-center text-neutral-500 dark:text-neutral-400 mb-8">
-            Copia esta linea en el <code className="text-xs bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded font-mono">&lt;head&gt;</code> de tu sitio. Eso es todo.
+            Paste this line in your site's <code className="text-xs bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded font-mono">&lt;head&gt;</code>. That's it.
           </p>
 
           {/* Tabs */}
@@ -365,19 +365,19 @@ export default function Home() {
               {copied ? (
                 <>
                   <IconCheckSmall />
-                  Copiado
+                  Copied
                 </>
               ) : (
                 <>
                   <IconCopy />
-                  Copiar
+                  Copy
                 </>
               )}
             </button>
           </div>
 
           <p className="text-center text-sm text-neutral-400 dark:text-neutral-500 mt-4">
-            Los datos empiezan a llegar inmediatamente.
+            Data starts flowing in immediately.
           </p>
         </div>
       </section>
@@ -386,10 +386,10 @@ export default function Home() {
       <section className="py-20 sm:py-28 px-6 bg-neutral-50 dark:bg-neutral-900/50">
         <div className="max-w-[1000px] mx-auto">
           <h2 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-center mb-3">
-            Google Analytics es gratis. Pero te cuesta mas de lo que pensas.
+            Google Analytics is free. But it costs more than you think.
           </h2>
           <p className="text-center text-neutral-500 dark:text-neutral-400 mb-12 max-w-xl mx-auto">
-            No es que Google Analytics sea malo. Es que es demasiado para la mayoria de los sitios.
+            Google Analytics isn't bad. It's just too much for most websites.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -425,7 +425,7 @@ export default function Home() {
           </div>
 
           <p className="text-center text-sm text-neutral-400 dark:text-neutral-500 mt-8 max-w-lg mx-auto">
-            Conteo te da lo que importa, sin la complejidad.
+            Conteo gives you what matters, without the complexity.
           </p>
         </div>
       </section>
@@ -434,10 +434,10 @@ export default function Home() {
       <section id="features" className="py-20 sm:py-28 px-6">
         <div className="max-w-[1100px] mx-auto">
           <h2 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-center mb-3">
-            Todo lo que necesitas. Nada que no.
+            Everything you need. Nothing you don't.
           </h2>
           <p className="text-center text-neutral-500 dark:text-neutral-400 mb-14 max-w-md mx-auto">
-            Solo features que existen y funcionan. Sin promesas vacias.
+            Only features that exist and work. No empty promises.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
@@ -456,10 +456,10 @@ export default function Home() {
       <section id="pricing" className="py-20 sm:py-28 px-6 bg-neutral-50 dark:bg-neutral-900/50">
         <div className="max-w-[1000px] mx-auto">
           <h2 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-center mb-3">
-            Pricing simple. Sin sorpresas.
+            Simple pricing. No surprises.
           </h2>
           <p className="text-center text-neutral-500 dark:text-neutral-400 mb-12">
-            Sin tarjeta de credito para empezar. Cancela cuando quieras.
+            No credit card to start. Cancel anytime.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -507,7 +507,7 @@ export default function Home() {
           </div>
 
           <p className="text-center text-sm text-neutral-400 dark:text-neutral-500 mt-8">
-            Gratis para siempre en sitios chicos.
+            Free forever for small sites.
           </p>
         </div>
       </section>
@@ -517,17 +517,17 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#4F46E5]/[0.03] to-transparent dark:from-[#4F46E5]/[0.05]" />
         <div className="max-w-[600px] mx-auto text-center relative">
           <h2 className="font-display font-bold text-2xl sm:text-3xl tracking-tight mb-4">
-            Empieza a trackear en 2 minutos
+            Start tracking in 2 minutes
           </h2>
           <p className="text-neutral-500 dark:text-neutral-400 mb-8">
-            Gratis para siempre en sitios con menos de 10.000 visitas al mes.
+            Free forever for sites with less than 10,000 visits per month.
           </p>
           <a
             href="/signup"
             onClick={() => trackCTA('bottom')}
             className="inline-block bg-[#4F46E5] text-white px-8 py-3.5 rounded-lg text-sm font-semibold hover:opacity-90 transition shadow-lg shadow-[#4F46E5]/20"
           >
-            Crear cuenta gratis &rarr;
+            Create free account &rarr;
           </a>
         </div>
       </section>
@@ -543,7 +543,7 @@ export default function Home() {
         </div>
         <div className="max-w-[1100px] mx-auto mt-6 pt-6 border-t border-neutral-100 dark:border-neutral-800/50 text-center">
           <p className="text-xs text-neutral-400 dark:text-neutral-600">
-            &copy; 2026 Conteo. Analytics simple y privado.
+            &copy; 2026 Conteo. Simple and private analytics.
           </p>
         </div>
       </footer>

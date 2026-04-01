@@ -25,22 +25,22 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Conteo — Analytics simple y privado para tu sitio web",
+  title: "Conteo — Simple and private analytics for your website",
   description:
-    "Trackea las visitas de tu sitio en 2 minutos. Sin cookies, GDPR compliant, gratis hasta 10k visitas/mes. La alternativa simple a Google Analytics.",
+    "Track your site's visits in 2 minutes. No cookies, GDPR compliant, free up to 10k visits/mo. The simple alternative to Google Analytics.",
   metadataBase: new URL("https://conteo.online"),
   openGraph: {
-    title: "Conteo — Analytics simple y privado",
+    title: "Conteo — Simple and private analytics",
     description:
-      "Trackea las visitas de tu sitio en 2 minutos. Sin cookies, GDPR compliant, gratis hasta 10k visitas/mes.",
+      "Track your site's visits in 2 minutes. No cookies, GDPR compliant, free up to 10k visits/mo.",
     url: "https://conteo.online",
     siteName: "Conteo",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Conteo — Analytics simple y privado",
-    description: "Trackea las visitas de tu sitio en 2 minutos. Sin cookies, GDPR compliant.",
+    title: "Conteo — Simple and private analytics",
+    description: "Track your site's visits in 2 minutes. No cookies, GDPR compliant.",
   },
 };
 
@@ -49,7 +49,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
-      lang="es"
+      lang="en"
       suppressHydrationWarning
       className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}
     >

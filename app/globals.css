@@ -2,26 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ── Base ──────────────────────────────────────────────────────────────────── */
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-dm-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+h1, h2, h3, h4 {
+  font-family: var(--font-syne), system-ui, sans-serif;
 }
+
+code, pre, kbd {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+/* ── Animations ────────────────────────────────────────────────────────────── */
+
+.animate-delay-100 { animation-delay: 100ms; }
+.animate-delay-200 { animation-delay: 200ms; }
+.animate-delay-300 { animation-delay: 300ms; }
+.animate-delay-400 { animation-delay: 400ms; }
+.animate-delay-500 { animation-delay: 500ms; }
+
+.animate-fade-up {
+  opacity: 0;
+  animation: fadeUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Dot-grid hero background ──────────────────────────────────────────────── */
+
+.bg-dot-grid {
+  background-image: radial-gradient(circle, #d1d5db 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.dark .bg-dot-grid {
+  background-image: radial-gradient(circle, #2d2d2d 1px, transparent 1px);
+}
+
+/* ── Code block ────────────────────────────────────────────────────────────── */
+
+.code-block {
+  background: #0d1117;
+  color: #e6edf3;
+}
+
+.code-comment { color: #8b949e; }
+.code-tag     { color: #7ee787; }
+.code-attr    { color: #79c0ff; }
+.code-string  { color: #a5d6ff; }
+.code-keyword { color: #ff7b72; }
+.code-fn      { color: #d2a8ff; }

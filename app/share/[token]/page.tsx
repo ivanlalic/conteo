@@ -475,6 +475,5 @@ export default function PublicDashboard() {
           </p>
         </footer>
       </div>
-    </div>
   )
 }

@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import PageviewsChart from '@/components/PageviewsChart'
-import StatCard from '@/components/dashboard/StatCard'
-import DataTable from '@/components/dashboard/DataTable'
+import VisitorChart, { type TrendDataPoint } from '@/components/dashboard/VisitorChart'
+import DateRangePicker, { type TimePeriod } from '@/components/dashboard/DateRangePicker'
 import { getCountryFlag, getCountryName } from '@/lib/utils'
+import { getGranularityForRange, type ChartMetric } from '@/lib/chart-utils'
 
 interface TopPage {
   path: string
@@ -14,12 +14,6 @@ interface TopPage {
   unique_visitors: number
   mobile_views: number
   desktop_views: number
-}
-
-interface ChartData {
-  date: string
-  pageviews: number
-  unique_visitors: number
 }
 
 interface DeviceBreakdown {
@@ -46,24 +40,82 @@ interface City {
   unique_visitors: number
 }
 
+function calcDelta(current: number, previous: number): number | null {
+  if (previous === 0 && current === 0) return null
+  if (previous === 0) return 100
+  return ((current - previous) / previous) * 100
+}
+
+function getPeriodDates(period: TimePeriod) {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  let start: Date
+  const end: Date = now
+
+  switch (period) {
+    case 'today':
+      start = today
+      break
+    case '7d':
+      start = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+      break
+    case '30d':
+      start = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+      break
+    case '6m':
+      start = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000)
+      break
+    case '12m':
+      start = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000)
+      break
+    default:
+      start = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+  }
+
+  const duration = end.getTime() - start.getTime()
+  const prevEnd = new Date(start.getTime() - 1)
+  const prevStart = new Date(prevEnd.getTime() - duration)
+
+  return { start, end, prevStart, prevEnd }
+}
+
+function formatNumber(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 100_000) return `${Math.round(n / 1_000)}k`
+  if (n >= 10_000) return `${(n / 1_000).toFixed(1)}k`
+  return n.toLocaleString()
+}
+
 export default function DemoDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [siteId, setSiteId] = useState<string | null>(null)
-  const [stats, setStats] = useState({
-    liveUsers: 0,
-    todayViews: 0,
-    weekViews: 0,
-    monthViews: 0,
-  })
+
+  // Period
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('7d')
+
+  // Stats
+  const [liveUsers, setLiveUsers] = useState(0)
+  const [currentVisitors, setCurrentVisitors] = useState(0)
+  const [prevVisitors, setPrevVisitors] = useState(0)
+  const [currentPageviews, setCurrentPageviews] = useState(0)
+  const [prevPageviews, setPrevPageviews] = useState(0)
+
+  // Chart
+  const [trendData, setTrendData] = useState<TrendDataPoint[]>([])
+  const [comparisonTrendData, setComparisonTrendData] = useState<TrendDataPoint[]>([])
+  const [showComparison, setShowComparison] = useState(false)
+  const [chartMetric, setChartMetric] = useState<ChartMetric>('visitors')
+
+  // Tables
   const [topPages, setTopPages] = useState<TopPage[]>([])
-  const [chartData, setChartData] = useState<ChartData[]>([])
   const [deviceBreakdown, setDeviceBreakdown] = useState<DeviceBreakdown[]>([])
   const [referrerSources, setReferrerSources] = useState<ReferrerSource[]>([])
   const [topCountries, setTopCountries] = useState<TopCountry[]>([])
-  const [timePeriod, setTimePeriod] = useState<'today' | '7days' | '30days'>('7days')
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null)
   const [countryCities, setCountryCities] = useState<{ [key: string]: City[] }>({})
+
+  // UI
   const [isEmbedded, setIsEmbedded] = useState(false)
   const [countriesLimit, setCountriesLimit] = useState(3)
   const [pagesLimit, setPagesLimit] = useState(3)
@@ -75,9 +127,7 @@ export default function DemoDashboard() {
   }, [])
 
   useEffect(() => {
-    if (siteId) {
-      loadStats()
-    }
+    if (siteId) loadStats()
   }, [siteId, timePeriod])
 
   async function loadDemoSite() {
@@ -107,95 +157,96 @@ export default function DemoDashboard() {
     if (!siteId) return
 
     try {
-      const now = new Date()
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
-      const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+      const { start, end, prevStart, prevEnd } = getPeriodDates(timePeriod)
+      const tzOffset = -new Date().getTimezoneOffset()
+      const { granularity } = getGranularityForRange(timePeriod)
 
-      let periodStart: Date
-      if (timePeriod === 'today') {
-        periodStart = today
-      } else if (timePeriod === '7days') {
-        periodStart = weekAgo
-      } else {
-        periodStart = monthAgo
-      }
-
-      const { data: liveUsersData } = await supabase
-        .rpc('get_live_users', { site_uuid: siteId })
-
-      const { count: todayCount } = await supabase
-        .from('pageviews')
-        .select('*', { count: 'exact', head: true })
-        .eq('site_id', siteId)
-        .gte('timestamp', today.toISOString())
-
-      const { count: weekCount } = await supabase
-        .from('pageviews')
-        .select('*', { count: 'exact', head: true })
-        .eq('site_id', siteId)
-        .gte('timestamp', weekAgo.toISOString())
-
-      const { count: monthCount } = await supabase
-        .from('pageviews')
-        .select('*', { count: 'exact', head: true })
-        .eq('site_id', siteId)
-        .gte('timestamp', monthAgo.toISOString())
-
-      const { data: topPagesData } = await supabase
-        .rpc('get_top_pages_with_devices', {
+      const [
+        liveRes,
+        trendRes,
+        compTrendRes,
+        visitorsRes,
+        prevVisitorsRes,
+        pageviewsRes,
+        prevPageviewsRes,
+        pagesRes,
+        deviceRes,
+        referrerRes,
+        countriesRes,
+      ] = await Promise.all([
+        supabase.rpc('get_live_users', { site_uuid: siteId }),
+        supabase.rpc('get_trend_chart', {
           site_uuid: siteId,
-          start_date: periodStart.toISOString(),
-          end_date: now.toISOString(),
-          page_limit: 5
-        })
-
-      const { data: deviceData } = await supabase
-        .rpc('get_device_breakdown', {
+          start_date: start.toISOString(),
+          end_date: end.toISOString(),
+          granularity,
+          tz_offset_minutes: tzOffset,
+        }),
+        supabase.rpc('get_trend_chart', {
           site_uuid: siteId,
-          start_date: periodStart.toISOString(),
-          end_date: now.toISOString()
-        })
-
-      const { data: referrerData } = await supabase
-        .rpc('get_referrer_sources', {
+          start_date: prevStart.toISOString(),
+          end_date: prevEnd.toISOString(),
+          granularity,
+          tz_offset_minutes: tzOffset,
+        }),
+        supabase.rpc('get_unique_visitors', {
           site_uuid: siteId,
-          start_date: periodStart.toISOString(),
-          end_date: now.toISOString(),
-          referrer_limit: 5
-        })
-
-      const { data: topCountriesData } = await supabase
-        .rpc('get_top_countries', {
+          start_date: start.toISOString(),
+          end_date: end.toISOString(),
+        }),
+        supabase.rpc('get_unique_visitors', {
           site_uuid: siteId,
-          start_date: periodStart.toISOString(),
-          end_date: now.toISOString(),
-          country_limit: 10
-        })
-
-      const timezoneOffsetMinutes = -new Date().getTimezoneOffset()
-
-      const { data: chartDataRaw } = await supabase
-        .rpc('get_pageviews_chart', {
+          start_date: prevStart.toISOString(),
+          end_date: prevEnd.toISOString(),
+        }),
+        supabase
+          .from('pageviews')
+          .select('*', { count: 'exact', head: true })
+          .eq('site_id', siteId)
+          .gte('timestamp', start.toISOString())
+          .lte('timestamp', end.toISOString()),
+        supabase
+          .from('pageviews')
+          .select('*', { count: 'exact', head: true })
+          .eq('site_id', siteId)
+          .gte('timestamp', prevStart.toISOString())
+          .lte('timestamp', prevEnd.toISOString()),
+        supabase.rpc('get_top_pages_with_devices', {
           site_uuid: siteId,
-          start_date: periodStart.toISOString(),
-          end_date: now.toISOString(),
-          tz_offset_minutes: timezoneOffsetMinutes
-        })
+          start_date: start.toISOString(),
+          end_date: end.toISOString(),
+          page_limit: 5,
+        }),
+        supabase.rpc('get_device_breakdown', {
+          site_uuid: siteId,
+          start_date: start.toISOString(),
+          end_date: end.toISOString(),
+        }),
+        supabase.rpc('get_referrer_sources', {
+          site_uuid: siteId,
+          start_date: start.toISOString(),
+          end_date: end.toISOString(),
+          source_limit: 5,
+        }),
+        supabase.rpc('get_top_countries', {
+          site_uuid: siteId,
+          start_date: start.toISOString(),
+          end_date: end.toISOString(),
+          country_limit: 10,
+        }),
+      ])
 
-      setStats({
-        liveUsers: liveUsersData || 0,
-        todayViews: todayCount || 0,
-        weekViews: weekCount || 0,
-        monthViews: monthCount || 0,
-      })
-
-      setTopPages(topPagesData || [])
-      setChartData(chartDataRaw || [])
-      setDeviceBreakdown(deviceData || [])
-      setReferrerSources(referrerData || [])
-      setTopCountries(topCountriesData || [])
-
+      setLiveUsers(liveRes.data || 0)
+      setTrendData(trendRes.data || [])
+      setComparisonTrendData(compTrendRes.data || [])
+      setCurrentVisitors(visitorsRes.data || 0)
+      setPrevVisitors(prevVisitorsRes.data || 0)
+      setCurrentPageviews(pageviewsRes.count || 0)
+      setPrevPageviews(prevPageviewsRes.count || 0)
+      setTopPages(pagesRes.data || [])
+      setDeviceBreakdown(deviceRes.data || [])
+      setReferrerSources(referrerRes.data || [])
+      setTopCountries(countriesRes.data || [])
     } catch (error) {
       console.error('Error loading stats:', error)
     }
@@ -206,44 +257,20 @@ export default function DemoDashboard() {
       setExpandedCountry(null)
       return
     }
-
     setExpandedCountry(countryCode)
-
-    if (countryCities[countryCode]) {
-      return
-    }
-
-    if (!siteId) return
+    if (countryCities[countryCode] || !siteId) return
 
     try {
-      const now = new Date()
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
-      const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
-
-      let periodStart: Date
-      if (timePeriod === 'today') {
-        periodStart = today
-      } else if (timePeriod === '7days') {
-        periodStart = weekAgo
-      } else {
-        periodStart = monthAgo
-      }
-
-      const { data: citiesData } = await supabase
-        .rpc('get_cities_by_country', {
-          site_uuid: siteId,
-          country_code: countryCode,
-          start_date: periodStart.toISOString(),
-          end_date: now.toISOString(),
-          city_limit: 10
-        })
-
+      const { start, end } = getPeriodDates(timePeriod)
+      const { data: citiesData } = await supabase.rpc('get_cities_by_country', {
+        site_uuid: siteId,
+        country_code: countryCode,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+        city_limit: 10,
+      })
       if (citiesData) {
-        setCountryCities(prev => ({
-          ...prev,
-          [countryCode]: citiesData
-        }))
+        setCountryCities((prev) => ({ ...prev, [countryCode]: citiesData }))
       }
     } catch (error) {
       console.error('Error loading cities:', error)
@@ -283,15 +310,7 @@ export default function DemoDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
-            <select
-              value={timePeriod}
-              onChange={(e) => setTimePeriod(e.target.value as 'today' | '7days' | '30days')}
-              className="text-sm bg-transparent border border-border rounded-md px-2 py-1 text-text-primary outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="today">Today</option>
-              <option value="7days">Last 7 Days</option>
-              <option value="30days">Last 30 Days</option>
-            </select>
+            <DateRangePicker value={timePeriod} onChange={setTimePeriod} />
 
             {!isEmbedded && (
               <Link
@@ -318,34 +337,50 @@ export default function DemoDashboard() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
             </div>
-            <p className="text-xl font-bold text-text-primary">{stats.liveUsers}</p>
+            <p className="text-xl font-bold text-text-primary">{liveUsers}</p>
             <p className="text-xs text-text-tertiary mt-0.5">last 5 min</p>
           </div>
 
           <div className="border border-border rounded-lg bg-bg-card p-3">
-            <h3 className="text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">Today</h3>
-            <p className="text-xl font-bold text-text-primary">{stats.todayViews.toLocaleString()}</p>
-            <p className="text-xs text-text-tertiary mt-0.5">pageviews</p>
+            <h3 className="text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">Visitors</h3>
+            <p className="text-xl font-bold text-text-primary">{formatNumber(currentVisitors)}</p>
+            {calcDelta(currentVisitors, prevVisitors) !== null && (
+              <p className={`text-xs mt-0.5 font-medium ${calcDelta(currentVisitors, prevVisitors)! >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {calcDelta(currentVisitors, prevVisitors)! >= 0 ? '↑' : '↓'} {Math.abs(Math.round(calcDelta(currentVisitors, prevVisitors)!))}%
+              </p>
+            )}
           </div>
 
           <div className="border border-border rounded-lg bg-bg-card p-3">
-            <h3 className="text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">This Week</h3>
-            <p className="text-xl font-bold text-text-primary">{stats.weekViews.toLocaleString()}</p>
-            <p className="text-xs text-text-tertiary mt-0.5">pageviews</p>
+            <h3 className="text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">Pageviews</h3>
+            <p className="text-xl font-bold text-text-primary">{formatNumber(currentPageviews)}</p>
+            {calcDelta(currentPageviews, prevPageviews) !== null && (
+              <p className={`text-xs mt-0.5 font-medium ${calcDelta(currentPageviews, prevPageviews)! >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {calcDelta(currentPageviews, prevPageviews)! >= 0 ? '↑' : '↓'} {Math.abs(Math.round(calcDelta(currentPageviews, prevPageviews)!))}%
+              </p>
+            )}
           </div>
 
           <div className="border border-border rounded-lg bg-bg-card p-3">
-            <h3 className="text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">This Month</h3>
-            <p className="text-xl font-bold text-text-primary">{stats.monthViews.toLocaleString()}</p>
-            <p className="text-xs text-text-tertiary mt-0.5">pageviews</p>
+            <h3 className="text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">Views/Visit</h3>
+            <p className="text-xl font-bold text-text-primary">
+              {currentVisitors > 0 ? (currentPageviews / currentVisitors).toFixed(1) : '--'}
+            </p>
+            <p className="text-xs text-text-tertiary mt-0.5">avg pages</p>
           </div>
         </section>
 
         {/* Chart */}
         <section className="border border-border rounded-lg bg-bg-card p-3">
-          <div className="h-48">
-            <PageviewsChart data={chartData} />
-          </div>
+          <VisitorChart
+            data={trendData}
+            comparisonData={comparisonTrendData}
+            timePeriod={timePeriod}
+            metric={chartMetric}
+            showComparison={showComparison}
+            onMetricChange={setChartMetric}
+            onComparisonChange={setShowComparison}
+          />
         </section>
 
         {/* Two Column Grid */}
@@ -358,7 +393,7 @@ export default function DemoDashboard() {
             ) : (
               <>
                 <div className="space-y-1">
-                  {topPages.slice(0, pagesLimit).map((page, i) => (
+                  {topPages.slice(0, pagesLimit).map((page: TopPage, i: number) => (
                     <div key={i} className="flex items-center justify-between py-1.5 border-b border-border last:border-0">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-text-primary truncate">{page.path}</p>
@@ -390,7 +425,7 @@ export default function DemoDashboard() {
             ) : (
               <>
                 <div className="space-y-1">
-                  {referrerSources.slice(0, sourcesLimit).map((source, i) => (
+                  {referrerSources.slice(0, sourcesLimit).map((source: ReferrerSource, i: number) => (
                     <div key={i} className="flex items-center justify-between py-1.5 border-b border-border last:border-0">
                       <p className="text-sm text-text-primary">{source.source}</p>
                       <p className="text-sm font-medium text-text-primary">{source.unique_visitors.toLocaleString()}</p>
@@ -419,7 +454,7 @@ export default function DemoDashboard() {
               <p className="text-sm text-text-tertiary py-4">No country data yet</p>
             ) : (
               <div className="space-y-1">
-                {topCountries.slice(0, countriesLimit).map((row) => {
+                {topCountries.slice(0, countriesLimit).map((row: TopCountry) => {
                   const isExpanded = expandedCountry === row.country
                   const cities = countryCities[row.country] || []
                   return (
@@ -437,7 +472,7 @@ export default function DemoDashboard() {
                       </div>
                       {isExpanded && cities.length > 0 && (
                         <div className="ml-6 pl-3 border-l border-border space-y-0.5 py-1">
-                          {cities.map((city) => (
+                          {cities.map((city: City) => (
                             <div key={city.city} className="flex items-center justify-between text-xs py-0.5">
                               <span className="text-text-secondary">{city.city}</span>
                               <span className="text-text-tertiary">{city.unique_visitors.toLocaleString()}</span>
@@ -454,22 +489,12 @@ export default function DemoDashboard() {
 
           {/* Devices */}
           <div className="border border-border rounded-lg bg-bg-card p-3">
-            <div className="flex items-center gap-1.5 mb-2">
-              <h3 className="text-sm font-semibold text-text-primary">Devices</h3>
-              <span className="group relative inline-flex items-center">
-                <svg className="w-3.5 h-3.5 text-text-tertiary cursor-help" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                </svg>
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 text-xs font-normal text-text-primary bg-bg-card border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
-                  Unique visitors by device type
-                </span>
-              </span>
-            </div>
+            <h3 className="text-sm font-semibold text-text-primary mb-2">Devices</h3>
             {deviceBreakdown.length === 0 ? (
               <p className="text-sm text-text-tertiary py-4">No device data yet</p>
             ) : (
               <div className="space-y-1">
-                {deviceBreakdown.map((device) => (
+                {deviceBreakdown.map((device: DeviceBreakdown) => (
                   <div key={device.device} className="flex items-center justify-between py-1.5 px-2 rounded-md">
                     <div className="flex items-center gap-2">
                       <span>{device.device === 'Desktop' ? '💻' : device.device === 'Mobile' ? '📱' : '📟'}</span>

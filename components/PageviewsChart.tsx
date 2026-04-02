@@ -53,7 +53,10 @@ export default function PageviewsChart({ data }: PageviewsChartProps) {
         borderColor: 'rgb(99, 102, 241)',
         backgroundColor: 'rgba(99, 102, 241, 0.1)',
         fill: true,
-        tension: 0.4,
+        tension: 0.3,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        borderWidth: 2,
       },
       {
         label: 'Unique Visitors',
@@ -61,7 +64,10 @@ export default function PageviewsChart({ data }: PageviewsChartProps) {
         borderColor: 'rgb(168, 85, 247)',
         backgroundColor: 'rgba(168, 85, 247, 0.1)',
         fill: true,
-        tension: 0.4,
+        tension: 0.3,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        borderWidth: 2,
       }
     ]
   }
@@ -71,20 +77,52 @@ export default function PageviewsChart({ data }: PageviewsChartProps) {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top' as const,
+        display: false,
       },
       tooltip: {
         mode: 'index' as const,
         intersect: false,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor: '#fff',
+        bodyColor: '#fff',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        cornerRadius: 8,
+        padding: 12,
+        displayColors: true,
+        boxPadding: 4,
       },
     },
     scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: 'rgba(128, 128, 128, 0.5)',
+          font: { size: 10 },
+          maxTicksLimit: 6,
+        },
+        border: {
+          display: false,
+        },
+      },
       y: {
         beginAtZero: true,
+        grid: {
+          color: 'rgba(128, 128, 128, 0.1)',
+          drawBorder: false,
+        },
         ticks: {
-          precision: 0
-        }
-      }
+          color: 'rgba(128, 128, 128, 0.5)',
+          font: { size: 10 },
+          precision: 0,
+          maxTicksLimit: 4,
+        },
+        border: {
+          display: false,
+        },
+      },
     },
     interaction: {
       mode: 'nearest' as const,
@@ -103,7 +141,7 @@ export default function PageviewsChart({ data }: PageviewsChartProps) {
   }
 
   return (
-    <div className="h-64">
+    <div className="h-full w-full overflow-hidden">
       <Line data={chartData} options={options} />
     </div>
   )

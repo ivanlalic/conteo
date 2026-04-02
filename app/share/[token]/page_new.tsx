@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useParams } from 'next/navigation'
 import PageviewsChart from '@/components/PageviewsChart'
-import StatCard from '@/components/dashboard/StatCard'
-import DataTable from '@/components/dashboard/DataTable'
 import { getCountryFlag, getCountryName } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -39,6 +37,12 @@ interface City {
   city: string
   pageviews: number
   unique_visitors: number
+}
+
+function formatNumber(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`
+  return n.toLocaleString()
 }
 
 export default function PublicDashboard() {
@@ -274,7 +278,7 @@ export default function PublicDashboard() {
 
   return (
     <div className={isDark ? 'dark' : ''}>
-      <div className="min-h-screen bg-bg-page">
+      <div className="min-h-screen bg-bg-page text-text-primary">
         {/* Header */}
         <header className="sticky top-0 z-30 h-14 border-b border-border bg-bg-card/80 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
@@ -325,30 +329,39 @@ export default function PublicDashboard() {
           </div>
         </header>
 
-        {/* Main */}
+        {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-          {/* Stats */}
-          <section className="flex flex-wrap gap-0 -mx-2 sm:mx-0">
-            <StatCard
-              label="Live Users"
-              value={stats.liveUsers.toString()}
-              tooltip="Usuarios activos en los últimos 5 minutos"
-            />
-            <StatCard
-              label="Today"
-              value={stats.todayViews.toLocaleString()}
-              tooltip="Pageviews del día de hoy"
-            />
-            <StatCard
-              label="This Week"
-              value={stats.weekViews.toLocaleString()}
-              tooltip="Pageviews de los últimos 7 días"
-            />
-            <StatCard
-              label="This Month"
-              value={stats.monthViews.toLocaleString()}
-              tooltip="Pageviews de los últimos 30 días"
-            />
+          {/* Stats Grid */}
+          <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="border border-border rounded-lg bg-bg-card p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-medium text-text-secondary uppercase tracking-wide">Live Users</h3>
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+              </div>
+              <p className="text-2xl font-bold text-text-primary">{stats.liveUsers}</p>
+              <p className="text-xs text-text-tertiary mt-1">last 5 min</p>
+            </div>
+
+            <div className="border border-border rounded-lg bg-bg-card p-4">
+              <h3 className="text-xs font-medium text-text-secondary uppercase tracking-wide mb-2">Today</h3>
+              <p className="text-2xl font-bold text-text-primary">{formatNumber(stats.todayViews)}</p>
+              <p className="text-xs text-text-tertiary mt-1">pageviews</p>
+            </div>
+
+            <div className="border border-border rounded-lg bg-bg-card p-4">
+              <h3 className="text-xs font-medium text-text-secondary uppercase tracking-wide mb-2">This Week</h3>
+              <p className="text-2xl font-bold text-text-primary">{formatNumber(stats.weekViews)}</p>
+              <p className="text-xs text-text-tertiary mt-1">pageviews</p>
+            </div>
+
+            <div className="border border-border rounded-lg bg-bg-card p-4">
+              <h3 className="text-xs font-medium text-text-secondary uppercase tracking-wide mb-2">This Month</h3>
+              <p className="text-2xl font-bold text-text-primary">{formatNumber(stats.monthViews)}</p>
+              <p className="text-xs text-text-tertiary mt-1">pageviews</p>
+            </div>
           </section>
 
           {/* Chart */}
@@ -362,23 +375,29 @@ export default function PublicDashboard() {
           {/* Two Column Grid */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Top Pages */}
-            <DataTable
-              title="Top Pages"
-              columns={[
-                {
-                  key: 'path',
-                  label: 'Page',
-                  render: (val: string) => (
-                    <span className="text-sm font-medium text-text-primary truncate max-w-[200px] block">{val}</span>
-                  ),
-                },
-                { key: 'pageviews', label: 'Views', align: 'right' },
-                { key: 'unique_visitors', label: 'Unique', align: 'right' },
-              ]}
-              data={topPages}
-              maxKey="pageviews"
-              emptyMessage="No pageviews yet"
-            />
+            <div className="border border-border rounded-lg bg-bg-card p-4">
+              <h3 className="text-sm font-semibold text-text-primary mb-3">Top Pages</h3>
+              {topPages.length === 0 ? (
+                <p className="text-sm text-text-tertiary py-4">No pageviews yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {topPages.map((page, i) => (
+                    <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary truncate">{page.path}</p>
+                        <p className="text-xs text-text-tertiary">
+                          {formatNumber(page.desktop_views)} desktop · {formatNumber(page.mobile_views)} mobile
+                        </p>
+                      </div>
+                      <div className="text-right ml-4">
+                        <p className="text-sm font-semibold text-text-primary">{formatNumber(page.pageviews)}</p>
+                        <p className="text-xs text-text-tertiary">{formatNumber(page.unique_visitors)} unique</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Countries */}
             <div className="border border-border rounded-lg bg-bg-card p-4">
@@ -402,14 +421,16 @@ export default function PublicDashboard() {
                               <span className="text-sm text-text-primary">{getCountryName(row.country) || row.country}</span>
                               <span className="text-xs text-text-tertiary">{isExpanded ? '▲' : '▼'}</span>
                             </div>
-                            <span className="text-sm font-medium text-text-primary">{row.unique_visitors.toLocaleString()}</span>
+                            <div className="text-right">
+                              <span className="text-sm font-medium text-text-primary">{formatNumber(row.unique_visitors)}</span>
+                            </div>
                           </div>
                           {isExpanded && cities.length > 0 && (
                             <div className="ml-6 pl-3 border-l border-border space-y-0.5 py-1">
                               {cities.map((city) => (
                                 <div key={city.city} className="flex items-center justify-between text-xs py-0.5">
                                   <span className="text-text-secondary">{city.city}</span>
-                                  <span className="text-text-tertiary">{city.unique_visitors.toLocaleString()}</span>
+                                  <span className="text-text-tertiary">{formatNumber(city.unique_visitors)}</span>
                                 </div>
                               ))}
                             </div>
@@ -423,7 +444,7 @@ export default function PublicDashboard() {
                       onClick={() => setCountriesLimit(countriesLimit === 5 ? topCountries.length : 5)}
                       className="w-full mt-2 py-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-bg-secondary rounded-md transition-colors"
                     >
-                      {countriesLimit === 5 ? `Show all (${topCountries.length})` : 'Show less'}
+                      {countriesLimit === 5 ? `Show all countries (${topCountries.length})` : 'Show less'}
                     </button>
                   )}
                 </>
@@ -432,25 +453,24 @@ export default function PublicDashboard() {
           </section>
 
           {/* Devices */}
-          <DataTable
-            title="Devices"
-            columns={[
-              {
-                key: 'device',
-                label: 'Device',
-                render: (val: string) => (
-                  <span className="flex items-center gap-1.5">
-                    <span>{val === 'Desktop' ? '💻' : val === 'Mobile' ? '📱' : '📟'}</span>
-                    <span>{val}</span>
-                  </span>
-                ),
-              },
-              { key: 'unique_visitors', label: 'Visitors', align: 'right' },
-            ]}
-            data={deviceBreakdown}
-            maxKey="unique_visitors"
-            emptyMessage="No device data yet"
-          />
+          <section className="border border-border rounded-lg bg-bg-card p-4">
+            <h3 className="text-sm font-semibold text-text-primary mb-3">Devices</h3>
+            {deviceBreakdown.length === 0 ? (
+              <p className="text-sm text-text-tertiary py-4">No device data yet</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {deviceBreakdown.map((device) => (
+                  <div key={device.device} className="text-center p-3 bg-bg-secondary rounded-lg">
+                    <p className="text-2xl mb-1">
+                      {device.device === 'Desktop' ? '💻' : device.device === 'Mobile' ? '📱' : '📟'}
+                    </p>
+                    <p className="text-sm font-medium text-text-primary">{device.device}</p>
+                    <p className="text-xs text-text-tertiary">{formatNumber(device.unique_visitors)} visitors</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </main>
 
         {/* Footer */}

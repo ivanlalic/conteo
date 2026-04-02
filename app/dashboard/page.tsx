@@ -12,7 +12,8 @@ import { useTheme } from '@/components/ThemeProvider'
 import StatCard from '@/components/dashboard/StatCard'
 import RealtimeBadge from '@/components/dashboard/RealtimeBadge'
 import DateRangePicker, { type TimePeriod } from '@/components/dashboard/DateRangePicker'
-import VisitorChart from '@/components/dashboard/VisitorChart'
+import VisitorChart, { type TrendDataPoint } from '@/components/dashboard/VisitorChart'
+import { getGranularityForRange, type ChartMetric } from '@/lib/chart-utils'
 import DataTable from '@/components/dashboard/DataTable'
 import UxInsightCard from '@/components/dashboard/UxInsightCard'
 import ShareModal from '@/components/ShareModal'
@@ -41,6 +42,12 @@ interface ReferrerSource {
 
 interface ChartData {
   date: string
+  pageviews: number
+  unique_visitors: number
+}
+
+interface TrendChartData {
+  bucket: string
   pageviews: number
   unique_visitors: number
 }
@@ -239,6 +246,10 @@ function DashboardContent() {
   // Chart
   const [chartData, setChartData] = useState<ChartData[]>([])
   const [comparisonChartData, setComparisonChartData] = useState<ChartData[]>([])
+  const [trendData, setTrendData] = useState<TrendChartData[]>([])
+  const [comparisonTrendData, setComparisonTrendData] = useState<TrendChartData[]>([])
+  const [showComparison, setShowComparison] = useState(false)
+  const [chartMetric, setChartMetric] = useState<ChartMetric>('visitors')
 
   // Tables
   const [topPages, setTopPages] = useState<TopPage[]>([])
@@ -331,11 +342,14 @@ function DashboardContent() {
       customEndDate
     )
     const tzOffset = -new Date().getTimezoneOffset()
+    const { granularity } = getGranularityForRange(timePeriod)
 
     const [
       liveRes,
       chartRes,
       compChartRes,
+      trendRes,
+      compTrendRes,
       visitorsRes,
       prevVisitorsRes,
       pageviewsRes,
@@ -362,6 +376,20 @@ function DashboardContent() {
         site_uuid: selectedSite.id,
         start_date: prevStart.toISOString(),
         end_date: prevEnd.toISOString(),
+        tz_offset_minutes: tzOffset,
+      }),
+      supabase.rpc('get_trend_chart', {
+        site_uuid: selectedSite.id,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+        granularity,
+        tz_offset_minutes: tzOffset,
+      }),
+      supabase.rpc('get_trend_chart', {
+        site_uuid: selectedSite.id,
+        start_date: prevStart.toISOString(),
+        end_date: prevEnd.toISOString(),
+        granularity,
         tz_offset_minutes: tzOffset,
       }),
       supabase.rpc('get_unique_visitors', {
@@ -446,6 +474,8 @@ function DashboardContent() {
     setLiveUsers(liveRes.data || 0)
     setChartData(chartRes.data || [])
     setComparisonChartData(compChartRes.data || [])
+    setTrendData(trendRes.data || [])
+    setComparisonTrendData(compTrendRes.data || [])
     setCurrentVisitors(visitorsRes.data || 0)
     setPrevVisitors(prevVisitorsRes.data || 0)
     setCurrentPageviews(pageviewsRes.count || 0)
@@ -750,7 +780,15 @@ function DashboardContent() {
 
         {/* Chart */}
         <section className="border border-border rounded-lg bg-bg-card p-4">
-          <VisitorChart data={chartData} comparisonData={comparisonChartData} />
+          <VisitorChart
+            data={trendData}
+            comparisonData={comparisonTrendData}
+            timePeriod={timePeriod}
+            metric={chartMetric}
+            showComparison={showComparison}
+            onMetricChange={setChartMetric}
+            onComparisonChange={setShowComparison}
+          />
         </section>
 
         {/* Top pages + Top sources */}

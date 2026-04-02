@@ -67,22 +67,19 @@ export default function PublicDashboard() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('theme')
+      const stored = localStorage.getItem('conteo-theme')
       if (stored === 'dark' || stored === 'light') {
         setTheme(stored)
         document.documentElement.classList.toggle('dark', stored === 'dark')
-      } else {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        setTheme(prefersDark ? 'dark' : 'light')
-        document.documentElement.classList.toggle('dark', prefersDark)
       }
+      // Always start in light mode if no preference saved
     }
   }, [])
 
   function toggleTheme() {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
-    localStorage.setItem('theme', newTheme)
+    localStorage.setItem('conteo-theme', newTheme)
     document.documentElement.classList.toggle('dark', newTheme === 'dark')
   }
 

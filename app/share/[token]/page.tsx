@@ -67,10 +67,24 @@ export default function PublicDashboard() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      setTheme(prefersDark ? 'dark' : 'light')
+      const stored = localStorage.getItem('theme')
+      if (stored === 'dark' || stored === 'light') {
+        setTheme(stored)
+        document.documentElement.classList.toggle('dark', stored === 'dark')
+      } else {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        setTheme(prefersDark ? 'dark' : 'light')
+        document.documentElement.classList.toggle('dark', prefersDark)
+      }
     }
   }, [])
+
+  function toggleTheme() {
+    const newTheme = theme === 'dark' ? 'light' : 'dark'
+    setTheme(newTheme)
+    localStorage.setItem('theme', newTheme)
+    document.documentElement.classList.toggle('dark', newTheme === 'dark')
+  }
 
   useEffect(() => {
     loadPublicDashboard()
@@ -270,11 +284,8 @@ export default function PublicDashboard() {
     )
   }
 
-  const isDark = theme === 'dark'
-
   return (
-    <div className={isDark ? 'dark' : ''}>
-      <div className="min-h-screen bg-bg-page">
+    <div className="min-h-screen bg-bg-page">
         {/* Header */}
         <header className="sticky top-0 z-30 h-14 border-b border-border bg-bg-card/80 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
@@ -299,11 +310,11 @@ export default function PublicDashboard() {
               </select>
 
               <button
-                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                onClick={toggleTheme}
                 className="p-1.5 text-text-secondary hover:text-text-primary transition-colors"
                 title="Toggle theme"
               >
-                {isDark ? (
+                {theme === 'dark' ? (
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M8 1a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1A.5.5 0 018 1zm3.354 2.354a.5.5 0 010 .707l-.708.708a.5.5 0 11-.707-.708l.708-.707a.5.5 0 01.707 0zM14 7.5a.5.5 0 010 1h-1a.5.5 0 010-1h1zm-1.646 3.854a.5.5 0 010-.707l.708-.708a.5.5 0 01.707.708l-.708.707a.5.5 0 01-.707 0zM8 13a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1A.5.5 0 018 13zm-3.354-2.354a.5.5 0 010-.707l.708-.708a.5.5 0 11.707.708l-.708.707a.5.5 0 01-.707 0zM3 7.5a.5.5 0 010 1H2a.5.5 0 010-1h1zm.646-3.146a.5.5 0 01.707 0l.708.707a.5.5 0 11-.708.708L3.646 5.06a.5.5 0 010-.707zM8 5a3 3 0 100 6 3 3 0 000-6z" />
                   </svg>

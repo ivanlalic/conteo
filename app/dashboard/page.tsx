@@ -17,6 +17,7 @@ import { getGranularityForRange, type ChartMetric } from '@/lib/chart-utils'
 import DataTable from '@/components/dashboard/DataTable'
 import UxInsightCard from '@/components/dashboard/UxInsightCard'
 import ShareModal from '@/components/ShareModal'
+import GoalsPanel from '@/components/GoalsPanel'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -1149,6 +1150,15 @@ function DashboardContent() {
             </div>
           )}
         </section>
+
+        {/* Goals — conversions tracking */}
+        {selectedSite && (
+          <GoalsPanel
+            siteId={selectedSite.id}
+            startDate={getPeriodDates(timePeriod, customStartDate, customEndDate).start.toISOString()}
+            endDate={getPeriodDates(timePeriod, customStartDate, customEndDate).end.toISOString()}
+          />
+        )}
 
         {/* UTM Campaigns — full width */}
         <section className="border border-border rounded-lg bg-bg-card p-4">

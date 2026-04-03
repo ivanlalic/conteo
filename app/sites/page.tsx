@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import GoalsSettings from '@/components/GoalsSettings'
 import Link from 'next/link'
 
 interface Site {
@@ -277,6 +278,11 @@ function SitesContent() {
                         />
                       </button>
                     </div>
+                  </div>
+
+                  {/* Goals Settings */}
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <GoalsSettings siteId={site.id} />
                   </div>
                 </div>
               </div>

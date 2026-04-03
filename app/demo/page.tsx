@@ -7,6 +7,7 @@ import VisitorChart, { type TrendDataPoint } from '@/components/dashboard/Visito
 import DateRangePicker, { type TimePeriod } from '@/components/dashboard/DateRangePicker'
 import { getCountryFlag, getCountryName } from '@/lib/utils'
 import { getGranularityForRange, type ChartMetric } from '@/lib/chart-utils'
+import { useTheme } from '@/components/ThemeProvider'
 
 interface TopPage {
   path: string
@@ -87,6 +88,8 @@ function formatNumber(n: number): string {
 }
 
 export default function DemoDashboard() {
+  const { resolvedTheme, setTheme } = useTheme()
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [siteId, setSiteId] = useState<string | null>(null)
@@ -298,19 +301,35 @@ export default function DemoDashboard() {
   return (
     <div className="min-h-screen bg-bg-page">
       {/* Header */}
-      <header className="sticky top-0 z-30 h-14 border-b border-border bg-bg-card/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4 min-w-0">
-            <span className="text-sm font-semibold text-text-primary truncate">
+      <header className="sticky top-0 z-30 border-b border-border bg-bg-card/80 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4 h-14">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <span className="text-sm font-semibold text-text-primary truncate hidden sm:inline">
               conteo.online
             </span>
-            <span className="px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded-full">
+            <span className="px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded-full shrink-0">
               Live
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <DateRangePicker value={timePeriod} onChange={setTimePeriod} />
+
+            <button
+              onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+              className="p-1.5 text-text-secondary hover:text-text-primary transition-colors"
+              title="Toggle theme"
+            >
+              {resolvedTheme === 'dark' ? (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 1a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1A.5.5 0 018 1zm3.354 2.354a.5.5 0 010 .707l-.708.708a.5.5 0 11-.707-.708l.708-.707a.5.5 0 01.707 0zM14 7.5a.5.5 0 010 1h-1a.5.5 0 010-1h1zm-1.646 3.854a.5.5 0 010-.707l.708-.708a.5.5 0 01.707.708l-.708.707a.5.5 0 01-.707 0zM8 13a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1A.5.5 0 018 13zm-3.354-2.354a.5.5 0 010-.707l.708-.708a.5.5 0 11.707.708l-.708.707a.5.5 0 01-.707 0zM3 7.5a.5.5 0 010 1H2a.5.5 0 010-1h1zm.646-3.146a.5.5 0 01.707 0l.708.707a.5.5 0 11-.708.708L3.646 5.06a.5.5 0 010-.707zM8 5a3 3 0 100 6 3 3 0 000-6z" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M6 .278a.768.768 0 01.08.858 7.208 7.208 0 00-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 01.81.316.733.733 0 01-.031.893A8.349 8.349 0 018.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 016 .278z" />
+                </svg>
+              )}
+            </button>
 
             {!isEmbedded && (
               <Link

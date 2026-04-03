@@ -54,7 +54,7 @@ export default function DateRangePicker({
           <button
             key={p.key}
             onClick={() => onChange(p.key)}
-            className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
               value === p.key
                 ? 'bg-primary text-white'
                 : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover'

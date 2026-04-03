@@ -313,18 +313,18 @@ export default function PublicDashboard() {
   return (
     <div className="min-h-screen bg-bg-page">
       {/* Header */}
-      <header className="sticky top-0 z-30 h-14 border-b border-border bg-bg-card/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4 min-w-0">
-            <span className="text-sm font-semibold text-text-primary truncate">
+      <header className="sticky top-0 z-30 border-b border-border bg-bg-card/80 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4 h-14">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <span className="text-sm font-semibold text-text-primary truncate hidden sm:inline">
               {domain}
             </span>
-            <span className="px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded-full">
+            <span className="px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded-full shrink-0">
               Public
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <DateRangePicker value={timePeriod} onChange={setTimePeriod} />
 
             <button

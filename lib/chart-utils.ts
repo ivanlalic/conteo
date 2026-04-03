@@ -49,12 +49,12 @@ export function getGranularityForRange(range: TimePeriod): GranularityConfig {
 
 export function formatBucketLabel(bucket: string, format: Intl.DateTimeFormatOptions): string {
   const d = new Date(bucket)
-  return d.toLocaleString('en-US', format)
+  return d.toLocaleString('en-US', { ...format, timeZone: 'UTC' })
 }
 
 export function formatBucketTooltip(bucket: string, format: Intl.DateTimeFormatOptions): string {
   const d = new Date(bucket)
-  return d.toLocaleString('en-US', format)
+  return d.toLocaleString('en-US', { ...format, timeZone: 'UTC' })
 }
 
 export function calcPercentChange(current: number, previous: number): string | null {

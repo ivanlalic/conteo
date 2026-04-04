@@ -3,6 +3,7 @@ import { Syne, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { WebsiteStructuredData } from "@/components/structured-data";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -26,22 +27,53 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Conteo — Simple and private analytics for your website",
-  description:
-    "Track your site's visits in 2 minutes. No cookies, GDPR compliant, free up to 10k visits/mo. The simple alternative to Google Analytics.",
   metadataBase: new URL("https://conteo.online"),
+  title: {
+    default: "Conteo — Simple and private analytics for your website",
+    template: "%s | Conteo",
+  },
+  description:
+    "Privacy-first web analytics. No cookies, GDPR compliant, real-time dashboard. One line of code. Free for small sites. The simple Google Analytics alternative.",
+  keywords: [
+    "web analytics",
+    "privacy analytics",
+    "GDPR compliant analytics",
+    "Google Analytics alternative",
+    "cookie-free analytics",
+    "simple analytics",
+    "real-time analytics",
+  ],
+  authors: [{ name: "Conteo" }],
+  creator: "Conteo",
+  publisher: "Conteo",
+  alternates: {
+    canonical: "https://conteo.online",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large" as const,
+      "max-snippet": -1,
+    },
+  },
   openGraph: {
-    title: "Conteo — Simple and private analytics",
-    description:
-      "Track your site's visits in 2 minutes. No cookies, GDPR compliant, free up to 10k visits/mo.",
+    type: "website",
+    locale: "en_US",
     url: "https://conteo.online",
     siteName: "Conteo",
-    type: "website",
+    title: "Conteo — Simple and private analytics",
+    description:
+      "Privacy-first web analytics. No cookies, GDPR compliant, real-time dashboard. One line of code. Free for small sites.",
   },
   twitter: {
     card: "summary_large_image",
     title: "Conteo — Simple and private analytics",
-    description: "Track your site's visits in 2 minutes. No cookies, GDPR compliant.",
+    description:
+      "Privacy-first web analytics. No cookies, GDPR compliant. Free for small sites.",
   },
 };
 
@@ -55,6 +87,7 @@ export default function RootLayout({
       className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}
     >
       <body>
+        <WebsiteStructuredData />
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>

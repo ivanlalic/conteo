@@ -1,3 +1,54 @@
+interface ArticleProps {
+  title: string;
+  description: string;
+  publishedAt: string;
+  updatedAt?: string;
+  author: string;
+  url: string;
+  image?: string;
+}
+
+export function ArticleStructuredData({
+  title,
+  description,
+  publishedAt,
+  updatedAt,
+  author,
+  url,
+  image,
+}: ArticleProps) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: title,
+    description,
+    datePublished: publishedAt,
+    dateModified: updatedAt || publishedAt,
+    author: {
+      "@type": "Organization",
+      name: author,
+      "@id": "https://conteo.online/#organization",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Conteo",
+      "@id": "https://conteo.online/#organization",
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": url,
+    },
+    image: image || "https://conteo.online/og-image.png",
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
 interface FAQItem {
   question: string;
   answer: string;

@@ -44,6 +44,7 @@ export default function Navbar() {
           <a href="/#features" className="hidden sm:inline text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition">Features</a>
           <a href="/pricing" className="hidden sm:inline text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition">Pricing</a>
           <a href="/docs" className="hidden sm:inline text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition">Docs</a>
+          <a href="/blog" className="hidden sm:inline text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition">Blog</a>
           <a href="/login" className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition">Log in</a>
           <button onClick={toggleDark} className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition text-neutral-500 dark:text-neutral-400" aria-label="Toggle theme">
             {dark ? <IconSun /> : <IconMoon />}

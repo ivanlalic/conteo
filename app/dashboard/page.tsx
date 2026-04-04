@@ -690,10 +690,11 @@ function DashboardContent() {
   return (
     <div className="min-h-screen bg-bg-page">
       {/* ── Sticky header ── */}
-      <header className="sticky top-0 z-30 h-14 border-b border-border bg-bg-card/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-30 border-b border-border bg-bg-card/80 backdrop-blur-sm">
+        {/* Top row: site + actions */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-3">
           {/* Left */}
-          <div className="flex items-center gap-4 min-w-0">
+          <div className="flex items-center gap-3 min-w-0">
             {sites.length === 1 ? (
               <span className="text-sm font-semibold text-text-primary truncate">
                 {selectedSite?.domain}
@@ -717,7 +718,7 @@ function DashboardContent() {
             <RealtimeBadge count={liveUsers} />
             <button
               onClick={() => setShareModalOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-bg-secondary rounded-md transition-colors"
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-bg-secondary rounded-md transition-colors"
               title="Share public dashboard"
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
@@ -728,15 +729,29 @@ function DashboardContent() {
           </div>
 
           {/* Right */}
-          <div className="flex items-center gap-3">
-            <DateRangePicker
-              value={timePeriod}
-              onChange={setTimePeriod}
-              customStartDate={customStartDate}
-              customEndDate={customEndDate}
-              onCustomStartChange={setCustomStartDate}
-              onCustomEndChange={setCustomEndDate}
-            />
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Date picker hidden on mobile, shown below */}
+            <div className="hidden sm:block">
+              <DateRangePicker
+                value={timePeriod}
+                onChange={setTimePeriod}
+                customStartDate={customStartDate}
+                customEndDate={customEndDate}
+                onCustomStartChange={setCustomStartDate}
+                onCustomEndChange={setCustomEndDate}
+              />
+            </div>
+
+            {/* Share icon-only on mobile */}
+            <button
+              onClick={() => setShareModalOpen(true)}
+              className="sm:hidden p-1.5 text-text-secondary hover:text-text-primary transition-colors"
+              title="Share public dashboard"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M7.775 3.275a.75.75 0 001.06 1.06l1.25-1.25a2 2 0 112.83 2.83l-2.5 2.5a2 2 0 01-2.83 0 .75.75 0 00-1.06 1.06 3.5 3.5 0 004.95 0l2.5-2.5a3.5 3.5 0 00-4.95-4.95l-1.25 1.25zm-4.69 9.64a2 2 0 010-2.83l2.5-2.5a2 2 0 012.83 0 .75.75 0 001.06-1.06 3.5 3.5 0 00-4.95 0l-2.5 2.5a3.5 3.5 0 004.95 4.95l1.25-1.25a.75.75 0 00-1.06-1.06l-1.25 1.25a2 2 0 01-2.83 0z" />
+              </svg>
+            </button>
 
             {/* Theme toggle */}
             <button
@@ -762,6 +777,17 @@ function DashboardContent() {
               Sign out
             </button>
           </div>
+        </div>
+        {/* Mobile-only date picker row */}
+        <div className="sm:hidden px-4 pb-3 -mt-1">
+          <DateRangePicker
+            value={timePeriod}
+            onChange={setTimePeriod}
+            customStartDate={customStartDate}
+            customEndDate={customEndDate}
+            onCustomStartChange={setCustomStartDate}
+            onCustomEndChange={setCustomEndDate}
+          />
         </div>
       </header>
 
@@ -797,7 +823,7 @@ function DashboardContent() {
         )}
 
         {/* Stat cards */}
-        <section className="flex flex-wrap gap-0 -mx-2 sm:mx-0">
+        <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1 sm:gap-0">
           <StatCard
             label="Unique visitors"
             value={formatNumber(currentVisitors)}
@@ -841,7 +867,7 @@ function DashboardContent() {
         </section>
 
         {/* Chart */}
-        <section className="border border-border rounded-lg bg-bg-card p-4">
+        <section className="border border-border rounded-lg bg-bg-card p-3 sm:p-4">
           <VisitorChart
             data={trendData}
             comparisonData={comparisonTrendData}
@@ -855,7 +881,7 @@ function DashboardContent() {
 
         {/* Top pages + Top sources */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="border border-border rounded-lg bg-bg-card p-4">
+          <div className="border border-border rounded-lg bg-bg-card p-3 sm:p-4">
             <DataTable
               title="Top pages"
               tooltip="Las páginas más visitadas de tu sitio, ordenadas por cantidad de visitantes únicos."
@@ -893,7 +919,7 @@ function DashboardContent() {
             />
           </div>
 
-          <div className="border border-border rounded-lg bg-bg-card p-4">
+          <div className="border border-border rounded-lg bg-bg-card p-3 sm:p-4">
             <DataTable
               title="Top sources"
               tooltip="De dónde vienen tus visitantes."
@@ -948,7 +974,7 @@ function DashboardContent() {
         {/* Countries + Devices */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Countries with city drill-down */}
-          <div className="border border-border rounded-lg bg-bg-card p-4">
+          <div className="border border-border rounded-lg bg-bg-card p-3 sm:p-4">
             <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center">
               Countries
             </h3>
@@ -1045,7 +1071,7 @@ function DashboardContent() {
             )}
           </div>
 
-          <div className="border border-border rounded-lg bg-bg-card p-4">
+          <div className="border border-border rounded-lg bg-bg-card p-3 sm:p-4">
             <DataTable
               title="Devices"
               tooltip="Tipo de dispositivo usado para acceder a tu sitio, detectado por el user agent del navegador."
@@ -1080,7 +1106,7 @@ function DashboardContent() {
 
         {/* Browsers + OS */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="border border-border rounded-lg bg-bg-card p-4">
+          <div className="border border-border rounded-lg bg-bg-card p-3 sm:p-4">
             <DataTable
               title="Browsers"
               tooltip="Navegador web utilizado por tus visitantes."
@@ -1112,7 +1138,7 @@ function DashboardContent() {
             />
           </div>
 
-          <div className="border border-border rounded-lg bg-bg-card p-4">
+          <div className="border border-border rounded-lg bg-bg-card p-3 sm:p-4">
             <DataTable
               title="Operating systems"
               tooltip="Sistema operativo del dispositivo de tus visitantes."
@@ -1147,9 +1173,9 @@ function DashboardContent() {
         </section>
 
         {/* UX Insights */}
-        <section className="border border-border rounded-lg bg-bg-card p-4">
+        <section className="border border-border rounded-lg bg-bg-card p-3 sm:p-4">
           <h3 className="text-sm font-semibold text-text-primary mb-3">UX Insights</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-1">
             <UxInsightCard
               label="Rage clicks"
               rate={getBehaviorMetric('rage_click').rate}
@@ -1243,7 +1269,7 @@ function DashboardContent() {
         )}
 
         {/* UTM Campaigns — full width */}
-        <section className="border border-border rounded-lg bg-bg-card p-4">
+        <section className="border border-border rounded-lg bg-bg-card p-3 sm:p-4">
           <h3 className="text-sm font-semibold text-text-primary mb-3">UTM Campaigns</h3>
           {campaigns.length === 0 ? (
             <p className="text-sm text-text-tertiary py-4">

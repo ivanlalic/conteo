@@ -78,7 +78,7 @@ export default function DataTable({
         <p className="text-sm text-text-tertiary py-4">{emptyMessage}</p>
       ) : (
         <>
-          <div className="data-table">
+          <div className="data-table overflow-x-auto -mx-1 px-1">
             <table className="w-full">
               <thead>
                 <tr>

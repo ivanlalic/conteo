@@ -32,11 +32,11 @@ export default function UxInsightCard({
   return (
     <button
       onClick={onClick}
-      className={`text-left w-full px-4 py-3 rounded-lg transition-colors hover:bg-bg-hover ${
+      className={`text-left w-full px-3 sm:px-4 py-3 rounded-lg transition-colors hover:bg-bg-hover ${
         isExpanded ? 'bg-bg-hover ring-1 ring-border' : ''
       }`}
     >
-      <p className="stat-label mb-1.5 flex items-center gap-1">
+      <p className="stat-label mb-1 sm:mb-1.5 flex items-center gap-1 text-[11px] sm:text-[13px]">
         <span
           className="inline-block w-2 h-2 rounded-full flex-shrink-0"
           style={{ backgroundColor: color }}
@@ -44,7 +44,7 @@ export default function UxInsightCard({
         {label}
         <MetricTooltip text={tooltip} />
       </p>
-      <p className="stat-value" style={{ color }}>{rate.toFixed(2)}%</p>
+      <p className="stat-value text-xl sm:text-[28px]" style={{ color }}>{rate.toFixed(2)}%</p>
       <p className="text-xs text-text-tertiary mt-1">
         {sessions} {sessions === 1 ? 'session' : 'sessions'}
       </p>

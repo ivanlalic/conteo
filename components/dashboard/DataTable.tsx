@@ -53,15 +53,16 @@ export default function DataTable({
   data,
   maxKey,
   showPercentBar = true,
-  initialRows = 10,
+  initialRows = 5,
   onRowClick,
   emptyMessage = 'No data yet',
   expandedKey,
   expandedContent,
 }: DataTableProps) {
-  const [showAll, setShowAll] = useState(false)
-  const visibleData = showAll ? data : data.slice(0, initialRows)
-  const hasMore = data.length > initialRows
+  const [visibleCount, setVisibleCount] = useState(initialRows)
+  const visibleData = data.slice(0, visibleCount)
+  const hasMore = visibleCount < data.length
+  const isExpanded = visibleCount > initialRows
 
   const maxValue = maxKey
     ? Math.max(...data.map((row) => Number(row[maxKey]) || 0), 1)
@@ -127,14 +128,24 @@ export default function DataTable({
               </tbody>
             </table>
           </div>
-          {hasMore && (
-            <button
-              onClick={() => setShowAll(!showAll)}
-              className="mt-2 text-sm text-primary hover:underline"
-            >
-              {showAll ? 'Show less' : `Show all ${data.length}`}
-            </button>
-          )}
+          <div className="mt-2 flex gap-3">
+            {hasMore && (
+              <button
+                onClick={() => setVisibleCount((c) => Math.min(c + initialRows, data.length))}
+                className="text-sm text-primary hover:underline"
+              >
+                Load more ({Math.min(initialRows, data.length - visibleCount)})
+              </button>
+            )}
+            {isExpanded && (
+              <button
+                onClick={() => setVisibleCount(initialRows)}
+                className="text-sm text-text-tertiary hover:underline"
+              >
+                Show less
+              </button>
+            )}
+          </div>
         </>
       )}
     </div>

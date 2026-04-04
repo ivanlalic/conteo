@@ -48,13 +48,13 @@ export default function DateRangePicker({
   }, [handleKeyDown])
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <div className="flex items-center bg-bg-card border border-border rounded-lg overflow-hidden">
         {PERIODS.map((p) => (
           <button
             key={p.key}
             onClick={() => onChange(p.key)}
-            className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
+            className={`px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
               value === p.key
                 ? 'bg-primary text-white'
                 : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover'
@@ -71,14 +71,14 @@ export default function DateRangePicker({
             type="date"
             value={customStartDate || ''}
             onChange={(e) => onCustomStartChange(e.target.value)}
-            className="px-2 py-1.5 text-sm border border-border rounded-lg bg-bg-card text-text-primary"
+            className="px-2 py-1.5 text-xs sm:text-sm border border-border rounded-lg bg-bg-card text-text-primary"
           />
-          <span className="text-text-tertiary text-sm">to</span>
+          <span className="text-text-tertiary text-xs sm:text-sm">to</span>
           <input
             type="date"
             value={customEndDate || ''}
             onChange={(e) => onCustomEndChange(e.target.value)}
-            className="px-2 py-1.5 text-sm border border-border rounded-lg bg-bg-card text-text-primary"
+            className="px-2 py-1.5 text-xs sm:text-sm border border-border rounded-lg bg-bg-card text-text-primary"
           />
         </div>
       )}

@@ -6,7 +6,7 @@ import { FAQStructuredData } from '@/components/structured-data'
 export const metadata: Metadata = {
   title: 'Pricing — Free Web Analytics',
   description:
-    'Free web analytics for small sites. No credit card, no hidden fees. Pro from $9/mo. The free Google Analytics alternative with real-time dashboard.',
+    'Free web analytics for small sites. No credit card, no hidden fees. Pro from $4.90/mo. The free Google Analytics alternative with real-time dashboard.',
   alternates: { canonical: 'https://conteo.online/pricing' },
   openGraph: {
     title: 'Conteo Pricing — Free Analytics for Your Website',
@@ -25,17 +25,17 @@ const PRICING_FAQS = [
   {
     question: 'Do I need a credit card to start?',
     answer:
-      'No. The free plan requires no payment information at all. Just sign up with your email, add your site, and start tracking. You only need a credit card if you upgrade to Pro.',
+      'No. The free plan requires no payment information at all. Just sign up with your email, add your site, and start tracking. You only need a credit card if you upgrade to Pro or Business.',
   },
   {
     question: 'What happens if I exceed my visit limit?',
     answer:
-      "We'll notify you when you're approaching your limit. Your data keeps flowing and your dashboard stays active — we don't cut you off mid-month. You can upgrade to Pro ($9/mo) for up to 100,000 visits.",
+      "We'll notify you when you're approaching your limit. Your data keeps flowing and your dashboard stays active — we don't cut you off mid-month. You can upgrade to Pro ($4.90/mo) for up to 50,000 visits.",
   },
   {
     question: 'Can I upgrade or downgrade anytime?',
     answer:
-      'Yes. You can switch between Free and Pro ($9/mo) at any time. Changes take effect immediately. No contracts, no lock-in periods.',
+      'Yes. You can switch between Free, Pro ($4.90/mo), and Business ($9.90/mo) at any time. Changes take effect immediately. No contracts, no lock-in periods.',
   },
   {
     question: 'Can I cancel anytime?',

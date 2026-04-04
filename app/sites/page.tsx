@@ -59,15 +59,18 @@ function SitesContent() {
     setError('')
 
     try {
-      // Check site limit
-      const { data: planData } = await supabase.rpc('get_user_plan_with_usage', {
-        user_uuid: user!.id
-      })
+      // Check site limit (admins have no limits)
+      const { data: isAdmin } = await supabase.rpc('is_admin')
+      if (!isAdmin) {
+        const { data: planData } = await supabase.rpc('get_user_plan_with_usage', {
+          user_uuid: user!.id
+        })
 
-      if (planData && planData.current_sites_count >= planData.sites_limit) {
-        setError(`You've reached the maximum of ${planData.sites_limit} sites on your ${planData.plan_tier} plan. Upgrade to add more.`)
-        setCreating(false)
-        return
+        if (planData && planData.current_sites_count >= planData.sites_limit) {
+          setError(`You've reached the maximum of ${planData.sites_limit} sites on your ${planData.plan_tier} plan. Upgrade to add more.`)
+          setCreating(false)
+          return
+        }
       }
 
       const { data, error } = await supabase

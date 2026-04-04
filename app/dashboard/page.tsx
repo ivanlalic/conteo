@@ -312,7 +312,7 @@ function DashboardContent() {
   const [shareModalOpen, setShareModalOpen] = useState(false)
 
   // Plan usage
-  const [planUsage, setPlanUsage] = useState<{ current: number; limit: number; tier: string } | null>(null)
+  const [planUsage, setPlanUsage] = useState<{ current: number; limit: number; tier: string; sitesUsed: number; sitesLimit: number } | null>(null)
 
   // Init: load sites + read URL filters
   useEffect(() => {
@@ -380,6 +380,10 @@ function DashboardContent() {
 
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      // Admin has no limits
+      const { data: isAdmin } = await supabase.rpc('is_admin')
+      if (isAdmin) return
 
       const { data, error } = await supabase.rpc('get_user_plan_with_usage', {
         user_uuid: user.id

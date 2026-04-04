@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS user_plans (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
 
   -- Plan information
-  plan_tier VARCHAR(20) NOT NULL DEFAULT 'free' CHECK (plan_tier IN ('free', 'pro')),
+  plan_tier VARCHAR(20) NOT NULL DEFAULT 'free' CHECK (plan_tier IN ('free', 'pro', 'business')),
 
   -- Limits
   sites_limit INT NOT NULL DEFAULT 1,

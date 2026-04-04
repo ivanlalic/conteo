@@ -13,9 +13,9 @@ RETURNS TABLE (
   current_events_count BIGINT
 ) AS $$
   SELECT
-    COALESCE(up.plan_tier, 'free') as plan_tier,
-    COALESCE(up.sites_limit, 1) as sites_limit,
-    COALESCE(up.events_limit_monthly, 10000) as events_limit_monthly,
+    COALESCE((SELECT plan_tier FROM user_plans WHERE user_id = user_uuid), 'free') as plan_tier,
+    COALESCE((SELECT sites_limit FROM user_plans WHERE user_id = user_uuid), 1) as sites_limit,
+    COALESCE((SELECT events_limit_monthly FROM user_plans WHERE user_id = user_uuid), 10000) as events_limit_monthly,
     COALESCE((SELECT COUNT(*) FROM sites WHERE user_id = user_uuid), 0) as current_sites_count,
     COALESCE((
       SELECT COUNT(*)

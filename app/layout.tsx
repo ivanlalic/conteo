@@ -68,12 +68,21 @@ export const metadata: Metadata = {
     title: "Conteo — Simple and private analytics",
     description:
       "Privacy-first web analytics. No cookies, GDPR compliant, real-time dashboard. One line of code. Free for small sites.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1424,
+        height: 752,
+        alt: "Conteo — Simple and private web analytics dashboard",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Conteo — Simple and private analytics",
     description:
       "Privacy-first web analytics. No cookies, GDPR compliant. Free for small sites.",
+    images: ["/og-image.png"],
   },
 };
 

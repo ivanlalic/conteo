@@ -18,6 +18,7 @@ import DataTable from '@/components/dashboard/DataTable'
 import UxInsightCard from '@/components/dashboard/UxInsightCard'
 import ShareModal from '@/components/ShareModal'
 import GoalsPanel from '@/components/GoalsPanel'
+import ScrollDepthMini from '@/components/dashboard/ScrollDepthMini'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,10 @@ interface TopPage {
   pageviews: number
   unique_visitors: number
   bounce_rate: number
+  pct_25?: number
+  pct_50?: number
+  pct_75?: number
+  pct_100?: number
 }
 
 interface ReferrerSource {
@@ -365,6 +370,7 @@ function DashboardContent() {
       osRes,
       campaignsRes,
       behaviorRes,
+      scrollDepthRes,
     ] = await Promise.all([
       supabase.rpc('get_live_users', { site_uuid: selectedSite.id }),
       supabase.rpc('get_pageviews_chart', {
@@ -470,6 +476,11 @@ function DashboardContent() {
         start_date: start.toISOString(),
         end_date: end.toISOString(),
       }),
+      supabase.rpc('get_scroll_depth_summary', {
+        site_uuid: selectedSite.id,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+      }),
     ])
 
     setLiveUsers(liveRes.data || 0)
@@ -496,7 +507,14 @@ function DashboardContent() {
       setBounceRate(0)
     }
 
-    setTopPages(pages)
+    // Merge scroll depth data into pages
+    const scrollData = scrollDepthRes.data || []
+    const scrollMap = new Map(scrollData.map((s: any) => [s.path, s]))
+    const pagesWithScroll = pages.map((p) => {
+      const sd = scrollMap.get(p.path)
+      return sd ? { ...p, pct_25: Number(sd.pct_25) || 0, pct_50: Number(sd.pct_50) || 0, pct_75: Number(sd.pct_75) || 0, pct_100: Number(sd.pct_100) || 0 } : p
+    })
+    setTopPages(pagesWithScroll)
     setReferrerSources(referrersRes.data || [])
     setTopCountries(countriesRes.data || [])
     setDeviceBreakdown(devicesRes.data || [])
@@ -813,6 +831,17 @@ function DashboardContent() {
                 },
                 { key: 'unique_visitors', label: 'Visitors', align: 'right' },
                 { key: 'pageviews', label: 'Views', align: 'right', render: (v: number) => formatNumber(v) },
+                {
+                  key: 'pct_25',
+                  label: 'Scroll',
+                  align: 'right',
+                  render: (_: any, row: TopPage) =>
+                    row.pct_25 != null ? (
+                      <ScrollDepthMini pct25={row.pct_25 || 0} pct50={row.pct_50 || 0} pct75={row.pct_75 || 0} pct100={row.pct_100 || 0} />
+                    ) : (
+                      <span className="text-text-tertiary text-xs">—</span>
+                    ),
+                },
               ]}
               data={topPages}
               maxKey="unique_visitors"

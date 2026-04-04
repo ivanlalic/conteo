@@ -656,6 +656,93 @@
         if (document.visibilityState === 'hidden') checkExcessiveScroll();
       });
 
+      // ---- SCROLL DEPTH MILESTONES (25/50/75/100%) ----
+
+      var scrollMilestones = [25, 50, 75, 100];
+      var reportedMilestones = {};
+      var scrollDepthTimer = null;
+      var scrollEndpoint = endpoint.replace('/api/track', '/api/track-scroll');
+
+      function pageIsScrollable() {
+        return document.documentElement.scrollHeight > (window.innerHeight + 100);
+      }
+
+      function getScrollPercent() {
+        var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        var docHeight = document.documentElement.scrollHeight;
+        var winHeight = window.innerHeight;
+        var scrollable = docHeight - winHeight;
+        if (scrollable <= 0) return 100;
+        return Math.min(Math.round((scrollTop / scrollable) * 100), 100);
+      }
+
+      function reportScrollMilestone(milestone) {
+        if (reportedMilestones[milestone]) return;
+        reportedMilestones[milestone] = true;
+
+        var payload = JSON.stringify({
+          api_key: apiKey,
+          visitor_id: getVisitorId(),
+          path: window.location.pathname,
+          scroll_depth: milestone
+        });
+
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(scrollEndpoint, payload);
+        } else {
+          fetch(scrollEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            keepalive: true
+          }).catch(function() {});
+        }
+      }
+
+      function checkScrollMilestones() {
+        if (!pageIsScrollable()) return;
+        var percent = getScrollPercent();
+        for (var i = 0; i < scrollMilestones.length; i++) {
+          if (percent >= scrollMilestones[i] && !reportedMilestones[scrollMilestones[i]]) {
+            reportScrollMilestone(scrollMilestones[i]);
+          }
+        }
+      }
+
+      function onScrollDepth() {
+        if (scrollDepthTimer) return;
+        scrollDepthTimer = setTimeout(function() {
+          scrollDepthTimer = null;
+          checkScrollMilestones();
+        }, 200);
+      }
+
+      function resetScrollMilestones() {
+        reportedMilestones = {};
+      }
+
+      // Start listening after page load for accurate scrollHeight
+      if (document.readyState === 'complete') {
+        window.addEventListener('scroll', onScrollDepth, { passive: true });
+      } else {
+        window.addEventListener('load', function() {
+          window.addEventListener('scroll', onScrollDepth, { passive: true });
+        });
+      }
+
+      // Reset on SPA navigation
+      var _sdPush = history.pushState;
+      history.pushState = function() {
+        _sdPush.apply(this, arguments);
+        resetScrollMilestones();
+      };
+      var _sdReplace = history.replaceState;
+      history.replaceState = function() {
+        _sdReplace.apply(this, arguments);
+        resetScrollMilestones();
+      };
+      window.addEventListener('popstate', resetScrollMilestones);
+
       // ---- QUICK BACK DETECTION ----
 
       var navHistory = []; // { url, time }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import PricingModal from '@/components/PricingModal'
+import { PLANS } from '@/lib/data/marketing'
 
 function IconCheckSmall() {
   return (
@@ -16,39 +17,6 @@ function trackCTA(location: string) {
     (window as any).conteo.trackEvent('CTA Click', { props: { location } })
   }
 }
-
-const PLANS = [
-  {
-    name: 'Free',
-    price: '$0',
-    period: '/mo',
-    badge: null,
-    features: ['1 site', '10,000 visits/mo', 'Real-time dashboard', 'All basic metrics', 'CSV export', 'Data retention: 30 days'],
-    cta: 'Start for free',
-    highlighted: false,
-    plan: 'free' as const,
-  },
-  {
-    name: 'Pro',
-    price: '$4.90',
-    period: '/mo',
-    badge: 'Popular',
-    features: ['3 sites', '50,000 visits/mo', 'Everything in Free', 'Public shareable dashboard', 'Priority support', 'Data retention: 90 days'],
-    cta: 'Start with Pro',
-    highlighted: true,
-    plan: 'pro' as const,
-  },
-  {
-    name: 'Business',
-    price: '$9.90',
-    period: '/mo',
-    badge: null,
-    features: ['10 sites', '100,000 visits/mo', 'Everything in Pro', 'API access', 'Unlimited data retention'],
-    cta: 'Start with Business',
-    highlighted: false,
-    plan: 'business' as const,
-  },
-]
 
 export default function PricingCards() {
   const [isModalOpen, setIsModalOpen] = useState(false)

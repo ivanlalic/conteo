@@ -41,8 +41,9 @@ export default function Navbar() {
       <div className="max-w-[1100px] mx-auto px-6 h-14 flex items-center justify-between">
         <a href="/" className="font-display font-bold text-xl tracking-tight">conteo</a>
         <div className="flex items-center gap-5">
-          <a href="#features" className="hidden sm:inline text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition">Features</a>
-          <a href="#pricing" className="hidden sm:inline text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition">Pricing</a>
+          <a href="/#features" className="hidden sm:inline text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition">Features</a>
+          <a href="/pricing" className="hidden sm:inline text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition">Pricing</a>
+          <a href="/docs" className="hidden sm:inline text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition">Docs</a>
           <a href="/login" className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition">Log in</a>
           <button onClick={toggleDark} className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition text-neutral-500 dark:text-neutral-400" aria-label="Toggle theme">
             {dark ? <IconSun /> : <IconMoon />}

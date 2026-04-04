@@ -1,3 +1,89 @@
+interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+export function FAQStructuredData({ faqs }: { faqs: FAQItem[] }) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+export function HowToStructuredData() {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How to Add Free Analytics to Your Website",
+    description:
+      "Add Conteo free web analytics to your website in 2 minutes. No cookies, GDPR compliant.",
+    totalTime: "PT2M",
+    step: [
+      {
+        "@type": "HowToStep",
+        name: "Create a free account",
+        text: "Sign up at conteo.online — free, no credit card required.",
+        url: "https://conteo.online/signup",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Add your website",
+        text: "Enter your website domain in the Conteo dashboard.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Copy the tracking script",
+        text: "Copy the one-line tracking script with your unique API key.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Paste into your site",
+        text: "Add the script tag before the closing </head> tag on your website. Data starts flowing immediately.",
+      },
+    ],
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+export function AboutPageStructuredData() {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    name: "About Conteo",
+    description:
+      "Conteo is a free, privacy-first web analytics tool. No cookies, GDPR compliant, lightweight tracking script under 1KB.",
+    mainEntity: { "@id": "https://conteo.online/#organization" },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
 export function WebsiteStructuredData() {
   const data = {
     "@context": "https://schema.org",

@@ -5,10 +5,9 @@ import { useEffect } from 'react'
 interface PricingModalProps {
   isOpen: boolean
   onClose: () => void
-  planName: 'Pro'
 }
 
-export default function PricingModal({ isOpen, onClose, planName }: PricingModalProps) {
+export default function PricingModal({ isOpen, onClose }: PricingModalProps) {
   // Close modal on ESC key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -72,34 +71,25 @@ export default function PricingModal({ isOpen, onClose, planName }: PricingModal
         {/* Content */}
         <div className="text-center">
           <h3 className="text-2xl font-bold text-gray-900 mb-4">
-            Thanks for your interest in {planName}!
+            Thanks for your interest in Pro!
           </h3>
           <p className="text-gray-600 mb-6">
             We're working hard to launch this plan soon. In the meantime,
             you can start <span className="font-semibold text-indigo-600">free</span> with
-            our Free plan and we'll notify you when {planName} is available.
+            our Free plan and we'll notify you when Pro is available.
           </p>
 
           {/* Features preview */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
             <p className="text-sm font-semibold text-gray-900 mb-2">
-              {planName} plan will include:
+              Pro plan will include:
             </p>
             <ul className="text-sm text-gray-600 space-y-1">
-              {planName === 'Pro' && (
-                <>
-                  <li>✓ 3 websites</li>
-                  <li>✓ 50k events/month</li>
-                  <li>✓ Priority support</li>
-                </>
-              )}
-              {planName === 'Business' && (
-                <>
-                  <li>✓ 10 websites</li>
-                  <li>✓ 100k events/month</li>
-                  <li>✓ API access</li>
-                </>
-              )}
+              <li>✓ 5 websites</li>
+              <li>✓ 100k events/month</li>
+              <li>✓ UX behavior insights</li>
+              <li>✓ COD tracking</li>
+              <li>✓ Priority support</li>
             </ul>
           </div>
 

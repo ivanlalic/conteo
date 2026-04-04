@@ -20,14 +20,12 @@ function trackCTA(location: string) {
 
 export default function PricingCards() {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState<'Pro'>('Pro')
 
   function handlePlanClick(plan: 'free' | 'pro') {
     trackCTA(`pricing-${plan}`)
     if (plan === 'free') {
       window.location.href = '/signup'
     } else {
-      setSelectedPlan('Pro')
       setIsModalOpen(true)
     }
   }
@@ -82,7 +80,7 @@ export default function PricingCards() {
         Free forever for small sites.
       </p>
 
-      <PricingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} planName={selectedPlan} />
+      <PricingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   )
 }

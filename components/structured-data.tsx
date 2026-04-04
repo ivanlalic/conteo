@@ -190,17 +190,10 @@ export function SoftwareApplicationStructuredData() {
       },
       {
         "@type": "Offer",
-        price: "4.90",
+        price: "9",
         priceCurrency: "USD",
         name: "Pro",
-        description: "3 sites, 50,000 visits/mo",
-      },
-      {
-        "@type": "Offer",
-        price: "9.90",
-        priceCurrency: "USD",
-        name: "Business",
-        description: "10 sites, 100,000 visits/mo",
+        description: "5 sites, 100,000 visits/mo",
       },
     ],
     featureList: [

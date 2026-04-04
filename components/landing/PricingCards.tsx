@@ -20,21 +20,21 @@ function trackCTA(location: string) {
 
 export default function PricingCards() {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState<'Pro' | 'Business'>('Pro')
+  const [selectedPlan, setSelectedPlan] = useState<'Pro'>('Pro')
 
-  function handlePlanClick(plan: 'free' | 'pro' | 'business') {
+  function handlePlanClick(plan: 'free' | 'pro') {
     trackCTA(`pricing-${plan}`)
     if (plan === 'free') {
       window.location.href = '/signup'
     } else {
-      setSelectedPlan(plan === 'pro' ? 'Pro' : 'Business')
+      setSelectedPlan('Pro')
       setIsModalOpen(true)
     }
   }
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
         {PLANS.map((plan) => (
           <div
             key={plan.name}

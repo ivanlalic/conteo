@@ -311,9 +311,13 @@ function DashboardContent() {
   // Share modal
   const [shareModalOpen, setShareModalOpen] = useState(false)
 
+  // Plan usage
+  const [planUsage, setPlanUsage] = useState<{ current: number; limit: number; tier: string } | null>(null)
+
   // Init: load sites + read URL filters
   useEffect(() => {
     loadSites()
+    loadPlanUsage()
     // Restore filters from URL
     const filters: ActiveFilters = {}
     if (searchParams.get('page')) filters.page = searchParams.get('page')!
@@ -361,6 +365,40 @@ function DashboardContent() {
       setLoading(false)
     } catch {
       setLoading(false)
+    }
+  }
+
+  async function loadPlanUsage() {
+    try {
+      // Check cache first
+      const cached = localStorage.getItem('plan_usage')
+      const cacheTime = localStorage.getItem('plan_usage_time')
+      if (cached && cacheTime && Date.now() - Number(cacheTime) < 3600000) {
+        setPlanUsage(JSON.parse(cached))
+        return
+      }
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error } = await supabase.rpc('get_user_plan_with_usage', {
+        user_uuid: user.id
+      })
+      if (error) throw error
+      if (data) {
+        const usage = {
+          current: data.current_events_count || 0,
+          limit: data.events_limit_monthly || 10000,
+          tier: data.plan_tier || 'free',
+          sitesUsed: data.current_sites_count || 0,
+          sitesLimit: data.sites_limit || 1,
+        }
+        setPlanUsage(usage)
+        localStorage.setItem('plan_usage', JSON.stringify(usage))
+        localStorage.setItem('plan_usage_time', Date.now().toString())
+      }
+    } catch (err) {
+      console.error('Error loading plan usage:', err)
     }
   }
 
@@ -761,7 +799,7 @@ function DashboardContent() {
             >
               {resolvedTheme === 'dark' ? (
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8 1a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1A.5.5 0 018 1zm3.354 2.354a.5.5 0 010 .707l-.708.708a.5.5 0 11-.707-.708l.708-.707a.5.5 0 01.707 0zM14 7.5a.5.5 0 010 1h-1a.5.5 0 010-1h1zm-1.646 3.854a.5.5 0 010-.707l.708-.708a.5.5 0 01.707.708l-.708.707a.5.5 0 01-.707 0zM8 13a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1A.5.5 0 018 13zm-3.354-2.354a.5.5 0 010-.707l.708-.708a.5.5 0 11.707.708l-.708.707a.5.5 0 01-.707 0zM3 7.5a.5.5 0 010 1H2a.5.5 0 010-1h1zm.646-3.146a.5.5 0 01.707 0l.708.707a.5.5 0 11-.708.708L3.646 5.06a.5.5 0 010-.707zM8 5a3 3 0 100 6 3 3 0 000-6z" />
+                  <path d="M8 1a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1A.5.5 0 018 1zm3.354 2.354a.5.5 0 010 .707l-.708.708a.5.5 0 11-.707-.708l.708-.707a.5.5 0 01.707 0zM14 7.5a.5.5 0 010 1h-1a.5.5 0 010-1h1zm-1.646 3.854a.5.5 0 010-.707l.708-.708a.5.5 0 01.707.708l-.708.707a.5.5 0 01-.707 0zM8 13a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1A.5.5 0 018 13zm-3.354-2.354a.5.5 0 010-.707l.708-.708a.5.5 0 01.707.708l-.708.707a.5.5 0 01-.707 0zM3 7.5a.5.5 0 010 1H2a.5.5 0 010-1h1zm.646-3.146a.5.5 0 01.707 0l.708.707a.5.5 0 11-.708.708L3.646 5.06a.5.5 0 010-.707zM8 5a3 3 0 100 6 3 3 0 000-6z" />
                 </svg>
               ) : (
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -803,6 +841,23 @@ function DashboardContent() {
 
       {/* ── Main ── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        {/* Plan usage banner */}
+        {planUsage && planUsage.current >= planUsage.limit && planUsage.tier === 'free' && (
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                You've exceeded your monthly event limit ({planUsage.limit.toLocaleString()} events)
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                Upgrade to Pro for higher limits, advanced analytics, and priority support.
+              </p>
+            </div>
+            <Link href="/pricing" className="text-sm font-medium text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 underline whitespace-nowrap ml-4">
+              Upgrade →
+            </Link>
+          </div>
+        )}
 
         {/* Active filter chips */}
         {hasFilters && (

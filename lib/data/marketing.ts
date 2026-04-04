@@ -4,30 +4,20 @@ export const PLANS = [
     price: '$0',
     period: '/mo',
     badge: null,
-    features: ['1 site', '10,000 visits/mo', 'Real-time dashboard', 'All basic metrics', 'CSV export', 'Data retention: 30 days'],
+    features: ['1 site', '10,000 visits/mo', 'Real-time dashboard', 'Public shareable dashboard', 'CSV export', 'Data retention: 30 days'],
     cta: 'Start for free',
     highlighted: false,
     plan: 'free' as const,
   },
   {
     name: 'Pro',
-    price: '$4.90',
+    price: '$9',
     period: '/mo',
-    badge: 'Popular',
-    features: ['3 sites', '50,000 visits/mo', 'Everything in Free', 'Public shareable dashboard', 'Priority support', 'Data retention: 90 days'],
+    badge: 'Most popular',
+    features: ['5 sites', '100,000 visits/mo', 'Everything in Free', 'UX behavior insights', 'COD tracking', 'Priority support', 'Data retention: 90 days'],
     cta: 'Start with Pro',
     highlighted: true,
     plan: 'pro' as const,
-  },
-  {
-    name: 'Business',
-    price: '$9.90',
-    period: '/mo',
-    badge: null,
-    features: ['10 sites', '100,000 visits/mo', 'Everything in Pro', 'API access', 'Unlimited data retention'],
-    cta: 'Start with Business',
-    highlighted: false,
-    plan: 'business' as const,
   },
 ]
 
@@ -50,7 +40,7 @@ export const CONTEO_POINTS = [
 ]
 
 export const COMPARISON_TABLE = [
-  { feature: 'Price', ga: 'Free (you pay with your data)', conteo: 'Free up to 10K visits/mo, then $4.90/mo' },
+  { feature: 'Price', ga: 'Free (you pay with your data)', conteo: 'Free up to 10K visits/mo, then $9/mo' },
   { feature: 'Script size', ga: '~45KB', conteo: '<1KB (45x lighter)' },
   { feature: 'Cookies', ga: 'Yes (requires consent banner)', conteo: 'None — zero cookies' },
   { feature: 'GDPR compliance', ga: 'Requires configuration + consent', conteo: 'Compliant by default, no setup' },

@@ -5,7 +5,7 @@ import { useEffect } from 'react'
 interface PricingModalProps {
   isOpen: boolean
   onClose: () => void
-  planName: 'Pro' | 'Business'
+  planName: 'Pro'
 }
 
 export default function PricingModal({ isOpen, onClose, planName }: PricingModalProps) {

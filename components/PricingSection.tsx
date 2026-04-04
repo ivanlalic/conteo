@@ -1,7 +1,7 @@
 'use client'
 
 interface PricingSectionProps {
-  onPlanClick: (plan: 'free' | 'pro' | 'business') => void
+  onPlanClick: (plan: 'free' | 'pro') => void
 }
 
 export default function PricingSection({ onPlanClick }: PricingSectionProps) {
@@ -13,52 +13,38 @@ export default function PricingSection({ onPlanClick }: PricingSectionProps) {
       sites: 1,
       eventsPerMonth: '10k',
       features: [
+        '1 website',
+        '10k events/month',
         'Real-time dashboard',
-        'Basic metrics',
-        'Event tracking',
+        'Public sharing',
         'CSV export',
         'GDPR compliant',
       ],
       cta: 'Start Free',
-      highlighted: true,
-      badge: 'Perfect to start',
+      highlighted: false,
+      badge: null,
       tier: 'free' as const,
     },
     {
       name: 'Pro',
-      price: '$4.90',
+      price: '$9',
       pricePerMonth: '/mo',
-      sites: 3,
-      eventsPerMonth: '50k',
-      features: [
-        'Everything in Free',
-        '3 websites',
-        '50k events/month',
-        'Priority support',
-        'Advanced dashboard',
-      ],
-      cta: 'Start with Pro',
-      highlighted: false,
-      badge: null,
-      tier: 'pro' as const,
-    },
-    {
-      name: 'Business',
-      price: '$9.90',
-      pricePerMonth: '/mo',
-      sites: 10,
+      sites: 5,
       eventsPerMonth: '100k',
       features: [
-        'Everything in Pro',
-        '10 websites',
+        '5 websites',
         '100k events/month',
-        'Advanced analytics',
-        'API access',
+        'Everything in Free',
+        'Public sharing',
+        'UX behavior insights',
+        'COD tracking',
+        'CSV export',
+        'Priority support',
       ],
-      cta: 'Start with Business',
-      highlighted: false,
-      badge: null,
-      tier: 'business' as const,
+      cta: 'Start with Pro',
+      highlighted: true,
+      badge: 'Most popular',
+      tier: 'pro' as const,
     },
   ]
 

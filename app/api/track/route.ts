@@ -68,6 +68,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check monthly event limits (soft limit: still track, but flag for dashboard warning)
+    // Uncomment below to enable hard blocking when limit is exceeded
+    // const { data: planData } = await supabase.rpc('get_user_plan_with_usage', {
+    //   user_uuid: site.user_id
+    // })
+    // if (planData && planData.current_events_count >= planData.events_limit_monthly) {
+    //   return NextResponse.json(
+    //     { error: 'Monthly event limit exceeded', limit: planData.events_limit_monthly },
+    //     { status: 429 }
+    //   )
+    // }
+
     // Validate domain (security: prevent API key abuse)
     const referer = request.headers.get('referer') || request.headers.get('origin')
     if (referer) {

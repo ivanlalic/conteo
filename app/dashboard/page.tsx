@@ -511,7 +511,7 @@ function DashboardContent() {
     const scrollData = scrollDepthRes.data || []
     const scrollMap = new Map(scrollData.map((s: any) => [s.path, s]))
     const pagesWithScroll = pages.map((p) => {
-      const sd = scrollMap.get(p.path)
+      const sd: any = scrollMap.get(p.path)
       return sd ? { ...p, pct_25: Number(sd.pct_25) || 0, pct_50: Number(sd.pct_50) || 0, pct_75: Number(sd.pct_75) || 0, pct_100: Number(sd.pct_100) || 0 } : p
     })
     setTopPages(pagesWithScroll)

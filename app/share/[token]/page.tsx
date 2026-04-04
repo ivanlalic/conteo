@@ -7,6 +7,7 @@ import VisitorChart, { type TrendDataPoint } from '@/components/dashboard/Visito
 import StatCard from '@/components/dashboard/StatCard'
 import DataTable from '@/components/dashboard/DataTable'
 import DateRangePicker, { type TimePeriod } from '@/components/dashboard/DateRangePicker'
+import ScrollDepthMini from '@/components/dashboard/ScrollDepthMini'
 import { getCountryFlag, getCountryName } from '@/lib/utils'
 import { getGranularityForRange, type ChartMetric } from '@/lib/chart-utils'
 import Link from 'next/link'
@@ -15,12 +16,33 @@ interface TopPage {
   path: string
   pageviews: number
   unique_visitors: number
-  mobile_views: number
-  desktop_views: number
+  bounce_rate: number
+  pct_25?: number
+  pct_50?: number
+  pct_75?: number
+  pct_100?: number
+}
+
+interface ReferrerSource {
+  source: string
+  visits: number
+  unique_visitors: number
 }
 
 interface DeviceBreakdown {
   device: string
+  pageviews: number
+  unique_visitors: number
+}
+
+interface BrowserBreakdown {
+  browser: string
+  pageviews: number
+  unique_visitors: number
+}
+
+interface OSBreakdown {
+  os: string
   pageviews: number
   unique_visitors: number
 }
@@ -33,6 +55,14 @@ interface TopCountry {
 
 interface City {
   city: string
+  pageviews: number
+  unique_visitors: number
+}
+
+interface Campaign {
+  utm_campaign: string
+  utm_source: string
+  utm_medium: string
   pageviews: number
   unique_visitors: number
 }
@@ -83,6 +113,48 @@ function formatNumber(n: number): string {
   return n.toLocaleString()
 }
 
+function formatDuration(seconds: number): string {
+  if (!seconds || seconds <= 0) return '--'
+  if (seconds < 60) return `${Math.round(seconds)}s`
+  if (seconds < 3600) {
+    const m = Math.floor(seconds / 60)
+    const s = Math.round(seconds % 60)
+    return s > 0 ? `${m}m ${s}s` : `${m}m`
+  }
+  const h = Math.floor(seconds / 3600)
+  const m = Math.round((seconds % 3600) / 60)
+  return m > 0 ? `${h}h ${m}m` : `${h}h`
+}
+
+function getSourceIcon(source: string): string {
+  const s = source.toLowerCase()
+  if (s === 'direct') return '⚡'
+  if (s.includes('google')) return '🔍'
+  if (s.includes('facebook')) return '📘'
+  if (s.includes('twitter') || s.includes('x.com') || s === 'twitter / x') return '𝕏'
+  if (s.includes('instagram')) return '📷'
+  if (s.includes('linkedin')) return '💼'
+  if (s.includes('youtube')) return '📺'
+  if (s.includes('reddit')) return '🤖'
+  if (s.includes('tiktok')) return '🎵'
+  if (s.includes('duckduckgo')) return '🦆'
+  if (s.includes('hacker news') || s.includes('ycombinator')) return '🟠'
+  if (s.includes('github')) return '🐙'
+  if (s.includes('producthunt')) return '🐱'
+  if (s.includes('bing')) return '🔵'
+  return '🔗'
+}
+
+function getOSIcon(os: string): string {
+  const s = os.toLowerCase()
+  if (s.includes('windows')) return '🪟'
+  if (s.includes('mac') || s.includes('osx') || s.includes('os x')) return '🍎'
+  if (s.includes('ios') || s.includes('iphone') || s.includes('ipad')) return '📱'
+  if (s.includes('android')) return '🤖'
+  if (s.includes('linux') || s.includes('ubuntu')) return '🐧'
+  return '💻'
+}
+
 export default function PublicDashboard() {
   const params = useParams()
   const token = params.token as string
@@ -101,6 +173,9 @@ export default function PublicDashboard() {
   const [prevVisitors, setPrevVisitors] = useState(0)
   const [currentPageviews, setCurrentPageviews] = useState(0)
   const [prevPageviews, setPrevPageviews] = useState(0)
+  const [bounceRate, setBounceRate] = useState(0)
+  const [avgDuration, setAvgDuration] = useState(0)
+  const [prevAvgDuration, setPrevAvgDuration] = useState(0)
 
   // Chart
   const [trendData, setTrendData] = useState<TrendDataPoint[]>([])
@@ -110,11 +185,17 @@ export default function PublicDashboard() {
 
   // Tables
   const [topPages, setTopPages] = useState<TopPage[]>([])
+  const [referrerSources, setReferrerSources] = useState<ReferrerSource[]>([])
   const [deviceBreakdown, setDeviceBreakdown] = useState<DeviceBreakdown[]>([])
+  const [browserBreakdown, setBrowserBreakdown] = useState<BrowserBreakdown[]>([])
+  const [osBreakdown, setOsBreakdown] = useState<OSBreakdown[]>([])
   const [topCountries, setTopCountries] = useState<TopCountry[]>([])
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null)
   const [countryCities, setCountryCities] = useState<{ [key: string]: City[] }>({})
   const [countriesLimit, setCountriesLimit] = useState(5)
+
+  // Campaigns
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
 
   // Theme
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
@@ -211,8 +292,15 @@ export default function PublicDashboard() {
         pageviewsRes,
         prevPageviewsRes,
         pagesRes,
+        referrersRes,
         deviceRes,
+        browserRes,
+        osRes,
         countriesRes,
+        durationRes,
+        prevDurationRes,
+        scrollDepthRes,
+        campaignsRes,
       ] = await Promise.all([
         supabase.rpc('get_live_users', { site_uuid: siteId }),
         supabase.rpc('get_trend_chart', {
@@ -255,9 +343,25 @@ export default function PublicDashboard() {
           site_uuid: siteId,
           start_date: start.toISOString(),
           end_date: end.toISOString(),
-          page_limit: 5,
+          page_limit: 20,
+        }),
+        supabase.rpc('get_referrer_sources', {
+          site_uuid: siteId,
+          start_date: start.toISOString(),
+          end_date: end.toISOString(),
+          source_limit: 20,
         }),
         supabase.rpc('get_device_breakdown', {
+          site_uuid: siteId,
+          start_date: start.toISOString(),
+          end_date: end.toISOString(),
+        }),
+        supabase.rpc('get_browser_breakdown', {
+          site_uuid: siteId,
+          start_date: start.toISOString(),
+          end_date: end.toISOString(),
+        }),
+        supabase.rpc('get_os_breakdown', {
           site_uuid: siteId,
           start_date: start.toISOString(),
           end_date: end.toISOString(),
@@ -268,6 +372,28 @@ export default function PublicDashboard() {
           end_date: end.toISOString(),
           country_limit: 10,
         }),
+        supabase.rpc('get_avg_session_duration', {
+          site_uuid: siteId,
+          start_date: start.toISOString(),
+          end_date: end.toISOString(),
+        }),
+        supabase.rpc('get_avg_session_duration', {
+          site_uuid: siteId,
+          start_date: prevStart.toISOString(),
+          end_date: prevEnd.toISOString(),
+        }),
+        supabase.rpc('get_scroll_depth_summary', {
+          site_uuid: siteId,
+          start_date: start.toISOString(),
+          end_date: end.toISOString(),
+        }),
+        supabase.rpc('get_top_campaigns', {
+          site_uuid: siteId,
+          start_date: start.toISOString(),
+          end_date: end.toISOString(),
+          campaign_limit: 10,
+          campaign_offset: 0,
+        }),
       ])
 
       setLiveUsers(liveRes.data || 0)
@@ -277,13 +403,42 @@ export default function PublicDashboard() {
       setPrevVisitors(prevVisitorsRes.data || 0)
       setCurrentPageviews(pageviewsRes.count || 0)
       setPrevPageviews(prevPageviewsRes.count || 0)
-      setTopPages(pagesRes.data || [])
+
+      const dur = durationRes.data?.[0] || { avg_duration_all: 0 }
+      const prevDur = prevDurationRes.data?.[0] || { avg_duration_all: 0 }
+      setAvgDuration(dur.avg_duration_all || 0)
+      setPrevAvgDuration(prevDur.avg_duration_all || 0)
+
+      const pages: TopPage[] = pagesRes.data || []
+      if (pages.length > 0) {
+        const totalViews = pages.reduce((s, p) => s + p.pageviews, 0)
+        const weighted = pages.reduce((s, p) => s + (p.bounce_rate || 0) * p.pageviews, 0)
+        setBounceRate(totalViews > 0 ? weighted / totalViews : 0)
+      } else {
+        setBounceRate(0)
+      }
+
+      // Merge scroll depth data into pages
+      const scrollData = scrollDepthRes.data || []
+      const scrollMap = new Map(scrollData.map((s: any) => [s.path, s]))
+      const pagesWithScroll = pages.map((p) => {
+        const sd: any = scrollMap.get(p.path)
+        return sd ? { ...p, pct_25: Number(sd.pct_25) || 0, pct_50: Number(sd.pct_50) || 0, pct_75: Number(sd.pct_75) || 0, pct_100: Number(sd.pct_100) || 0 } : p
+      })
+      setTopPages(pagesWithScroll)
+
+      setReferrerSources(referrersRes.data || [])
       setDeviceBreakdown(deviceRes.data || [])
+      setBrowserBreakdown(browserRes.data || [])
+      setOsBreakdown(osRes.data || [])
       setTopCountries(countriesRes.data || [])
+      setCampaigns(campaignsRes.data || [])
     } catch (error) {
       console.error('Error loading stats:', error)
     }
   }
+
+  const totalVisitors = referrerSources.reduce((s, r) => s + r.unique_visitors, 0)
 
   if (loading) {
     return (
@@ -375,6 +530,17 @@ export default function PublicDashboard() {
             delta={calcDelta(currentPageviews, prevPageviews)}
             tooltip="Total pageviews in this period"
           />
+          <StatCard
+            label="Bounce rate"
+            value={`${Math.round(bounceRate)}%`}
+            tooltip="Percentage of visitors who viewed only one page"
+          />
+          <StatCard
+            label="Visit duration"
+            value={formatDuration(avgDuration)}
+            delta={calcDelta(avgDuration, prevAvgDuration)}
+            tooltip="Average time spent per session"
+          />
         </section>
 
         {/* Chart */}
@@ -390,27 +556,71 @@ export default function PublicDashboard() {
           />
         </section>
 
-        {/* Two Column Grid */}
+        {/* Top Pages & Top Sources */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Top Pages */}
-          <DataTable
-            title="Top Pages"
-            columns={[
-              {
-                key: 'path',
-                label: 'Page',
-                render: (val: string) => (
-                  <span className="text-sm font-medium text-text-primary truncate max-w-[200px] block">{val}</span>
-                ),
-              },
-              { key: 'pageviews', label: 'Views', align: 'right' },
-              { key: 'unique_visitors', label: 'Unique', align: 'right' },
-            ]}
-            data={topPages}
-            maxKey="pageviews"
-            emptyMessage="No pageviews yet"
-          />
+          <div className="border border-border rounded-lg bg-bg-card p-4">
+            <DataTable
+              title="Top pages"
+              columns={[
+                {
+                  key: 'path',
+                  label: 'Page',
+                  render: (val: string) => (
+                    <span className="text-sm font-medium text-text-primary truncate max-w-[200px] block" title={val}>{val}</span>
+                  ),
+                },
+                { key: 'unique_visitors', label: 'Visitors', align: 'right' },
+                { key: 'pageviews', label: 'Views', align: 'right', render: (v: number) => formatNumber(v) },
+                {
+                  key: 'pct_25',
+                  label: 'Scroll',
+                  align: 'right',
+                  render: (_: any, row: TopPage) =>
+                    row.pct_25 != null ? (
+                      <ScrollDepthMini pct25={row.pct_25 || 0} pct50={row.pct_50 || 0} pct75={row.pct_75 || 0} pct100={row.pct_100 || 0} />
+                    ) : (
+                      <span className="text-text-tertiary text-xs">—</span>
+                    ),
+                },
+              ]}
+              data={topPages}
+              maxKey="unique_visitors"
+              emptyMessage="No pageviews yet"
+            />
+          </div>
 
+          <div className="border border-border rounded-lg bg-bg-card p-4">
+            <DataTable
+              title="Top sources"
+              columns={[
+                {
+                  key: 'source',
+                  label: 'Source',
+                  render: (val: string) => (
+                    <span className="flex items-center gap-1.5">
+                      <span>{getSourceIcon(val)}</span>
+                      <span className="truncate max-w-[160px]">{val}</span>
+                    </span>
+                  ),
+                },
+                { key: 'unique_visitors', label: 'Visitors', align: 'right' },
+                {
+                  key: '_pct',
+                  label: '%',
+                  align: 'right',
+                  render: (_: any, row: ReferrerSource) =>
+                    `${totalVisitors > 0 ? Math.round((row.unique_visitors / totalVisitors) * 100) : 0}%`,
+                },
+              ]}
+              data={referrerSources}
+              maxKey="unique_visitors"
+              emptyMessage="No referrers yet"
+            />
+          </div>
+        </section>
+
+        {/* Countries & Devices */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Countries */}
           <div className="border border-border rounded-lg bg-bg-card p-4">
             <h3 className="text-sm font-semibold text-text-primary mb-3">Countries</h3>
@@ -460,28 +670,142 @@ export default function PublicDashboard() {
               </>
             )}
           </div>
+
+          {/* Devices */}
+          <div className="border border-border rounded-lg bg-bg-card p-4">
+            <DataTable
+              title="Devices"
+              columns={[
+                {
+                  key: 'device',
+                  label: 'Device',
+                  render: (val: string) => (
+                    <span className="flex items-center gap-1.5">
+                      <span>{val === 'Desktop' ? '💻' : val === 'Mobile' ? '📱' : '📟'}</span>
+                      <span>{val}</span>
+                    </span>
+                  ),
+                },
+                { key: 'unique_visitors', label: 'Visitors', align: 'right' },
+                {
+                  key: '_pct',
+                  label: '%',
+                  align: 'right',
+                  render: (_: any, row: DeviceBreakdown) => {
+                    const total = deviceBreakdown.reduce((s, d) => s + d.unique_visitors, 0)
+                    return `${total > 0 ? Math.round((row.unique_visitors / total) * 100) : 0}%`
+                  },
+                },
+              ]}
+              data={deviceBreakdown}
+              maxKey="unique_visitors"
+              emptyMessage="No device data yet"
+            />
+          </div>
         </section>
 
-        {/* Devices */}
-        <DataTable
-          title="Devices"
-          columns={[
-            {
-              key: 'device',
-              label: 'Device',
-              render: (val: string) => (
-                <span className="flex items-center gap-1.5">
-                  <span>{val === 'Desktop' ? '💻' : val === 'Mobile' ? '📱' : '📟'}</span>
-                  <span>{val}</span>
-                </span>
-              ),
-            },
-            { key: 'unique_visitors', label: 'Visitors', align: 'right' },
-          ]}
-          data={deviceBreakdown}
-          maxKey="unique_visitors"
-          emptyMessage="No device data yet"
-        />
+        {/* Browsers & OS */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="border border-border rounded-lg bg-bg-card p-4">
+            <DataTable
+              title="Browsers"
+              columns={[
+                { key: 'browser', label: 'Browser' },
+                { key: 'unique_visitors', label: 'Visitors', align: 'right' },
+                {
+                  key: '_pct',
+                  label: '%',
+                  align: 'right',
+                  render: (_: any, row: BrowserBreakdown) => {
+                    const total = browserBreakdown.reduce((s, b) => s + b.unique_visitors, 0)
+                    return `${total > 0 ? Math.round((row.unique_visitors / total) * 100) : 0}%`
+                  },
+                },
+              ]}
+              data={browserBreakdown}
+              maxKey="unique_visitors"
+              emptyMessage="No browser data yet"
+            />
+          </div>
+
+          <div className="border border-border rounded-lg bg-bg-card p-4">
+            <DataTable
+              title="Operating systems"
+              columns={[
+                {
+                  key: 'os',
+                  label: 'OS',
+                  render: (val: string) => (
+                    <span className="flex items-center gap-1.5">
+                      <span>{getOSIcon(val)}</span>
+                      <span>{val}</span>
+                    </span>
+                  ),
+                },
+                { key: 'unique_visitors', label: 'Visitors', align: 'right' },
+                {
+                  key: '_pct',
+                  label: '%',
+                  align: 'right',
+                  render: (_: any, row: OSBreakdown) => {
+                    const total = osBreakdown.reduce((s, o) => s + o.unique_visitors, 0)
+                    return `${total > 0 ? Math.round((row.unique_visitors / total) * 100) : 0}%`
+                  },
+                },
+              ]}
+              data={osBreakdown}
+              maxKey="unique_visitors"
+              emptyMessage="No OS data yet"
+            />
+          </div>
+        </section>
+
+        {/* UTM Campaigns */}
+        {campaigns.length > 0 && (
+          <section className="border border-border rounded-lg bg-bg-card p-4">
+            <h3 className="text-sm font-semibold text-text-primary mb-3">UTM Campaigns</h3>
+            <div className="data-table overflow-x-auto">
+              <table className="w-full min-w-[480px]">
+                <thead>
+                  <tr>
+                    <th className="pb-2 text-left pr-2">Campaign</th>
+                    <th className="pb-2 text-left pr-2">Source</th>
+                    <th className="pb-2 text-left pr-2">Medium</th>
+                    <th className="pb-2 text-right pr-2">Views</th>
+                    <th className="pb-2 text-right">Visitors</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {campaigns.map((row, i) => {
+                    const maxViews = Math.max(...campaigns.map(c => c.pageviews), 1)
+                    return (
+                      <tr key={i} className="group relative">
+                        <td className="py-2 pr-2 relative">
+                          <div
+                            className="absolute inset-y-0 left-0 rounded-sm transition-all duration-[400ms] ease-out group-hover:opacity-[0.18]"
+                            style={{ width: `${(row.pageviews / maxViews) * 100}%`, background: 'var(--color-primary)', opacity: 0.08 }}
+                          />
+                          <span className="relative z-10 font-medium text-text-primary">
+                            {row.utm_campaign || '—'}
+                          </span>
+                        </td>
+                        <td className="py-2 pr-2 text-text-secondary relative z-10">
+                          <span className="flex items-center gap-1">
+                            <span>{getSourceIcon(row.utm_source || '')}</span>
+                            {row.utm_source || '—'}
+                          </span>
+                        </td>
+                        <td className="py-2 pr-2 text-text-secondary relative z-10">{row.utm_medium || '—'}</td>
+                        <td className="py-2 pr-2 text-right relative z-10">{formatNumber(row.pageviews)}</td>
+                        <td className="py-2 text-right relative z-10">{formatNumber(row.unique_visitors)}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
       </main>
 
       {/* Footer */}

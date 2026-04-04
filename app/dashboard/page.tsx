@@ -19,6 +19,8 @@ import UxInsightCard from '@/components/dashboard/UxInsightCard'
 import ShareModal from '@/components/ShareModal'
 import GoalsPanel from '@/components/GoalsPanel'
 import ScrollDepthMini from '@/components/dashboard/ScrollDepthMini'
+import AITrafficPanel from '@/components/dashboard/AITrafficPanel'
+import { isAISource } from '@/lib/ai-sources'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -96,6 +98,14 @@ interface Campaign {
   utm_term: string
   pageviews: number
   unique_visitors: number
+}
+
+interface AITrafficData {
+  ai_source: string
+  ai_type: string
+  visitors: number
+  pageviews: number
+  percentage: number
 }
 
 interface BehaviorMetric {
@@ -192,6 +202,18 @@ function getPeriodDates(period: TimePeriod, customStart?: string, customEnd?: st
 function getSourceIcon(source: string): string {
   const s = source.toLowerCase()
   if (s === 'direct') return '⚡'
+  // AI Sources
+  if (s.includes('chatgpt')) return '✨'
+  if (s.includes('claude')) return '✨'
+  if (s.includes('perplexity')) return '✨'
+  if (s.includes('gemini')) return '✨'
+  if (s.includes('copilot')) return '✨'
+  if (s.includes('deepseek')) return '✨'
+  if (s.includes('poe')) return '✨'
+  if (s === 'you.com') return '✨'
+  if (s.includes('kagi')) return '✨'
+  if (s.includes('phind')) return '✨'
+  // Search & Social
   if (s.includes('google')) return '🔍'
   if (s.includes('facebook')) return '📘'
   if (s.includes('twitter') || s.includes('x.com') || s === 'twitter / x') return '𝕏'
@@ -264,6 +286,9 @@ function DashboardContent() {
   const [deviceBreakdown, setDeviceBreakdown] = useState<DeviceBreakdown[]>([])
   const [browserBreakdown, setBrowserBreakdown] = useState<BrowserBreakdown[]>([])
   const [osBreakdown, setOsBreakdown] = useState<OSBreakdown[]>([])
+
+  // AI Traffic
+  const [aiTrafficData, setAiTrafficData] = useState<AITrafficData[]>([])
 
   // Campaigns
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -371,6 +396,7 @@ function DashboardContent() {
       campaignsRes,
       behaviorRes,
       scrollDepthRes,
+      aiTrafficRes,
     ] = await Promise.all([
       supabase.rpc('get_live_users', { site_uuid: selectedSite.id }),
       supabase.rpc('get_pageviews_chart', {
@@ -481,6 +507,11 @@ function DashboardContent() {
         start_date: start.toISOString(),
         end_date: end.toISOString(),
       }),
+      supabase.rpc('get_ai_traffic_summary', {
+        site_uuid: selectedSite.id,
+        start_date: start.toISOString(),
+        end_date: end.toISOString(),
+      }),
     ])
 
     setLiveUsers(liveRes.data || 0)
@@ -527,6 +558,7 @@ function DashboardContent() {
     setHasMoreCampaigns(campaignsData.length === 10)
 
     setBehaviorSummary(behaviorRes.data || [])
+    setAiTrafficData(aiTrafficRes.data || [])
     setExpandedMetric(null)
     setBehaviorDetails([])
   }
@@ -795,6 +827,17 @@ function DashboardContent() {
             delta={calcDelta(viewsPerVisit, prevViewsPerVisit)}
             tooltip="Promedio de páginas vistas por cada sesión. Más alto = mayor engagement con tu contenido."
           />
+          {aiTrafficData.filter(d => d.ai_type === 'human').length > 0 && (
+            <StatCard
+              label="AI traffic"
+              value={(() => {
+                const humanAI = aiTrafficData.filter(d => d.ai_type === 'human')
+                const totalAIVisitors = humanAI.reduce((sum, d) => sum + d.visitors, 0)
+                return formatNumber(totalAIVisitors)
+              })()}
+              tooltip="Visitantes que llegaron a tu sitio desde herramientas de AI como ChatGPT, Claude, Perplexity, etc."
+            />
+          )}
         </section>
 
         {/* Chart */}
@@ -862,6 +905,11 @@ function DashboardContent() {
                     <span className={`flex items-center gap-1.5 ${activeFilters.source === val ? 'text-primary font-medium' : ''}`}>
                       <span>{getSourceIcon(val)}</span>
                       <span className="truncate max-w-[160px]">{val}</span>
+                      {isAISource(val) && (
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                          AI
+                        </span>
+                      )}
                       {(val === 'Direct' || val.includes('Direct')) && (
                         <span className="group relative inline-flex items-center">
                           <svg className="w-3.5 h-3.5 text-text-tertiary cursor-help" fill="currentColor" viewBox="0 0 20 20">
@@ -891,6 +939,11 @@ function DashboardContent() {
             />
           </div>
         </section>
+
+        {/* AI Traffic Panel */}
+        {aiTrafficData.length > 0 && (
+          <AITrafficPanel data={aiTrafficData} />
+        )}
 
         {/* Countries + Devices */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">

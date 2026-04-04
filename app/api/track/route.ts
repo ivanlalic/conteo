@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServiceSupabase } from '@/lib/supabase'
 import { generateVisitorId, parseUserAgent, extractDomain } from '@/lib/utils'
+import { detectAISource } from '@/lib/ai-sources'
 
 // Enable Vercel Edge Runtime for automatic geolocation
 export const runtime = 'edge'
@@ -119,6 +120,9 @@ export async function POST(request: NextRequest) {
     // Extract referrer domain
     const referrerDomain = extractDomain(referrer)
 
+    // Detect AI traffic source (use full referrer URL for better matching)
+    const aiDetection = detectAISource(referrer || referrerDomain, user_agent || null)
+
     // Get geolocation from Vercel Edge Runtime
     // Note: request.geo is only available in production on Vercel
     // In development, these will be undefined
@@ -146,6 +150,8 @@ export async function POST(request: NextRequest) {
         utm_campaign: utm_campaign || null,
         utm_content: utm_content || null,
         utm_term: utm_term || null,
+        ai_source: aiDetection.source,
+        ai_type: aiDetection.type,
       })
 
     if (insertError) {

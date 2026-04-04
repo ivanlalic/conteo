@@ -8,6 +8,11 @@ interface ScrollDepthMiniProps {
 }
 
 export default function ScrollDepthMini({ pct25, pct50, pct75, pct100 }: ScrollDepthMiniProps) {
+  // If no meaningful scroll data, show nothing
+  if (pct25 === 0 && pct50 === 0 && pct75 === 0 && pct100 === 0) {
+    return <span className="text-text-tertiary text-xs">—</span>
+  }
+
   const bars = [
     { label: '25%', value: pct25 },
     { label: '50%', value: pct50 },
@@ -22,24 +27,24 @@ export default function ScrollDepthMini({ pct25, pct50, pct75, pct100 }: ScrollD
   }
 
   return (
-    <div className="flex items-end gap-0.5 h-5 group relative">
+    <div className="inline-flex items-end gap-[3px] h-[20px] group relative cursor-default">
       {bars.map((bar) => (
         <div
           key={bar.label}
-          className="w-1.5 rounded-sm transition-colors"
+          className="w-[4px] rounded-sm"
           style={{
-            height: `${Math.max(bar.value, 5)}%`,
+            height: `${Math.max(bar.value, 10)}%`,
             backgroundColor: getColor(bar.value),
           }}
         />
       ))}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-        <div className="bg-gray-900 text-white text-xs rounded px-2 py-1.5 whitespace-nowrap shadow-lg">
-          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
-            <span className="text-gray-400">25%</span><span>{pct25}%</span>
-            <span className="text-gray-400">50%</span><span>{pct50}%</span>
-            <span className="text-gray-400">75%</span><span>{pct75}%</span>
-            <span className="text-gray-400">100%</span><span>{pct100}%</span>
+      <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block z-50 pointer-events-none">
+        <div className="bg-gray-900 text-white text-xs rounded-md px-3 py-2 shadow-lg whitespace-nowrap">
+          <div className="space-y-0.5">
+            <div className="flex justify-between gap-4"><span className="text-gray-400">25%</span><span className="font-medium">{pct25}%</span></div>
+            <div className="flex justify-between gap-4"><span className="text-gray-400">50%</span><span className="font-medium">{pct50}%</span></div>
+            <div className="flex justify-between gap-4"><span className="text-gray-400">75%</span><span className="font-medium">{pct75}%</span></div>
+            <div className="flex justify-between gap-4"><span className="text-gray-400">100%</span><span className="font-medium">{pct100}%</span></div>
           </div>
         </div>
       </div>

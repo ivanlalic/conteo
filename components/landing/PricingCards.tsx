@@ -12,17 +12,13 @@ function IconCheckSmall() {
   )
 }
 
-function trackCTA(location: string) {
-  if (typeof window !== 'undefined' && (window as any).conteo) {
-    (window as any).conteo.trackEvent('CTA Click', { props: { location } })
-  }
-}
-
 export default function PricingCards() {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   function handlePlanClick(plan: 'free' | 'pro') {
-    trackCTA(`pricing-${plan}`)
+    if (typeof window !== 'undefined' && (window as any).conteo) {
+      (window as any).conteo.trackEvent(plan === 'pro' ? 'Pro Plan Click' : 'Free Plan Click')
+    }
     if (plan === 'free') {
       window.location.href = '/signup'
     } else {

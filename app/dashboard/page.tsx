@@ -92,11 +92,19 @@ interface City {
 }
 
 interface Campaign {
+  utm_campaign: string
   utm_source: string
   utm_medium: string
-  utm_campaign: string
+  pageviews: number
+  unique_visitors: number
+  variant_count: number
+}
+
+interface CampaignDetail {
   utm_content: string
   utm_term: string
+  utm_source: string
+  utm_medium: string
   pageviews: number
   unique_visitors: number
 }
@@ -296,6 +304,9 @@ function DashboardContent() {
   const [loadingMoreCampaigns, setLoadingMoreCampaigns] = useState(false)
   const [campaignsOffset, setCampaignsOffset] = useState(0)
   const [hasMoreCampaigns, setHasMoreCampaigns] = useState(false)
+  const [expandedCampaign, setExpandedCampaign] = useState<string | null>(null)
+  const [campaignDetails, setCampaignDetails] = useState<CampaignDetail[]>([])
+  const [loadingCampaignDetails, setLoadingCampaignDetails] = useState(false)
 
   // UX Behavior
   const [behaviorSummary, setBehaviorSummary] = useState<BehaviorMetric[]>([])
@@ -659,6 +670,27 @@ function DashboardContent() {
     setCampaignsOffset((prev) => prev + 10)
     setHasMoreCampaigns(newData.length === 10)
     setLoadingMoreCampaigns(false)
+  }
+
+  async function loadCampaignDetails(campaignName: string) {
+    if (expandedCampaign === campaignName) {
+      setExpandedCampaign(null)
+      setCampaignDetails([])
+      return
+    }
+    setExpandedCampaign(campaignName)
+    if (!selectedSite) return
+    setLoadingCampaignDetails(true)
+    const { start, end } = getPeriodDates(timePeriod, customStartDate, customEndDate)
+    const { data } = await supabase.rpc('get_campaign_details', {
+      site_uuid: selectedSite.id,
+      start_date: start.toISOString(),
+      end_date: end.toISOString(),
+      p_utm_campaign: campaignName,
+      detail_limit: 20,
+    })
+    setCampaignDetails(data || [])
+    setLoadingCampaignDetails(false)
   }
 
   async function toggleBehaviorMetric(eventType: string) {
@@ -1356,27 +1388,79 @@ function DashboardContent() {
                   <tbody>
                     {campaigns.map((row, i) => {
                       const maxViews = Math.max(...campaigns.map(c => c.pageviews), 1)
+                      const isExpanded = expandedCampaign === row.utm_campaign
                       return (
-                        <tr key={i} className="group relative">
-                          <td className="py-2 pr-2 relative">
-                            <div
-                              className="absolute inset-y-0 left-0 rounded-sm transition-all duration-[400ms] ease-out group-hover:opacity-[0.18]"
-                              style={{ width: `${(row.pageviews / maxViews) * 100}%`, background: 'var(--color-primary)', opacity: 0.08 }}
-                            />
-                            <span className="relative z-10 font-medium text-text-primary">
-                              {row.utm_campaign || '—'}
-                            </span>
-                          </td>
-                          <td className="py-2 pr-2 text-text-secondary relative z-10">
-                            <span className="flex items-center gap-1">
-                              <span>{getSourceIcon(row.utm_source || '')}</span>
-                              {row.utm_source || '—'}
-                            </span>
-                          </td>
-                          <td className="py-2 pr-2 text-text-secondary relative z-10">{row.utm_medium || '—'}</td>
-                          <td className="py-2 pr-2 text-right relative z-10">{formatNumber(row.pageviews)}</td>
-                          <td className="py-2 text-right relative z-10">{formatNumber(row.unique_visitors)}</td>
-                        </tr>
+                        <>
+                          <tr
+                            key={i}
+                            className="group relative cursor-pointer hover:bg-bg-hover/50 transition-colors"
+                            onClick={() => loadCampaignDetails(row.utm_campaign)}
+                          >
+                            <td className="py-2 pr-2 relative">
+                              <div
+                                className="absolute inset-y-0 left-0 rounded-sm transition-all duration-[400ms] ease-out group-hover:opacity-[0.18]"
+                                style={{ width: `${(row.pageviews / maxViews) * 100}%`, background: 'var(--color-primary)', opacity: 0.08 }}
+                              />
+                              <span className="relative z-10 font-medium text-text-primary flex items-center gap-2">
+                                <span className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
+                                  <svg className="w-3.5 h-3.5 text-text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                  </svg>
+                                </span>
+                                {row.utm_campaign || '—'}
+                                {row.variant_count > 1 && (
+                                  <span className="text-[10px] bg-border-light text-text-tertiary px-1.5 py-0.5 rounded-full font-normal">
+                                    {row.variant_count} variants
+                                  </span>
+                                )}
+                              </span>
+                            </td>
+                            <td className="py-2 pr-2 text-text-secondary relative z-10">
+                              <span className="flex items-center gap-1">
+                                <span>{getSourceIcon(row.utm_source || '')}</span>
+                                {row.utm_source || '—'}
+                              </span>
+                            </td>
+                            <td className="py-2 pr-2 text-text-secondary relative z-10">{row.utm_medium || '—'}</td>
+                            <td className="py-2 pr-2 text-right relative z-10">{formatNumber(row.pageviews)}</td>
+                            <td className="py-2 text-right relative z-10">{formatNumber(row.unique_visitors)}</td>
+                          </tr>
+                          {/* Drill-down row */}
+                          {isExpanded && (
+                            <tr>
+                              <td colSpan={5} className="pb-3 pt-0">
+                                <div className="ml-6 pl-4 border-l-2 border-border-light bg-bg-subtle rounded-r-lg p-3">
+                                  {loadingCampaignDetails ? (
+                                    <p className="text-xs text-text-tertiary">Loading variants…</p>
+                                  ) : campaignDetails.length === 0 ? (
+                                    <p className="text-xs text-text-tertiary">No variants found.</p>
+                                  ) : (
+                                    <div className="space-y-1.5">
+                                      <div className="flex text-[10px] uppercase tracking-wider text-text-tertiary font-medium mb-1">
+                                        <span className="flex-1">Content</span>
+                                        <span className="flex-1">Term</span>
+                                        <span className="w-20 text-right">Views</span>
+                                        <span className="w-20 text-right">Visitors</span>
+                                      </div>
+                                      {campaignDetails.map((detail, j) => (
+                                        <div key={j} className="flex text-xs text-text-secondary py-1 border-b border-border/50 last:border-0">
+                                          <span className="flex-1 truncate pr-2" title={detail.utm_content || '—'}>
+                                            {detail.utm_content || '—'}
+                                          </span>
+                                          <span className="flex-1 truncate pr-2" title={detail.utm_term || '—'}>
+                                            {detail.utm_term || '—'}
+                                          </span>
+                                          <span className="w-20 text-right">{formatNumber(detail.pageviews)}</span>
+                                          <span className="w-20 text-right">{formatNumber(detail.unique_visitors)}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </>
                       )
                     })}
                   </tbody>

@@ -388,7 +388,7 @@ export default function AdminPage() {
         {/* Statistics Tab */}
         {activeTab === 'stats' && stats && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="text-sm font-medium text-gray-500">Total Users</div>
                 <div className="mt-2 text-3xl font-bold text-gray-900">{stats.total_users}</div>
@@ -400,10 +400,6 @@ export default function AdminPage() {
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="text-sm font-medium text-gray-500">Total Pageviews</div>
                 <div className="mt-2 text-3xl font-bold text-gray-900">{stats.total_pageviews.toLocaleString()}</div>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="text-sm font-medium text-gray-500">COD Conversions</div>
-                <div className="mt-2 text-3xl font-bold text-gray-900">{stats.total_cod_conversions}</div>
               </div>
             </div>
 
@@ -521,9 +517,6 @@ export default function AdminPage() {
                     Pageviews
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    COD Tracking
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Created
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -542,17 +535,6 @@ export default function AdminPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {site.pageviews_count.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {site.cod_tracking_enabled ? (
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          Enabled
-                        </span>
-                      ) : (
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                          Disabled
-                        </span>
-                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(site.created_at).toLocaleDateString()}

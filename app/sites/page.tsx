@@ -271,29 +271,6 @@ function SitesContent() {
                     </p>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">COD Conversion Tracking</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Track Cash on Delivery conversions from Facebook & TikTok pixels
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => toggleCODTracking(site.id, site.cod_tracking_enabled)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          site.cod_tracking_enabled ? 'bg-green-500' : 'bg-gray-300'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            site.cod_tracking_enabled ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-
                   {/* Goals Settings */}
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <GoalsSettings siteId={site.id} />

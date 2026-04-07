@@ -192,7 +192,8 @@ export default function DocsPage() {
           </div>
         </div>
       </section>
-FAQ */}
+
+      {/* FAQ */}
       <section className="py-20 px-6">
         <div className="max-w-[700px] mx-auto">
           <h2 className="font-display font-bold text-2xl tracking-tight mb-8">

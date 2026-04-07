@@ -84,12 +84,12 @@ function IconXSmall() {
 // ── Data ─────────────────────────────────────────────────────────────────────
 
 const FEATURES = [
-  { icon: <IconActivity />, title: 'Real-time dashboard', desc: 'Live visitors, pageviews by the hour, everything updated to the second.' },
-  { icon: <IconShield />, title: 'No cookies', desc: 'Zero cookies, zero consent banners, zero legal headaches.' },
-  { icon: <IconShieldCheck />, title: 'GDPR compliant', desc: "Privacy-first by design. We don't collect personal data." },
-  { icon: <IconBarChart />, title: 'Top pages & sources', desc: 'Know which pages work and where your traffic comes from.' },
-  { icon: <IconGlobe />, title: 'Countries & devices', desc: 'Flags, cities, desktop vs mobile, browsers and more.' },
-  { icon: <IconDownload />, title: 'Export CSV', desc: "Download your data anytime. It's yours, always." },
+  { icon: <IconActivity />, title: 'Real-time dashboard', desc: 'Live visitors, pageviews by the hour, everything updated to the second. No refresh needed — your dashboard reflects what\'s happening right now.' },
+  { icon: <IconShield />, title: 'No cookies', desc: 'Zero cookies, zero consent banners, zero legal headaches. Conteo counts unique visitors without tracking individuals across sessions.' },
+  { icon: <IconShieldCheck />, title: 'GDPR compliant', desc: "Privacy-first by design. We don't collect personal data, IP addresses, or fingerprints. GDPR, CCPA, and PECR compliant out of the box." },
+  { icon: <IconBarChart />, title: 'Top pages & sources', desc: 'Know which pages work and where your traffic comes from. See top referrers, social sources, and direct traffic at a glance.' },
+  { icon: <IconGlobe />, title: 'Countries & devices', desc: 'Flags, cities, desktop vs mobile, browsers and more. Understand your audience without invading their privacy.' },
+  { icon: <IconDownload />, title: 'Export CSV', desc: "Download your data anytime. It's yours, always. Export pageviews, visitors, sources, and device data to CSV with one click." },
 ]
 
 const HOME_FAQS = [
@@ -142,6 +142,7 @@ export default function Home() {
           </h1>
           <p className="animate-fade-up animate-delay-100 text-lg sm:text-xl text-neutral-500 dark:text-neutral-400 max-w-2xl mx-auto mb-8 leading-relaxed">
             One line of code. Real-time dashboard. No cookies, GDPR compliant, and free for small sites.
+            See who visits, where they come from, and which pages perform — without the complexity of Google Analytics.
           </p>
           <div className="animate-fade-up animate-delay-200 flex flex-col sm:flex-row items-center justify-center gap-3">
             <CTAButton
@@ -297,7 +298,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── F
       {/* ── Final CTA ────────────────────────────────────────────────────── */}
       <section className="py-20 sm:py-28 px-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#4F46E5]/[0.03] to-transparent dark:from-[#4F46E5]/[0.05]" />

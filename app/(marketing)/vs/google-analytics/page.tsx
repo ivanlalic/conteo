@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import CTAButton from '@/components/landing/CTAButton'
-import { FAQStructuredData } from '@/components/structured-data'
+import { FAQStructuredData, BreadcrumbListStructuredData } from '@/components/structured-data'
 import { COMPARISON_TABLE } from '@/lib/data/marketing'
 
 export const metadata: Metadata = {
@@ -69,6 +69,13 @@ function IconX() {
 export default function VsGoogleAnalyticsPage() {
   return (
     <>
+      <BreadcrumbListStructuredData
+        items={[
+          { name: 'Home', url: 'https://conteo.online' },
+          { name: 'VS', url: 'https://conteo.online/vs' },
+          { name: 'Google Analytics', url: 'https://conteo.online/vs/google-analytics' },
+        ]}
+      />
       <FAQStructuredData faqs={VS_GA_FAQS} />
 
       {/* Hero */}

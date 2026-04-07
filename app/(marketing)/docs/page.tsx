@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import CodeSnippets from '@/components/landing/CodeSnippets'
 import CTAButton from '@/components/landing/CTAButton'
-import { HowToStructuredData, FAQStructuredData } from '@/components/structured-data'
+import { HowToStructuredData, FAQStructuredData, BreadcrumbListStructuredData } from '@/components/structured-data'
 
 export const metadata: Metadata = {
   title: 'Setup Guide — Add Free Analytics in 2 Minutes',
@@ -42,6 +42,12 @@ const DOCS_FAQS = [
 export default function DocsPage() {
   return (
     <>
+      <BreadcrumbListStructuredData
+        items={[
+          { name: 'Home', url: 'https://conteo.online' },
+          { name: 'Docs', url: 'https://conteo.online/docs' },
+        ]}
+      />
       <HowToStructuredData />
       <FAQStructuredData faqs={DOCS_FAQS} />
 
@@ -53,6 +59,7 @@ export default function DocsPage() {
           </h1>
           <p className="text-lg sm:text-xl text-neutral-500 dark:text-neutral-400 max-w-2xl mx-auto leading-relaxed">
             One line of code. No configuration. No cookies. Free forever for small sites.
+            Works with any platform — HTML, WordPress, Shopify, Next.js, React, Vue, and more.
           </p>
         </div>
       </section>
@@ -104,6 +111,33 @@ export default function DocsPage() {
               </div>
             </li>
           </ol>
+        </div>
+      </section>
+
+      {/* Why choose Conteo */}
+      <section className="pb-16 px-6">
+        <div className="max-w-[700px] mx-auto">
+          <h2 className="font-display font-bold text-2xl tracking-tight mb-6">
+            Why choose Conteo for analytics
+          </h2>
+          <div className="space-y-4 text-neutral-600 dark:text-neutral-300 leading-relaxed">
+            <p>
+              Most analytics tools force a trade-off: either you get powerful features at the cost of visitor privacy
+              (Google Analytics), or you pay a premium for privacy-first tracking (Plausible, Fathom). Conteo breaks
+              that trade-off by offering a free, privacy-first analytics tool with the metrics most website owners
+              actually need.
+            </p>
+            <p>
+              The tracking script is under 1KB — 45x smaller than Google Analytics. That means faster page loads,
+              better Core Web Vitals scores, and no impact on your SEO ranking. No cookies means no consent banner
+              required, which simplifies your legal compliance and reduces page clutter.
+            </p>
+            <p>
+              Conteo is built for the 90% of websites that don&apos;t need 200+ reports or real-time event streams.
+              If you want to know how many visitors you get, which pages they read, and where they come from —
+              Conteo gives you that in a clean, real-time dashboard. Free for up to 10,000 visits per month.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -172,14 +206,16 @@ export default function DocsPage() {
               <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
                 Check that the script tag is correctly placed before <code className="text-xs bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 rounded font-mono">&lt;/head&gt;</code> and
                 that your API key matches the one in your dashboard. Data appears within seconds of the first visit.
-                Check the browser console for any errors.
+                Check the browser console for any errors. If you&apos;re using a content security policy (CSP), make sure
+                it allows requests to your Conteo tracking endpoint.
               </p>
             </div>
             <div>
               <h3 className="font-semibold text-base mb-2">Does it work with single-page apps (SPAs)?</h3>
               <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
                 Yes. Conteo automatically detects client-side route changes in React, Next.js, Vue, and other SPA frameworks.
-                No additional configuration needed.
+                The script intercepts pushState, replaceState, and popstate events, so every route change is tracked
+                without any additional configuration.
               </p>
             </div>
             <div>
@@ -187,6 +223,7 @@ export default function DocsPage() {
               <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
                 Some ad blockers may block third-party analytics scripts. Because Conteo is privacy-first and doesn&apos;t use cookies
                 or track users, many ad blockers allow it. However, aggressive blockers may still block the script.
+                Hosting the script on your own domain (self-hosting) can help bypass most ad blockers.
               </p>
             </div>
           </div>

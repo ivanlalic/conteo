@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import CTAButton from '@/components/landing/CTAButton'
-import { AboutPageStructuredData } from '@/components/structured-data'
+import { AboutPageStructuredData, BreadcrumbListStructuredData } from '@/components/structured-data'
 
 export const metadata: Metadata = {
   title: 'About Conteo — Free, Privacy-First Web Analytics',
@@ -18,6 +18,12 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
+      <BreadcrumbListStructuredData
+        items={[
+          { name: 'Home', url: 'https://conteo.online' },
+          { name: 'About', url: 'https://conteo.online/about' },
+        ]}
+      />
       <AboutPageStructuredData />
 
       {/* Hero */}
@@ -27,7 +33,7 @@ export default function AboutPage() {
             What is Conteo?
           </h1>
           <p className="text-lg sm:text-xl text-neutral-500 dark:text-neutral-400 max-w-2xl mx-auto leading-relaxed">
-            Free, simple, privacy-first web analytics.
+            Free, simple, privacy-first web analytics. No cookies, no personal data, no consent banners — just the metrics that matter.
           </p>
         </div>
       </section>
@@ -119,7 +125,8 @@ export default function AboutPage() {
               <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
                 Conteo doesn&apos;t collect personal data. Not because we anonymize it — because we never collect it
                 in the first place. No IP addresses stored. No cookies set. No fingerprinting. No cross-site tracking.
-                This isn&apos;t a feature toggle — it&apos;s how Conteo is built.
+                This isn&apos;t a feature toggle — it&apos;s how Conteo is built. Your visitors can browse your site
+                without being profiled, and you can sleep well knowing your analytics don&apos;t feed an ad network.
               </p>
             </div>
             <div>
@@ -127,7 +134,7 @@ export default function AboutPage() {
               <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
                 Our free plan isn&apos;t a limited trial. It includes the full real-time dashboard, all metrics, and CSV export
                 for up to 10,000 visits per month. No credit card required. No feature gating.
-                We make money from Pro and Business plans for larger sites.
+                We make money from Pro and Business plans for larger sites — not by selling your data.
               </p>
             </div>
             <div>
@@ -136,7 +143,7 @@ export default function AboutPage() {
                 Google Analytics has 200+ reports. Most website owners use 5.
                 Conteo gives you one dashboard with the metrics that actually matter:
                 visitors, top pages, sources, countries, devices, and browsers. That&apos;s it.
-                No training needed, no certification required.
+                No training needed, no certification required, no two-hour setup process.
               </p>
             </div>
             <div>
@@ -144,7 +151,8 @@ export default function AboutPage() {
               <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">
                 Our tracking script is under 1KB. Google Analytics is ~45KB. Plausible is ~1.5KB.
                 Every kilobyte matters for page speed and SEO. Conteo is one of the lightest analytics
-                scripts available — and it&apos;s free.
+                scripts available — and it&apos;s free. A lighter script means faster pages, better Core Web Vitals,
+                and higher search rankings.
               </p>
             </div>
           </div>

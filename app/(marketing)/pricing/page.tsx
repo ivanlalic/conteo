@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import PricingCards from '@/components/landing/PricingCards'
 import CTAButton from '@/components/landing/CTAButton'
-import { FAQStructuredData } from '@/components/structured-data'
+import { FAQStructuredData, BreadcrumbListStructuredData } from '@/components/structured-data'
 
 export const metadata: Metadata = {
   title: 'Pricing — Free Web Analytics',
@@ -52,25 +52,31 @@ const PRICING_FAQS = [
 const PRICING_AUDIENCES = [
   {
     title: 'Indie developers',
-    desc: 'Track your personal projects, portfolio, or side hustle with free analytics. No credit card, no complexity.',
+    desc: 'Track your personal projects, portfolio, or side hustle with free analytics. No credit card, no complexity. Get the numbers you need in seconds, not hours.',
   },
   {
     title: 'Small businesses',
-    desc: 'Know which pages convert, where customers come from, and how your site performs — without paying $19/month.',
+    desc: 'Know which pages convert, where customers come from, and how your site performs — without paying $19/month for analytics you barely use.',
   },
   {
     title: 'Bloggers & creators',
-    desc: 'See which posts perform best, where readers come from, and how they found your content.',
+    desc: 'See which posts perform best, where readers come from, and how they found your content. Understand your audience without tracking them across the web.',
   },
   {
     title: 'Privacy-conscious teams',
-    desc: 'GDPR compliant by default. No cookie banners, no data processing agreements, no legal overhead.',
+    desc: "GDPR compliant by default. No cookie banners, no data processing agreements, no legal overhead. Your visitors' data stays on your site, not in an ad network.",
   },
 ]
 
 export default function PricingPage() {
   return (
     <>
+      <BreadcrumbListStructuredData
+        items={[
+          { name: 'Home', url: 'https://conteo.online' },
+          { name: 'Pricing', url: 'https://conteo.online/pricing' },
+        ]}
+      />
       <FAQStructuredData faqs={PRICING_FAQS} />
 
       {/* Hero */}
@@ -82,6 +88,7 @@ export default function PricingPage() {
           <p className="text-lg sm:text-xl text-neutral-500 dark:text-neutral-400 max-w-2xl mx-auto leading-relaxed">
             Free forever for small sites. No credit card required. No hidden fees.
             The free Google Analytics alternative you&apos;ve been looking for.
+            Every plan includes a real-time dashboard, all core metrics, and CSV export.
           </p>
         </div>
       </section>

@@ -49,6 +49,25 @@ const PRICING_FAQS = [
   },
 ]
 
+const PRICING_AUDIENCES = [
+  {
+    title: 'Indie developers',
+    desc: 'Track your personal projects, portfolio, or side hustle with free analytics. No credit card, no complexity.',
+  },
+  {
+    title: 'Small businesses',
+    desc: 'Know which pages convert, where customers come from, and how your site performs — without paying $19/month.',
+  },
+  {
+    title: 'Bloggers & creators',
+    desc: 'See which posts perform best, where readers come from, and how they found your content.',
+  },
+  {
+    title: 'Privacy-conscious teams',
+    desc: 'GDPR compliant by default. No cookie banners, no data processing agreements, no legal overhead.',
+  },
+]
+
 export default function PricingPage() {
   return (
     <>
@@ -71,6 +90,23 @@ export default function PricingPage() {
       <section className="pb-20 px-6">
         <div className="max-w-[1000px] mx-auto">
           <PricingCards />
+        </div>
+      </section>
+
+      {/* Who uses Conteo */}
+      <section className="py-20 px-6">
+        <div className="max-w-[700px] mx-auto">
+          <h2 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-center mb-8">
+            Who uses Conteo
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {PRICING_AUDIENCES.map((item) => (
+              <div key={item.title} className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5">
+                <h3 className="font-semibold text-sm mb-1.5">{item.title}</h3>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

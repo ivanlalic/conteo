@@ -10,6 +10,7 @@ const syne = Syne({
   variable: "--font-syne",
   display: "swap",
   weight: ["400", "600", "700", "800"],
+  preload: false,
 });
 
 const dmSans = DM_Sans({
@@ -17,6 +18,7 @@ const dmSans = DM_Sans({
   variable: "--font-dm-sans",
   display: "swap",
   weight: ["400", "500", "600"],
+  preload: false,
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -24,6 +26,7 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   display: "swap",
   weight: ["400", "500"],
+  preload: false,
 });
 
 export const metadata: Metadata = {

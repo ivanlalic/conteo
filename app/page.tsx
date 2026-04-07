@@ -4,7 +4,7 @@ import CodeSnippets from '@/components/landing/CodeSnippets'
 import PricingCards from '@/components/landing/PricingCards'
 import TrackingScript from '@/components/landing/TrackingScript'
 import CTAButton from '@/components/landing/CTAButton'
-import { SoftwareApplicationStructuredData } from '@/components/structured-data'
+import { SoftwareApplicationStructuredData, FAQStructuredData } from '@/components/structured-data'
 import { GA_POINTS, CONTEO_POINTS } from '@/lib/data/marketing'
 
 // ── SVG Icons (server-renderable) ───────────────────────────────────────────
@@ -92,6 +92,34 @@ const FEATURES = [
   { icon: <IconDownload />, title: 'Export CSV', desc: "Download your data anytime. It's yours, always." },
 ]
 
+const HOME_FAQS = [
+  {
+    question: 'Is Conteo really free?',
+    answer:
+      'Yes. Conteo is free forever for websites with up to 10,000 visits per month. No credit card required, no trial period. You get a full real-time analytics dashboard, all basic metrics, and CSV export — completely free.',
+  },
+  {
+    question: 'How do I add Conteo to my website?',
+    answer:
+      'Copy one line of code — a script tag under 1KB — and paste it before the closing </head> tag on your website. Data starts flowing into your dashboard within seconds. Setup takes about 2 minutes.',
+  },
+  {
+    question: 'Does Conteo use cookies?',
+    answer:
+      'No. Conteo is 100% cookie-free. It uses a privacy-preserving method to count unique visitors without tracking individuals. No cookie consent banner is needed.',
+  },
+  {
+    question: 'Is Conteo GDPR compliant?',
+    answer:
+      'Yes, by design. Conteo doesn\'t collect personal data, doesn\'t use cookies, and doesn\'t track users across websites. It\'s GDPR, CCPA, and PECR compliant out of the box.',
+  },
+  {
+    question: 'Can I use Conteo with WordPress, Shopify, or Next.js?',
+    answer:
+      'Yes. Conteo works with any website platform — WordPress, Shopify, Next.js, React, Vue, plain HTML, and more. The tracking script is a simple script tag that works everywhere.',
+  },
+]
+
 // ── Page (Server Component) ─────────────────────────────────────────────────
 
 export default function Home() {
@@ -99,6 +127,7 @@ export default function Home() {
     <div className="min-h-screen bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 transition-colors">
       <TrackingScript />
       <SoftwareApplicationStructuredData />
+      <FAQStructuredData faqs={HOME_FAQS} />
 
       {/* ── Nav ──────────────────────────────────────────────────────────── */}
       <Navbar />
@@ -242,7 +271,32 @@ export default function Home() {
           <PricingCards />
         </div>
       </section>
+AQ ──────────────────────────────────────────────────────────── */}
+      <section className="py-20 sm:py-28 px-6">
+        <div className="max-w-[700px] mx-auto">
+          <h2 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-center mb-10">
+            Frequently asked questions
+          </h2>
+          <div className="space-y-3">
+            {HOME_FAQS.map((faq, i) => (
+              <details
+                key={i}
+                className="group rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+              >
+                <summary className="flex items-center justify-between cursor-pointer px-6 py-4 text-sm font-semibold select-none">
+                  {faq.question}
+                  <span className="ml-4 text-neutral-400 group-open:rotate-45 transition-transform text-lg">+</span>
+                </summary>
+                <p className="px-6 pb-4 text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                  {faq.answer}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
 
+      {/* ── F
       {/* ── Final CTA ────────────────────────────────────────────────────── */}
       <section className="py-20 sm:py-28 px-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#4F46E5]/[0.03] to-transparent dark:from-[#4F46E5]/[0.05]" />

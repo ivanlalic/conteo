@@ -207,6 +207,37 @@ export default function VsGoogleAnalyticsPage() {
         </div>
       </section>
 
+      {/* Who should switch */}
+      <section className="py-20 px-6 bg-neutral-50 dark:bg-neutral-900/50">
+        <div className="max-w-[800px] mx-auto">
+          <h2 className="font-display font-bold text-2xl tracking-tight mb-6">
+            Who should switch from Google Analytics to Conteo
+          </h2>
+          <div className="space-y-4 text-neutral-600 dark:text-neutral-300 leading-relaxed">
+            <p>
+              <strong>You should switch if</strong> you run a blog, portfolio, landing page, or small business website
+              and only need to know visitors, top pages, traffic sources, countries, and devices. Conteo&apos;s free plan
+              covers all of this with a real-time dashboard and CSV export.
+            </p>
+            <p>
+              <strong>You should switch if</strong> you&apos;re tired of configuring cookie consent banners, managing
+              GDPR compliance, or explaining to clients why Google Analytics requires a legal disclaimer on every page.
+              Conteo is compliant by design — no configuration needed.
+            </p>
+            <p>
+              <strong>You should switch if</strong> your website&apos;s page speed scores are suffering from a 45KB
+              analytics script. Conteo&apos;s script is under 1KB — 45 times smaller — and it&apos;s free for sites
+              under 10,000 visits per month.
+            </p>
+            <p>
+              <strong>Keep Google Analytics if</strong> you need advanced e-commerce funnels, custom event tracking,
+              Google Ads integration, or audience segmentation for remarketing. For everything else, Conteo is simpler,
+              faster, and more private.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section className="py-20 px-6 bg-neutral-50 dark:bg-neutral-900/50">
         <div className="max-w-[700px] mx-auto">

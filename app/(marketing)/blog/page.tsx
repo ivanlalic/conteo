@@ -15,6 +15,15 @@ export const metadata: Metadata = {
   },
 }
 
+const BLOG_TOPICS = [
+  { topic: 'Free analytics', desc: 'Tools and tips for zero-cost tracking' },
+  { topic: 'Privacy & GDPR', desc: 'Cookie-free, compliant analytics' },
+  { topic: 'Google Analytics alternatives', desc: 'Honest comparisons and migration guides' },
+  { topic: 'Web performance', desc: 'Lightweight scripts and fast pages' },
+  { topic: 'Small business', desc: 'Analytics for indie devs and creators' },
+  { topic: 'Conteo updates', desc: 'New features and product news' },
+]
+
 export default function BlogIndex() {
   return (
     <>
@@ -27,6 +36,38 @@ export default function BlogIndex() {
           <p className="text-lg text-neutral-500 dark:text-neutral-400 max-w-xl mx-auto leading-relaxed">
             Thoughts on free web analytics, privacy, and building a better internet.
           </p>
+        </div>
+      </section>
+
+      {/* Intro */}
+      <section className="pb-12 px-6">
+        <div className="max-w-[700px] mx-auto text-neutral-600 dark:text-neutral-300 leading-relaxed space-y-4">
+          <p>
+            The Conteo blog covers practical guides on <strong>free web analytics</strong>, privacy-first tracking,
+            and building a better internet. Whether you&apos;re comparing <strong>Google Analytics alternatives</strong>,
+            learning about GDPR-compliant tracking, or looking for tips on analytics without cookies,
+            you&apos;ll find honest, actionable articles here.
+          </p>
+          <p>
+            We write about what matters: real-time dashboards that work, lightweight scripts that don&apos;t
+            slow down your site, and analytics that respect your visitors&apos; privacy — all without
+            the complexity or cost of traditional analytics platforms.
+          </p>
+        </div>
+      </section>
+
+      {/* Topics */}
+      <section className="pb-12 px-6">
+        <div className="max-w-[700px] mx-auto">
+          <h2 className="font-display font-bold text-lg tracking-tight mb-4">What we cover</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {BLOG_TOPICS.map((item) => (
+              <div key={item.topic} className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3">
+                <h3 className="font-semibold text-sm mb-0.5">{item.topic}</h3>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">{item.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

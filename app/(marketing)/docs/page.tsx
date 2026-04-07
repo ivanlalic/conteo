@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import CodeSnippets from '@/components/landing/CodeSnippets'
 import CTAButton from '@/components/landing/CTAButton'
-import { HowToStructuredData } from '@/components/structured-data'
+import { HowToStructuredData, FAQStructuredData } from '@/components/structured-data'
 
 export const metadata: Metadata = {
   title: 'Setup Guide — Add Free Analytics in 2 Minutes',
@@ -16,10 +16,34 @@ export const metadata: Metadata = {
   },
 }
 
+const DOCS_FAQS = [
+  {
+    question: 'How long does it take to set up Conteo?',
+    answer:
+      'About 2 minutes. Create a free account, add your website, copy the tracking script, and paste it before the closing </head> tag. Data appears in your dashboard within seconds of the first visit.',
+  },
+  {
+    question: 'Do I need technical knowledge to use Conteo?',
+    answer:
+      'Basic HTML knowledge is enough. If you can paste a script tag into your website, you can use Conteo. We provide setup guides for WordPress, Shopify, Next.js, and plain HTML.',
+  },
+  {
+    question: 'Does Conteo work with single-page applications (SPAs)?',
+    answer:
+      'Yes. Conteo automatically detects client-side route changes in React, Next.js, Vue, and other SPA frameworks. No additional configuration needed.',
+  },
+  {
+    question: 'What data does Conteo collect?',
+    answer:
+      'Conteo collects page views, unique visitors (without cookies), traffic sources, countries, cities, devices, browsers, and operating systems. No personal data, no IP addresses, no cookies, no fingerprinting.',
+  },
+]
+
 export default function DocsPage() {
   return (
     <>
       <HowToStructuredData />
+      <FAQStructuredData faqs={DOCS_FAQS} />
 
       {/* Hero */}
       <section className="pt-24 pb-12 sm:pt-32 sm:pb-16 px-6">
@@ -168,7 +192,32 @@ export default function DocsPage() {
           </div>
         </div>
       </section>
+FAQ */}
+      <section className="py-20 px-6">
+        <div className="max-w-[700px] mx-auto">
+          <h2 className="font-display font-bold text-2xl tracking-tight mb-8">
+            Common questions
+          </h2>
+          <div className="space-y-3">
+            {DOCS_FAQS.map((faq, i) => (
+              <details
+                key={i}
+                className="group rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+              >
+                <summary className="flex items-center justify-between cursor-pointer px-6 py-4 text-sm font-semibold select-none">
+                  {faq.question}
+                  <span className="ml-4 text-neutral-400 group-open:rotate-45 transition-transform text-lg">+</span>
+                </summary>
+                <p className="px-6 pb-4 text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                  {faq.answer}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
 
+      {/* 
       {/* CTA */}
       <section className="py-20 px-6">
         <div className="max-w-[600px] mx-auto text-center">

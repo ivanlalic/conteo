@@ -271,7 +271,8 @@ export default function Home() {
           <PricingCards />
         </div>
       </section>
-AQ ──────────────────────────────────────────────────────────── */}
+
+      {/* ── FAQ ──────────────────────────────────────────────────────────── */}
       <section className="py-20 sm:py-28 px-6">
         <div className="max-w-[700px] mx-auto">
           <h2 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-center mb-10">

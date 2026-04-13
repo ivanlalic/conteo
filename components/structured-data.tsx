@@ -183,6 +183,70 @@ export function WebsiteStructuredData() {
           "@type": "ImageObject",
           url: "https://conteo.online/icon.png",
         },
+        description:
+          "Conteo is a privacy-first web analytics platform. No cookies, GDPR compliant, real-time dashboard. Free for small sites. The simple Google Analytics alternative.",
+        foundingDate: "2026",
+        areaServed: "Worldwide",
+        availableLanguage: ["English"],
+        sameAs: [
+          "https://github.com/ivanlalic/conteo",
+          "https://x.com/conteo_app",
+          "https://www.producthunt.com/products/conteo",
+        ],
+      },
+    ],
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+export function PricingStructuredData() {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: "Conteo Web Analytics",
+    url: "https://conteo.online",
+    description:
+      "Privacy-first web analytics. No cookies, GDPR compliant, real-time dashboard. One line of code.",
+    brand: {
+      "@type": "Brand",
+      name: "Conteo",
+    },
+    offers: [
+      {
+        "@type": "Offer",
+        name: "Free Plan",
+        price: "0",
+        priceCurrency: "USD",
+        priceValidUntil: "2027-12-31",
+        availability: "https://schema.org/InStock",
+        url: "https://conteo.online/pricing",
+        description: "1 site, up to 10,000 visits/month, full real-time dashboard, CSV export. No credit card required.",
+      },
+      {
+        "@type": "Offer",
+        name: "Pro Plan",
+        price: "4.90",
+        priceCurrency: "USD",
+        priceValidUntil: "2027-12-31",
+        availability: "https://schema.org/InStock",
+        url: "https://conteo.online/pricing",
+        description: "Up to 5 sites, up to 50,000 visits/month, all features.",
+      },
+      {
+        "@type": "Offer",
+        name: "Business Plan",
+        price: "9.90",
+        priceCurrency: "USD",
+        priceValidUntil: "2027-12-31",
+        availability: "https://schema.org/InStock",
+        url: "https://conteo.online/pricing",
+        description: "Unlimited sites, up to 100,000 visits/month, all features.",
       },
     ],
   };

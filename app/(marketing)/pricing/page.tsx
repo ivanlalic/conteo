@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import PricingCards from '@/components/landing/PricingCards'
 import CTAButton from '@/components/landing/CTAButton'
-import { FAQStructuredData, BreadcrumbListStructuredData } from '@/components/structured-data'
+import { FAQStructuredData, BreadcrumbListStructuredData, PricingStructuredData } from '@/components/structured-data'
 
 export const metadata: Metadata = {
   title: 'Pricing — Free Web Analytics',
@@ -78,6 +78,7 @@ export default function PricingPage() {
         ]}
       />
       <FAQStructuredData faqs={PRICING_FAQS} />
+      <PricingStructuredData />
 
       {/* Hero */}
       <section className="pt-24 pb-12 sm:pt-32 sm:pb-16 px-6">

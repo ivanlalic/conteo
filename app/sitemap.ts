@@ -22,31 +22,31 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
       url: baseUrl,
-      lastModified: new Date(),
+      lastModified: new Date("2026-04-13"),
       changeFrequency: "weekly",
       priority: 1,
     },
     {
       url: `${baseUrl}/pricing`,
-      lastModified: new Date(),
+      lastModified: new Date("2026-04-13"),
       changeFrequency: "monthly",
       priority: 0.9,
     },
     {
       url: `${baseUrl}/vs/google-analytics`,
-      lastModified: new Date(),
+      lastModified: new Date("2026-04-04"),
       changeFrequency: "monthly",
       priority: 0.9,
     },
     {
       url: `${baseUrl}/docs`,
-      lastModified: new Date(),
+      lastModified: new Date("2026-04-04"),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
       url: `${baseUrl}/about`,
-      lastModified: new Date(),
+      lastModified: new Date("2026-04-04"),
       changeFrequency: "monthly",
       priority: 0.7,
     },

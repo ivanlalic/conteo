@@ -5,6 +5,7 @@ export default function Footer() {
         <a href="/" className="font-display font-bold text-lg">conteo</a>
         <div className="flex items-center gap-6 text-sm text-neutral-500 dark:text-neutral-400">
           <a href="/pricing" className="hover:text-neutral-900 dark:hover:text-white transition">Pricing</a>
+          <a href="/blog" className="hover:text-neutral-900 dark:hover:text-white transition">Blog</a>
           <a href="/docs" className="hover:text-neutral-900 dark:hover:text-white transition">Docs</a>
           <a href="/about" className="hover:text-neutral-900 dark:hover:text-white transition">About</a>
           <a href="/vs/google-analytics" className="hover:text-neutral-900 dark:hover:text-white transition">vs GA</a>

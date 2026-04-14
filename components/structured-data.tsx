@@ -205,12 +205,33 @@ export function WebsiteStructuredData() {
   );
 }
 
+const DIGITAL_SHIPPING: object = {
+  "@type": "OfferShippingDetails",
+  shippingRate: { "@type": "MonetaryAmount", value: "0", currency: "USD" },
+  shippingDestination: { "@type": "DefinedRegion", addressCountry: "Worldwide" },
+  deliveryTime: {
+    "@type": "ShippingDeliveryTime",
+    handlingTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 0, unitCode: "DAY" },
+    transitTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 0, unitCode: "DAY" },
+  },
+};
+
+const RETURN_POLICY: object = {
+  "@type": "MerchantReturnPolicy",
+  applicableCountry: "US",
+  returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+  merchantReturnDays: 30,
+  returnMethod: "https://schema.org/ReturnByMail",
+  returnFees: "https://schema.org/FreeReturn",
+};
+
 export function PricingStructuredData() {
   const data = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: "Conteo Web Analytics",
     url: "https://conteo.online",
+    image: "https://conteo.online/og-image.png",
     description:
       "Privacy-first web analytics. No cookies, GDPR compliant, real-time dashboard. One line of code.",
     brand: {
@@ -227,6 +248,8 @@ export function PricingStructuredData() {
         availability: "https://schema.org/InStock",
         url: "https://conteo.online/pricing",
         description: "1 site, up to 10,000 visits/month, full real-time dashboard, CSV export. No credit card required.",
+        shippingDetails: DIGITAL_SHIPPING,
+        hasMerchantReturnPolicy: RETURN_POLICY,
       },
       {
         "@type": "Offer",
@@ -237,6 +260,8 @@ export function PricingStructuredData() {
         availability: "https://schema.org/InStock",
         url: "https://conteo.online/pricing",
         description: "Up to 5 sites, up to 50,000 visits/month, all features.",
+        shippingDetails: DIGITAL_SHIPPING,
+        hasMerchantReturnPolicy: RETURN_POLICY,
       },
       {
         "@type": "Offer",
@@ -247,6 +272,8 @@ export function PricingStructuredData() {
         availability: "https://schema.org/InStock",
         url: "https://conteo.online/pricing",
         description: "Unlimited sites, up to 100,000 visits/month, all features.",
+        shippingDetails: DIGITAL_SHIPPING,
+        hasMerchantReturnPolicy: RETURN_POLICY,
       },
     ],
   };
